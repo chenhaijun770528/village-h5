@@ -43,139 +43,14 @@ body {
   margin: 0 auto;
 }
 
-/* 搜索栏 */
-.search-bar {
-  background: white;
-  border-radius: 25px;
-  padding: 10px 16px;
-  margin: 12px 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  cursor: pointer;
-}
-
-.search-bar input {
-  border: none;
-  outline: none;
-  flex: 1;
-  font-size: 14px;
-  background: transparent;
-}
-
-/* 轮播图 */
-.banner-swiper {
-  border-radius: 12px;
-  overflow: hidden;
-  height: 180px;
-  margin-bottom: 16px;
-}
-
-.banner-swiper img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* 功能入口网格 */
-.func-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.func-item {
-  background: white;
-  border-radius: 12px;
-  padding: 16px 8px;
-  text-align: center;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-  transition: transform 0.2s;
-}
-
-.func-item:active { transform: scale(0.95); }
-.func-icon { font-size: 28px; display: block; margin-bottom: 4px; }
-.func-text { font-size: 12px; color: #666; }
-
-/* 村庄卡片 */
-.section-title {
-  font-size: 16px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.village-count { font-size: 12px; color: #999; font-weight: normal; }
-
-.village-card {
-  background: white;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.village-card:active { transform: scale(0.98); }
-
-.village-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
-}
-
-.village-name { font-size: 16px; font-weight: bold; color: #2E7D32; }
-.village-location { font-size: 12px; color: #999; margin-top: 2px; }
-.village-population { text-align: right; }
-.population-number { font-size: 20px; font-weight: bold; color: #FF9800; }
-.population-label { font-size: 11px; color: #999; }
-
-.village-stats {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-  padding: 10px;
-  background: #f5f5f5;
-  border-radius: 8px;
-}
-
-.stat-item { flex: 1; display: flex; align-items: center; gap: 6px; }
-.stat-icon { font-size: 18px; }
-.stat-value { font-size: 14px; font-weight: bold; color: #333; }
-.stat-label { font-size: 11px; color: #999; }
-
-.village-desc {
-  font-size: 13px;
-  color: #666;
-  margin-bottom: 12px;
-  line-height: 1.6;
-}
-
-.village-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.action-btn {
-  flex: 1;
-  background: #f0f7f0;
-  color: #2E7D32;
-  border-radius: 20px;
-  padding: 6px 0;
-  text-align: center;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.action-btn:active { background: #2E7D32; color: white; }
+/* 商品列表 */
+.goods-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.goods-card { background: white; border-radius: 8px; overflow: hidden; }
+.goods-img { width: 100%; height: 120px; object-fit: cover; }
+.goods-info { padding: 8px; }
+.goods-name { font-size: 13px; color: #333; margin-bottom: 4px; }
+.goods-price { font-size: 16px; color: #FF9800; font-weight: bold; }
+.goods-btn { background: #2E7D32; color: white; border: none; width: 100%; padding: 6px; border-radius: 4px; font-size: 12px; cursor: pointer; margin-top: 6px; }
 
 /* 底部导航 */
 .tab-bar {
@@ -200,203 +75,6 @@ body {
 .tab-icon { font-size: 24px; display: block; }
 .tab-text { font-size: 11px; color: #999; margin-top: 2px; }
 .tab-item.active .tab-text { color: #2E7D32; }
-
-/* 表单样式 */
-.form-group { margin-bottom: 16px; }
-.form-label { font-size: 14px; color: #666; margin-bottom: 6px; display: block; }
-.form-input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.form-input:focus { border-color: #2E7D32; }
-
-.btn-primary {
-  width: 100%;
-  padding: 12px;
-  background: #2E7D32;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-.btn-primary:active { background: #1B5E20; }
-
-/* 卡片详情页 */
-.detail-header { margin-bottom: 20px; }
-.detail-title { font-size: 22px; font-weight: bold; color: #2E7D32; margin-bottom: 8px; }
-.detail-meta { font-size: 12px; color: #999; }
-
-.detail-section {
-  background: white;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 12px;
-}
-
-.detail-section h3 { font-size: 15px; color: #2E7D32; margin-bottom: 10px; }
-.detail-section p { font-size: 14px; color: #666; line-height: 1.8; }
-
-/* 图片网格 */
-.img-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.img-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
-
-/* 空状态 */
-.empty-state { text-align: center; padding: 60px 20px; color: #999; }
-.empty-icon { font-size: 48px; display: block; margin-bottom: 12px; }
-
-/* Toast提示 */
-.toast {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0,0,0,0.75);
-  color: white;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 14px;
-  z-index: 9999;
-  animation: fadeIn 0.3s;
-}
-
-@keyframes fadeIn { from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
-
-/* 加载状态 */
-.loading { text-align: center; padding: 20px; color: #999; }
-
-/* 角色选择页 */
-.role-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-.role-card {
-  background: white;
-  border-radius: 12px;
-  padding: 20px 16px;
-  text-align: center;
-  cursor: pointer;
-  border: 2px solid #e0e0e0;
-  transition: all 0.2s;
-}
-
-.role-card.selected { border-color: #2E7D32; background: #f0f7f0; }
-.role-icon { font-size: 36px; display: block; margin-bottom: 8px; }
-.role-name { font-size: 14px; font-weight: bold; color: #333; }
-
-/* 农产品卡片 */
-.product-card { background: white; border-radius: 12px; overflow: hidden; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); cursor: pointer; }
-.product-card:active { transform: scale(0.98); }
-.product-img { width: 100%; height: 160px; object-fit: cover; }
-.product-info { padding: 12px; }
-.product-name { font-size: 15px; font-weight: bold; color: #333; margin-bottom: 4px; }
-.product-price { font-size: 18px; color: #FF9800; font-weight: bold; }
-.product-unit { font-size: 12px; color: #999; font-weight: normal; }
-
-/* 商品列表 */
-.goods-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-.goods-card { background: white; border-radius: 8px; overflow: hidden; }
-.goods-img { width: 100%; height: 120px; object-fit: cover; }
-.goods-info { padding: 8px; }
-.goods-name { font-size: 13px; color: #333; margin-bottom: 4px; }
-.goods-price { font-size: 16px; color: #FF9800; font-weight: bold; }
-.goods-btn { background: #2E7D32; color: white; border: none; width: 100%; padding: 6px; border-radius: 4px; font-size: 12px; cursor: pointer; margin-top: 6px; }
-
-/* 露营页面 */
-.camp-card { background: white; border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
-.camp-img { width: 100%; height: 180px; object-fit: cover; }
-.camp-info { padding: 12px; }
-.camp-name { font-size: 15px; font-weight: bold; margin-bottom: 4px; }
-.camp-desc { font-size: 12px; color: #666; margin-bottom: 8px; }
-.camp-tags { display: flex; gap: 6px; flex-wrap: wrap; }
-.camp-tag { background: #f0f7f0; color: #2E7D32; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
-
-/* 我的页面 */
-.profile-header {
-  background: linear-gradient(135deg, #2E7D32, #4CAF50);
-  color: white;
-  padding: 30px 16px;
-  text-align: center;
-}
-
-.avatar { width: 70px; height: 70px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.3); font-size: 36px; line-height: 70px; background: rgba(255,255,255,0.2); margin: 0 auto 10px; }
-.nickname { font-size: 18px; font-weight: bold; }
-
-.profile-stats { display: flex; justify-content: space-around; padding: 16px; background: white; margin-bottom: 12px; border-radius: 12px; }
-.profile-stat { text-align: center; }
-.profile-stat-num { font-size: 18px; font-weight: bold; color: #2E7D32; }
-.profile-stat-label { font-size: 11px; color: #999; }
-
-.menu-list { background: white; border-radius: 12px; overflow: hidden; }
-.menu-item { padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
-.menu-item:last-child { border-bottom: none; }
-.menu-item-left { display: flex; align-items: center; gap: 10px; }
-.menu-icon { font-size: 20px; }
-.menu-name { font-size: 14px; color: #333; }
-.menu-arrow { color: #ccc; font-size: 16px; }
-
-/* 收藏/历史/点评列表 */
-.list-card { background: white; border-radius: 12px; padding: 12px; margin-bottom: 10px; display: flex; gap: 12px; cursor: pointer; }
-.list-thumb { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
-.list-info { flex: 1; }
-.list-title { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 4px; }
-.list-meta { font-size: 12px; color: #999; }
-
-/* 评论区 */
-.comment-item { padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
-.comment-user { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.comment-avatar { width: 32px; height: 32px; border-radius: 50%; background: #e0e0e0; font-size: 16px; text-align: center; line-height: 32px; }
-.comment-name { font-size: 13px; font-weight: bold; color: #333; }
-.comment-text { font-size: 13px; color: #555; line-height: 1.6; }
-.comment-time { font-size: 11px; color: #bbb; margin-top: 4px; }
-
-/* 留言板 */
-.message-board { background: white; border-radius: 12px; padding: 16px; }
-.message-input-wrap { display: flex; gap: 8px; margin-bottom: 16px; }
-.message-input { flex: 1; padding: 10px; border: 1px solid #e0e0e0; border-radius: 20px; outline: none; font-size: 13px; }
-.message-send { background: #2E7D32; color: white; border: none; padding: 8px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; }
-
-/* 点赞 */
-.like-btn { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #999; cursor: pointer; }
-.like-btn.liked { color: #FF6B6B; }
-.like-icon { font-size: 16px; }
-
-/* 分享弹窗 */
-.share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: flex-end; }
-.share-modal.show { display: flex; }
-.share-panel { background: white; width: 100%; padding: 20px; border-radius: 16px 16px 0 0; }
-.share-title { text-align: center; font-size: 14px; color: #666; margin-bottom: 16px; }
-.share-icons { display: flex; justify-content: space-around; }
-.share-icon-item { text-align: center; cursor: pointer; }
-.share-icon-item span { font-size: 40px; display: block; margin-bottom: 6px; }
-.share-icon-item small { font-size: 12px; color: #666; }
-.share-close { margin-top: 12px; text-align: center; color: #999; padding: 10px; cursor: pointer; }
-
-/* 加载更多 */
-.load-more { text-align: center; padding: 16px; color: #999; font-size: 13px; cursor: pointer; }
-
-/* 页面切换动画 */
-.page { display: none; }
-.page.active { display: block; animation: fadeIn 0.2s; }
-
-/* 表单页面 */
-.form-page { padding: 20px 16px; }
-.form-card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-.form-row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
-.form-row:last-child { border-bottom: none; }
-.form-row-label { width: 100px; font-size: 14px; color: #666; flex-shrink: 0; }
-.form-row-value { flex: 1; font-size: 14px; color: #333; }
-
-/* 响应式 */
-@media (max-width: 375px) {
-  .func-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .func-item { padding: 12px 4px; }
-  .func-text { font-size: 11px; }
-}
 
 /* 悬浮按钮 */
 .fab {
@@ -479,6 +157,34 @@ body {
   font-size: 14px;
 }
 
+/* 表单样式 */
+.form-group { margin-bottom: 16px; }
+.form-label { font-size: 14px; color: #666; margin-bottom: 6px; display: block; }
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-input:focus { border-color: #2E7D32; }
+
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+  background: #2E7D32;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.btn-primary:active { background: #1B5E20; }
+
 /* 申请卡片 */
 .app-card {
   background: white;
@@ -518,7 +224,8 @@ body {
 
 .app-card-actions .btn-edit { color: #2E7D32; border-color: #2E7D32; }
 .app-card-actions .btn-delete { color: #F44336; border-color: #F44336; }
-.app-card-actions .btn-tag { color: #999; border-color: #e0e0e0; }
+.app-card-actions .btn-approve { color: #4CAF50; border-color: #4CAF50; }
+.app-card-actions .btn-reject { color: #F44336; border-color: #F44336; }
 
 /* 图片预览 */
 .img-preview {
@@ -529,6 +236,27 @@ body {
   margin-top: 8px;
   display: none;
 }
+
+/* Toast提示 */
+.toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.75);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 9999;
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+
+/* 空状态 */
+.empty-state { text-align: center; padding: 60px 20px; color: #999; }
+.empty-icon { font-size: 48px; display: block; margin-bottom: 12px; }
 </style>
 </head>
 <body>
@@ -539,9 +267,8 @@ body {
   </div>
 
   <div class="container">
-    <div class="section-title" style="margin-bottom:12px">🌾 精选农产品</div>
+    <div class="section-title" style="margin-bottom:12px;font-size:16px;font-weight:bold;color:#333;">🌾 精选农产品</div>
     <div class="goods-grid" id="productGrid"></div>
-    <div class="load-more" id="loadMore" style="display:none" onclick="loadMore()">加载更多 ↓</div>
   </div>
 
   <div class="tab-bar">
@@ -599,263 +326,346 @@ body {
     </div>
   </div>
 
-  <script>// village-h5 数据层
-// 模拟数据（后续可替换为真实API）
-
-var DB = {
-  // 村庄数据
-  villages: [
-    {
-      id: 'v1',
-      name: '幸福村',
-      province: '江苏省',
-      city: '苏州市',
-      population: '3280',
-      totalArea: '4500',
-      farmlandArea: '2800',
-      commercialArea: '200',
-      description: '幸福村位于苏州市郊区，环境优美，基础设施完善，是著名的生态农业示范村。村内有千年古银杏树、多彩田园，是周末休闲的好去处。',
-      chief: { name: '张建国', phone: '13800138001' },
-      scenery: [
-        { id: 's1', title: '千年古银杏', desc: '树龄超过800年，树高25米，胸围6米', img: 'https://picsum.photos/seed/scene1/400/300' },
-        { id: 's2', title: '多彩田园', desc: '四季变换的稻田画，色彩斑斓', img: 'https://picsum.photos/seed/scene2/400/300' },
-        { id: 's3', title: '荷塘月色', desc: '夏季荷花盛开，清香四溢', img: 'https://picsum.photos/seed/scene3/400/300' }
-      ],
-      food: [
-        { id: 'f1', name: '农家土鸡', price: '98', unit: '只', desc: '散养土鸡，肉质鲜嫩', img: 'https://picsum.photos/seed/food1/400/300' },
-        { id: 'f2', name: '新鲜虾仁', price: '58', unit: '斤', desc: '本地河虾，当日捕捞', img: 'https://picsum.photos/seed/food2/400/300' },
-        { id: 'f3', name: '手工年糕', price: '25', unit: '斤', desc: '传统工艺，口感软糯', img: 'https://picsum.photos/seed/food3/400/300' }
-      ],
-      images: ['https://picsum.photos/seed/v1a/400/300', 'https://picsum.photos/seed/v1b/400/300', 'https://picsum.photos/seed/v1c/400/300']
-    },
-    {
-      id: 'v2',
-      name: '阳光村',
-      province: '广东省',
-      city: '广州市',
-      population: '4560',
-      totalArea: '6200',
-      farmlandArea: '3500',
-      commercialArea: '350',
-      description: '阳光村是广州市郊的现代化农村，积极发展乡村旅游和生态农业。村内有大型草莓采摘园、农家乐设施，是城市居民周末体验田园生活的好选择。',
-      chief: { name: '李明华', phone: '13800138002' },
-      scenery: [
-        { id: 's4', title: '草莓采摘园', desc: '50亩有机草莓，个大味甜', img: 'https://picsum.photos/seed/scene4/400/300' },
-        { id: 's5', title: '阳光花海', desc: '百亩花田，四季花开', img: 'https://picsum.photos/seed/scene5/400/300' }
-      ],
-      food: [
-        { id: 'f4', name: '有机草莓', price: '35', unit: '斤', desc: '有机种植，个大香甜', img: 'https://picsum.photos/seed/food4/400/300' },
-        { id: 'f5', name: '客家酿豆腐', price: '38', unit: '份', desc: '传统客家美食', img: 'https://picsum.photos/seed/food5/400/300' }
-      ],
-      images: ['https://picsum.photos/seed/v2a/400/300', 'https://picsum.photos/seed/v2b/400/300']
-    },
-    {
-      id: 'v3',
-      name: '青山村',
-      province: '湖南省',
-      city: '长沙市',
-      population: '2150',
-      totalArea: '3800',
-      farmlandArea: '1800',
-      commercialArea: '150',
-      description: '青山村坐落于长株潭后花园，森林覆盖率超过70%，空气清新，是天然的氧吧。村内有古民居、古井等历史遗迹，适合徒步探险和研学旅行。',
-      chief: { name: '王志强', phone: '13800138003' },
-      scenery: [
-        { id: 's6', title: '古民居群', desc: '保存完好的明清古建筑', img: 'https://picsum.photos/seed/scene6/400/300' },
-        { id: 's7', title: '千年古井', desc: '井水清澈，冬暖夏凉', img: 'https://picsum.photos/seed/scene7/400/300' },
-        { id: 's8', title: '竹林氧吧', desc: '百亩竹林，呼吸自然', img: 'https://picsum.photos/seed/scene8/400/300' }
-      ],
-      food: [
-        { id: 'f6', name: '竹林土鸡', price: '108', unit: '只', desc: '竹林散养，营养丰富', img: 'https://picsum.photos/seed/food6/400/300' },
-        { id: 'f7', name: '手工竹笋干', price: '45', unit: '斤', desc: '春季竹笋，自然晾晒', img: 'https://picsum.photos/seed/food7/400/300' }
-      ],
-      images: ['https://picsum.photos/seed/v3a/400/300', 'https://picsum.photos/seed/v3b/400/300', 'https://picsum.photos/seed/v3c/400/300']
-    }
-  ],
-
-  // 农产品
-  products: [
-    { id: 'p1', name: '有机大米', price: '68', unit: '袋/10斤', desc: '绿色有机种植，口感香糯', img: 'https://picsum.photos/seed/prod1/400/300', sales: 328 },
-    { id: 'p2', name: '土鸡蛋', price: '45', unit: '盒/30枚', desc: '散养土鸡，蛋黄饱满', img: 'https://picsum.photos/seed/prod2/400/300', sales: 256 },
-    { id: 'p3', name: '新鲜蜂蜜', price: '88', unit: '瓶/500g', desc: '深山百花蜜，纯天然', img: 'https://picsum.photos/seed/prod3/400/300', sales: 189 },
-    { id: 'p4', name: '农家菜籽油', price: '58', unit: '瓶/2L', desc: '传统压榨，香浓健康', img: 'https://picsum.photos/seed/prod4/400/300', sales: 412 },
-    { id: 'p5', name: '干香菇', price: '78', unit: '袋/500g', desc: '深山椴木种植，香味浓郁', img: 'https://picsum.photos/seed/prod5/400/300', sales: 167 },
-    { id: 'p6', name: '红薯粉条', price: '35', unit: '袋/500g', desc: '纯手工制作，口感劲道', img: 'https://picsum.photos/seed/prod6/400/300', sales: 523 }
-  ],
-
-  // 露营基地
-  camps: [
-    { id: 'c1', name: '星空露营基地', desc: '海拔800米，远离光污染，是观星圣地', price: '188', unit: '顶/晚', img: 'https://picsum.photos/seed/camp1/400/300', tags: ['观星', '烧烤', '篝火'], features: ['专业露营帐篷', '天文望远镜租借', '烧烤设备', '24小时热水'] },
-    { id: 'c2', name: '湖畔露营区', desc: '紧邻水库，湖光山色，宁静惬意', price: '158', unit: '顶/晚', img: 'https://picsum.photos/seed/camp2/400/300', tags: ['钓鱼', '划船', '亲子'], features: ['湖景帐篷', '免费停车', '钓鱼工具租借', '儿童游乐区'] },
-    { id: 'c3', name: '森林木屋营地', desc: '独栋木屋掩映在松林间，呼吸森林负氧离子', price: '288', unit: '间/晚', img: 'https://picsum.photos/seed/camp3/400/300', tags: ['森林', '静修', '养生'], features: ['独栋木屋', '独立卫浴', '厨房设施', '森林SPA'] }
-  ],
-
-  // 角色类型（注册）
-  roles: [
-    { id: 'r1', icon: '🏠', name: '村民', path: 'register-villager.html' },
-    { id: 'r2', icon: '👔', name: '村主任', path: 'register-township.html' },
-    { id: 'r3', icon: '🏪', name: '超市老板', path: 'register-market.html' },
-    { id: 'r4', icon: '🏗️', name: '建筑公司', path: 'register-construction.html' },
-    { id: 'r5', icon: '📚', name: '老师', path: 'register-teacher.html' },
-    { id: 'r6', icon: '🎓', name: '大学生', path: 'register-student.html' },
-    { id: 'r7', icon: '⚖️', name: '律师事务所', path: 'register-law-firm.html' },
-    { id: 'r8', icon: '👨‍💼', name: '律师', path: 'register-lawyer.html' },
-    { id: 'r9', icon: '🚛', name: '货运司机', path: 'register-truck.html' },
-    { id: 'r10', icon: '🚗', name: '顺风车司机', path: 'register-carpool.html' },
-    { id: 'r11', icon: '💆', name: '按摩技师', path: 'register-massage.html' }
-  ],
-
-  // 留言数据
-  messages: [
-    { id: 'm1', author: '张三', avatar: '👨', text: '幸福村风景真美，周末带孩子去玩得很开心！', time: '2小时前', likes: 12 },
-    { id: 'm2', author: '李四', avatar: '👩', text: '农家乐的饭菜很好吃，老板人也很热情。', time: '5小时前', likes: 8 }
-  ],
-
-  // 我的收藏
-  favorites: [],
-
-  // 浏览历史
-  history: []
-}
-
-// 工具函数
-function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5) }
-
-function formatTime(ts) {
-  var d = new Date(ts)
-  var now = Date.now()
-  var diff = now - ts
-  if (diff < 60000) return '刚刚'
-  if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前'
-  if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前'
-  return d.toLocaleDateString('zh-CN')
-}
-
-function toast(msg, duration) {
-  duration = duration || 2000
-  var existing = document.querySelector('.toast')
-  if (existing) existing.remove()
-  var el = document.createElement('div')
-  el.className = 'toast'
-  el.textContent = msg
-  document.body.appendChild(el)
-  setTimeout(function() { el.remove() }, duration)
-}
-
-// 存储
+  <script>// village-h5 数据存储
 var Storage = {
   get: function(key, defaultVal) {
     try {
-      var v = localStorage.getItem('village_' + key)
-      return v ? JSON.parse(v) : defaultVal
-    } catch(e) { return defaultVal }
+      var v = localStorage.getItem('village_' + key);
+      return v ? JSON.parse(v) : defaultVal;
+    } catch(e) { return defaultVal; }
   },
   set: function(key, val) {
-    localStorage.setItem('village_' + key, JSON.stringify(val))
+    localStorage.setItem('village_' + key, JSON.stringify(val));
   }
+};
+
+// 工具函数
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 }
 
-// 初始化示例数据到localStorage
+function toast(msg, duration) {
+  duration = duration || 2000;
+  var existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  var el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function() { el.remove(); }, duration);
+}
+
+function goPage(url) {
+  window.location.href = url;
+}
+
+// 初始化示例数据
 function initSampleData() {
-  if (!localStorage.getItem('village_villages')) {
-    Storage.set('villages', DB.villages)
+  // 初始化村庄数据
+  if (!Storage.get('villages', null)) {
+    var defaultVillages = [
+      {
+        id: 'v1',
+        name: '幸福村',
+        province: '江苏省',
+        city: '苏州市',
+        population: '3280',
+        totalArea: '4500',
+        farmlandArea: '2800',
+        commercialArea: '200',
+        description: '幸福村位于苏州市郊区，环境优美，基础设施完善，是著名的生态农业示范村。',
+        chief: { name: '张建国', phone: '13800138001' },
+        images: []
+      },
+      {
+        id: 'v2',
+        name: '阳光村',
+        province: '广东省',
+        city: '广州市',
+        population: '4560',
+        totalArea: '6200',
+        farmlandArea: '3500',
+        commercialArea: '350',
+        description: '阳光村是广州市郊的现代化农村，积极发展乡村旅游和生态农业。',
+        chief: { name: '李明华', phone: '13800138002' },
+        images: []
+      }
+    ];
+    Storage.set('villages', defaultVillages);
   }
-  if (!localStorage.getItem('village_messages')) {
-    Storage.set('messages', DB.messages)
-  }
-  if (!localStorage.getItem('village_favorites')) {
-    Storage.set('favorites', [])
-  }
-  if (!localStorage.getItem('village_history')) {
-    Storage.set('history', [])
+  
+  // 初始化农产品申请数据
+  if (!Storage.get('product_applications', null)) {
+    Storage.set('product_applications', []);
   }
 }
 
-// 用户
-var currentUser = Storage.get('user', null)
-
-function login(nickName, avatarUrl) {
-  currentUser = { id: genId(), nickName: nickName, avatarUrl: avatarUrl, time: Date.now() }
-  Storage.set('user', currentUser)
-  return currentUser
+// 页面初始化
+function init() {
+  initSampleData();
+  loadProducts();
+  updateFabVisibility();
 }
 
-function logout() {
-  currentUser = null
-  localStorage.removeItem('village_user')
-}</script>
-  <script>
-    var pageIndex = 0
-    var pageSize = 6
-    var currentApplyImgBase64 = ''
+// 加载农产品列表
+function loadProducts() {
+  var grid = document.getElementById('productGrid');
+  var products = [
+    { id: 'p1', name: '有机大米', price: '68', unit: '袋/10斤', desc: '绿色有机种植，口感香糯', sales: 328 },
+    { id: 'p2', name: '土鸡蛋', price: '45', unit: '盒/30枚', desc: '散养土鸡，蛋黄饱满', sales: 256 },
+    { id: 'p3', name: '新鲜蜂蜜', price: '88', unit: '瓶/500g', desc: '深山百花蜜，纯天然', sales: 189 }
+  ];
+  
+  grid.innerHTML = '';
+  products.forEach(function(p) {
+    var card = document.createElement('div');
+    card.className = 'goods-card';
+    card.innerHTML = '<div class="goods-img" style="background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:48px;">🥬</div>' +
+      '<div class="goods-info">' +
+      '<div class="goods-name">' + p.name + '</div>' +
+      '<div class="goods-price">¥' + p.price + '<span style="font-size:12px;color:#999;font-weight:normal;">/' + p.unit + '</span></div>' +
+      '<button class="goods-btn">购买</button>' +
+      '</div>';
+    grid.appendChild(card);
+  });
+}
 
-    function checkLoginAndVillager() {
-      var user = Storage.get('user', null)
-      if (!user) {
-        toast('请先登录')
-        return null
-      }
-      var role = user.role || ''
-      if (role !== '村民' && role !== '村主任') {
-        toast('仅村民可申请上架')
-        return null
-      }
-      return user
+// 检查登录和权限
+function checkLoginAndVillager() {
+  var user = Storage.get('user', null);
+  if (!user) {
+    toast('请先登录');
+    return null;
+  }
+  var role = user.role || '';
+  if (role !== '村民' && role !== '村主任') {
+    toast('仅村民可申请上架');
+    return null;
+  }
+  return user;
+}
+
+// 更新FAB按钮可见性
+function updateFabVisibility() {
+  var user = Storage.get('user', null);
+  if (!user) {
+    document.getElementById('fabBtn').style.display = 'none';
+    document.getElementById('myAppBtn').style.display = 'none';
+    return;
+  }
+  var role = user.role || '';
+  if (role === '村民' || role === '村主任') {
+    document.getElementById('fabBtn').style.display = 'flex';
+    document.getElementById('myAppBtn').style.display = 'block';
+  } else {
+    document.getElementById('fabBtn').style.display = 'none';
+    document.getElementById('myAppBtn').style.display = 'none';
+  }
+}
+
+// 打开申请弹窗
+var currentApplyImgBase64 = '';
+
+function openApplyModal(appId) {
+  var user = checkLoginAndVillager();
+  if (!user) return;
+  
+  // 重置表单
+  document.getElementById('applyName').value = '';
+  document.getElementById('applyPrice').value = '';
+  document.getElementById('applyUnit').value = '';
+  document.getElementById('applyDesc').value = '';
+  document.getElementById('applyImgInput').value = '';
+  document.getElementById('applyImgPreview').style.display = 'none';
+  document.getElementById('applyEditId').value = '';
+  currentApplyImgBase64 = '';
+  document.getElementById('applyModalTitle').textContent = '申请上架';
+  
+  // 加载村庄列表
+  var villageSelect = document.getElementById('applyVillage');
+  var villages = Storage.get('villages', []);
+  villageSelect.innerHTML = villages.map(function(v) {
+    return '<option value="' + v.id + '">' + v.name + '</option>';
+  }).join('');
+  
+  // 如果是编辑模式
+  if (appId) {
+    document.getElementById('applyModalTitle').textContent = '编辑申请';
+    document.getElementById('applyEditId').value = appId;
+    
+    var apps = Storage.get('product_applications', []);
+    var app = null;
+    for (var i = 0; i < apps.length; i++) {
+      if (apps[i].id === appId) { app = apps[i]; break; }
     }
-
-    function updateFabVisibility() {
-      var user = Storage.get('user', null)
-      if (!user) {
-        document.getElementById('fabBtn').style.display = 'none'
-        document.getElementById('myAppBtn').style.display = 'none'
-        return
-      }
-      var role = user.role || ''
-      if (role === '村民' || role === '村主任') {
-        document.getElementById('fabBtn').style.display = 'flex'
-        document.getElementById('myAppBtn').style.display = 'block'
-      } else {
-        document.getElementById('fabBtn').style.display = 'none'
-        document.getElementById('myAppBtn').style.display = 'none'
+    
+    if (app) {
+      document.getElementById('applyName').value = app.name;
+      document.getElementById('applyPrice').value = app.price;
+      document.getElementById('applyUnit').value = app.unit;
+      document.getElementById('applyDesc').value = app.desc || '';
+      document.getElementById('applyVillage').value = app.village;
+      
+      if (app.img) {
+        currentApplyImgBase64 = app.img;
+        var preview = document.getElementById('applyImgPreview');
+        preview.src = app.img;
+        preview.style.display = 'block';
       }
     }
+  }
+  
+  document.getElementById('applyModal').classList.add('show');
+}
 
-    function openApplyModal(appId) {
-      var user = checkLoginAndVillager()
-      if (!user) return
+// 关闭申请弹窗
+function closeApplyModal() {
+  document.getElementById('applyModal').classList.remove('show');
+}
 
-      document.getElementById('applyName').value = ''
-      document.getElementById('applyPrice').value = ''
-      document.getElementById('applyUnit').value = ''
-      document.getElementById('applyDesc').value = ''
-      document.getElementById('applyImgInput').value = ''
-      document.getElementById('applyImgPreview').style.display = 'none'
-      document.getElementById('applyEditId').value = ''
-      currentApplyImgBase64 = ''
-      document.getElementById('applyModalTitle').textContent = '申请上架'
+// 预览申请图片
+function previewApplyImg(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    currentApplyImgBase64 = e.target.result;
+    var preview = document.getElementById('applyImgPreview');
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
 
-      var villageSelect = document.getElementById('applyVillage')
-      var villages = Storage.get('villages', DB.villages) || []
-      villageSelect.innerHTML = villages.map(function(v) {
-        return '<option value="' + v.id + '">' + v.name + '</option>'
-      }).join('')
+// 提交申请
+function submitApplication() {
+  var user = checkLoginAndVillager();
+  if (!user) return;
+  
+  var name = document.getElementById('applyName').value.trim();
+  var price = document.getElementById('applyPrice').value.trim();
+  var unit = document.getElementById('applyUnit').value.trim();
+  var desc = document.getElementById('applyDesc').value.trim();
+  var village = document.getElementById('applyVillage').value;
+  var editId = document.getElementById('applyEditId').value;
+  
+  if (!name || !price || !unit || !village) {
+    toast('请填写完整信息');
+    return;
+  }
+  
+  var apps = Storage.get('product_applications', []);
+  
+  if (editId) {
+    // 编辑模式
+    for (var i = 0; i < apps.length; i++) {
+      if (apps[i].id === editId) {
+        apps[i].name = name;
+        apps[i].price = price;
+        apps[i].unit = unit;
+        apps[i].desc = desc;
+        apps[i].village = village;
+        apps[i].img = currentApplyImgBase64 || apps[i].img;
+        apps[i].updateTime = Date.now();
+        break;
+      }
+    }
+    toast('申请修改成功');
+  } else {
+    // 新增模式
+    var newApp = {
+      id: genId(),
+      userId: user.id,
+      userName: user.nickName,
+      name: name,
+      price: price,
+      unit: unit,
+      desc: desc,
+      village: village,
+      img: currentApplyImgBase64,
+      status: 'waiting', // waiting/pass/reject
+      createTime: Date.now(),
+      updateTime: Date.now()
+    };
+    apps.push(newApp);
+    toast('申请提交成功');
+  }
+  
+  Storage.set('product_applications', apps);
+  closeApplyModal();
+}
 
-      if (appId) {
-        document.getElementById('applyModalTitle').textContent = '编辑申请'
-        document.getElementById('applyEditId').value = appId
-        var apps = Storage.get('village_product_applications', []) || []
-        var app = null
-        for (var i = 0; i < apps.length; i++) {
-          if (apps[i].id === appId) { app = apps[i]; break }
-        }
-        if (app) {
-          document.getElementById('applyName').value = app.name
-          document.getElementById('applyPrice').value = app.price
-          document.getElementById('applyUnit').value = app.unit
-          document.getElementById('applyDesc').value = app.desc || ''
-          document.getElementById('applyVillage').value = app.village
-          if (app.img) {
-            currentApplyImgBase64 = app.img
-            var preview = document.getElementById('applyImgPreview')
-            preview.src = app.img
-            preview.style.display
+// 打开我的申请列表
+function openMyApplications() {
+  var user = Storage.get('user', null);
+  if (!user) {
+    toast('请先登录');
+    return;
+  }
+  
+  var apps = Storage.get('product_applications', []);
+  var myApps = apps.filter(function(app) {
+    return app.userId === user.id;
+  });
+  
+  var listEl = document.getElementById('myAppList');
+  
+  if (myApps.length === 0) {
+    listEl.innerHTML = '<div class="empty-state"><span class="empty-icon">📋</span><div>暂无申请记录</div></div>';
+  } else {
+    listEl.innerHTML = '';
+    myApps.forEach(function(app) {
+      var card = document.createElement('div');
+      card.className = 'app-card status-' + app.status;
+      
+      var statusText = '';
+      if (app.status === 'waiting') statusText = '待审核';
+      else if (app.status === 'pass') statusText = '已通过';
+      else if (app.status === 'reject') statusText = '已拒绝';
+      
+      card.innerHTML = '<div class="app-card-top">' +
+        '<span class="app-card-name">' + app.name + '</span>' +
+        '<span class="app-card-status ' + app.status + '">' + statusText + '</span>' +
+        '</div>' +
+        '<div class="app-card-info">价格：¥' + app.price + '/' + app.unit + '</div>' +
+        '<div class="app-card-actions">' +
+        '<button class="btn-edit" onclick="openApplyModal(\'' + app.id + '\')">编辑</button>' +
+        '<button class="btn-delete" onclick="deleteApplication(\'' + app.id + '\')">删除</button>' +
+        '</div>';
+      
+      listEl.appendChild(card);
+    });
+  }
+  
+  document.getElementById('myAppModal').classList.add('show');
+}
+
+// 关闭我的申请弹窗
+function closeMyAppModal() {
+  document.getElementById('myAppModal').classList.remove('show');
+}
+
+// 删除申请
+function deleteApplication(appId) {
+  if (!confirm('确定要删除此申请吗？')) return;
+  
+  var apps = Storage.get('product_applications', []);
+  apps = apps.filter(function(app) {
+    return app.id !== appId;
+  });
+  
+  Storage.set('product_applications', apps);
+  toast('删除成功');
+  openMyApplications(); // 刷新列表
+}
+
+// 页面加载完成后初始化
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>
