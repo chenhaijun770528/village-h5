@@ -702,23 +702,23 @@ function logout() {
     }
 
     function renderBanner() {
-      const banners = [
-        { img: 'https://picsum.photos/seed/banner1/750/360', title: '美丽乡村计划' },
-        { img: 'https://picsum.photos/seed/banner2/750/360', title: '乡村振兴进行时' },
-        { img: 'https://picsum.photos/seed/banner3/750/360', title: '共建美好家园' }
+      var banners = [
+        { title: '美丽乡村计划', color: '#2E7D32', icon: '🏘️' },
+        { title: '乡村振兴进行时', color: '#4CAF50', icon: '🌾' },
+        { title: '共建美好家园', color: '#1B5E20', icon: '🌳' }
       ]
       var el = document.getElementById('bannerSwiper')
       el.style.position = 'relative'
       el.innerHTML = banners.map(function(b, i) {
-        return '<img src="' + b.img + '" alt="' + b.title + '" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:' + (i===0?1:0) + ';transition:opacity 0.8s">'
+        return '<div id="banner' + i + '" style="position:absolute;top:0;left:0;width:100%;height:100%;background:' + b.color + ';display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;opacity:' + (i===0?1:0) + ';transition:opacity 0.8s"><span style="font-size:48px">' + b.icon + '</span><span style="font-size:18px;margin-top:8px;font-weight:bold">' + b.title + '</span></div>'
       }).join('')
-      var imgs = el.getElementsByTagName('img')
+      var items = []
+      for (var i = 0; i < banners.length; i++) { items.push(document.getElementById('banner' + i)) }
 
-      // 自动轮播 - 不重建DOM，只切换透明度
       setInterval(function() {
-        imgs[currentBanner].style.opacity = '0'
+        items[currentBanner].style.opacity = '0'
         currentBanner = (currentBanner + 1) % banners.length
-        imgs[currentBanner].style.opacity = '1'
+        items[currentBanner].style.opacity = '1'
       }, 3000)
     }
 
