@@ -396,7 +396,145 @@ body {
   .func-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .func-item { padding: 12px 4px; }
   .func-text { font-size: 11px; }
-}</style>
+}
+  /* 悬浮申请按钮 */
+  .fab {
+    position: fixed; right: 20px; bottom: 90px;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(135deg, #2E7D32, #4CAF50);
+    color: white; display: none;
+    align-items: center; justify-content: center;
+    font-size: 28px; box-shadow: 0 4px 12px rgba(46,125,50,0.4);
+    cursor: pointer; z-index: 200; user-select: none;
+  }
+  .fab:active { transform: scale(0.9); }
+  .my-app-btn {
+    position: fixed; right: 13px; bottom: 154px;
+    padding: 6px 12px; background: white;
+    color: #2E7D32; border: 1.5px solid #2E7D32;
+    border-radius: 16px; font-size: 12px;
+    cursor: pointer; z-index: 200; display: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  }
+  .modal-mask {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.50); z-index: 1000;
+    justify-content: center; align-items: flex-end;
+  }
+  .modal-mask.show { display: flex; }
+  .modal-panel {
+    background: white; width: 100%;
+    padding: 20px 16px 28px; border-radius: 16px 16px 0 0;
+    max-height: 88vh; overflow-y: auto;
+  }
+  .modal-title { text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 16px; color: #333; }
+  .modal-close { text-align: center; color: #999; padding: 12px 0 4px; cursor: pointer; font-size: 14px; }
+  .fgroup { margin-bottom: 14px; }
+  .flabel { font-size: 13px; color: #666; margin-bottom: 4px; display: block; }
+  .finput {
+    width: 100%; padding: 10px 12px;
+    border: 1px solid #e0e0e0; border-radius: 8px;
+    font-size: 14px; outline: none; box-sizing: border-box; background: white;
+  }
+  .finput:focus { border-color: #2E7D32; }
+  select.finput { -webkit-appearance: none; appearance: none; }
+  textarea.finput { min-height: 80px; resize: vertical; }
+  .img-preview {
+    width: 80px; height: 80px; object-fit: cover;
+    border-radius: 8px; margin-top: 8px; display: none; border: 1px solid #e0e0e0;
+  }
+  .app-card {
+    background: white; border-radius: 10px; padding: 14px;
+    margin-bottom: 10px; border-left: 4px solid #FF9800;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .app-card.approved { border-left-color: #2E7D32; }
+  .app-card.rejected { border-left-color: #F44336; }
+  .app-card-top { display: flex; justify-content: space-between; align-items: center; }
+  .app-card-name { font-size: 15px; font-weight: bold; color: #333; }
+  .app-card-status { font-size: 11px; padding: 2px 8px; border-radius: 10px; }
+  .app-card-status.pending { background: #FFF3E0; color: #FF9800; }
+  .app-card-status.approved { background: #E8F5E9; color: #2E7D32; }
+  .app-card-status.rejected { background: #FFEBEE; color: #F44336; }
+  .app-card-meta { font-size: 12px; color: #999; margin-top: 6px; }
+  .app-card-actions { margin-top: 10px; display: flex; gap: 8px; }
+  .app-card-actions button {
+    flex: 1; padding: 7px 0; border: none; border-radius: 6px;
+    font-size: 12px; cursor: pointer; font-weight: bold;
+  }
+  .btn-edit { background: #E3F2FD; color: #1976D2; }
+  .btn-delete { background: #FFEBEE; color: #D32F2F; }
+
+  
+  /* 悬浮申请按钮 */
+  .fab {
+    position: fixed; right: 20px; bottom: 90px;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(135deg, #2E7D32, #4CAF50);
+    color: white; display: none;
+    align-items: center; justify-content: center;
+    font-size: 28px; box-shadow: 0 4px 12px rgba(46,125,50,0.4);
+    cursor: pointer; z-index: 200; user-select: none;
+  }
+  .fab:active { transform: scale(0.9); }
+  .my-app-btn {
+    position: fixed; right: 13px; bottom: 154px;
+    padding: 6px 12px; background: white;
+    color: #2E7D32; border: 1.5px solid #2E7D32;
+    border-radius: 16px; font-size: 12px;
+    cursor: pointer; z-index: 200; display: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  }
+  .modal-mask {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.50); z-index: 1000;
+    justify-content: center; align-items: flex-end;
+  }
+  .modal-mask.show { display: flex; }
+  .modal-panel {
+    background: white; width: 100%;
+    padding: 20px 16px 28px; border-radius: 16px 16px 0 0;
+    max-height: 88vh; overflow-y: auto;
+  }
+  .modal-title { text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 16px; color: #333; }
+  .modal-close { text-align: center; color: #999; padding: 12px 0 4px; cursor: pointer; font-size: 14px; }
+  .fgroup { margin-bottom: 14px; }
+  .flabel { font-size: 13px; color: #666; margin-bottom: 4px; display: block; }
+  .finput {
+    width: 100%; padding: 10px 12px;
+    border: 1px solid #e0e0e0; border-radius: 8px;
+    font-size: 14px; outline: none; box-sizing: border-box; background: white;
+  }
+  .finput:focus { border-color: #2E7D32; }
+  select.finput { -webkit-appearance: none; appearance: none; }
+  textarea.finput { min-height: 80px; resize: vertical; }
+  .img-preview {
+    width: 80px; height: 80px; object-fit: cover;
+    border-radius: 8px; margin-top: 8px; display: none; border: 1px solid #e0e0e0;
+  }
+  .app-card {
+    background: white; border-radius: 10px; padding: 14px;
+    margin-bottom: 10px; border-left: 4px solid #FF9800;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .app-card.approved { border-left-color: #2E7D32; }
+  .app-card.rejected { border-left-color: #F44336; }
+  .app-card-top { display: flex; justify-content: space-between; align-items: center; }
+  .app-card-name { font-size: 15px; font-weight: bold; color: #333; }
+  .app-card-status { font-size: 11px; padding: 2px 8px; border-radius: 10px; }
+  .app-card-status.pending { background: #FFF3E0; color: #FF9800; }
+  .app-card-status.approved { background: #E8F5E9; color: #2E7D32; }
+  .app-card-status.rejected { background: #FFEBEE; color: #F44336; }
+  .app-card-meta { font-size: 12px; color: #999; margin-top: 6px; }
+  .app-card-actions { margin-top: 10px; display: flex; gap: 8px; }
+  .app-card-actions button {
+    flex: 1; padding: 7px 0; border: none; border-radius: 6px;
+    font-size: 12px; cursor: pointer; font-weight: bold;
+  }
+  .btn-edit { background: #E3F2FD; color: #1976D2; }
+  .btn-delete { background: #FFEBEE; color: #D32F2F; }
+
+  </style></style></style>
 </head>
 <body>
   <div class="header">
@@ -406,6 +544,68 @@ body {
   </div>
   <div class="container">
     <div class="goods-grid" id="foodList" style="grid-template-columns:repeat(1,1fr)"></div>
+  </div>
+
+  
+  <!-- 悬浮按钮 -->
+  <div class="fab" id="fabApply" onclick="openApplyModal()">＋</div>
+  <div class="my-app-btn" id="btnMyApp" onclick="openMyApplications()">我的申请</div>
+
+  <!-- 申请上架弹窗 -->
+  <div class="modal-mask" id="applyMask">
+    <div class="modal-panel">
+      <div class="modal-title" id="applyTitle">申请上架</div>
+      <div>
+        <div class="fgroup"><label class="flabel">名称 *</label><input class="finput" id="applyName" placeholder="请输入名称"></div>
+        <div class="fgroup"><label class="flabel">价格 *</label><input class="finput" id="applyPrice" type="number" placeholder="请输入价格"></div>
+        <div class="fgroup"><label class="flabel">单位 *</label><input class="finput" id="applyUnit" placeholder="如：袋/10斤、只、斤"></div>
+        <div class="fgroup"><label class="flabel">描述</label><textarea class="finput" id="applyDesc" placeholder="请输入描述"></textarea></div>
+        <div class="fgroup"><label class="flabel">图片</label><input class="finput" type="file" accept="image/*" id="applyImgInput" onchange="previewApplyImg(event)" style="padding:6px"><img class="img-preview" id="applyImgPreview"></div>
+        <div class="fgroup"><label class="flabel">所属村庄 *</label><select class="finput" id="applyVillage"><option value="">请选择村庄</option></select></div>
+      </div>
+      <button class="btn-primary" style="margin-top:14px" onclick="submitApplication()">提交申请</button>
+      <div class="modal-close" onclick="closeApplyModal()">取 消</div>
+    </div>
+  </div>
+
+  <!-- 我的申请弹窗 -->
+  <div class="modal-mask" id="myAppMask">
+    <div class="modal-panel">
+      <div class="modal-title">我的申请</div>
+      <div id="myAppList" style="min-height:100px"></div>
+      <button class="btn-primary" style="margin-top:14px;background:#999" onclick="closeMyAppModal()">关 闭</button>
+    </div>
+  </div>
+
+  
+  <!-- 悬浮按钮 -->
+  <div class="fab" id="fabApply" onclick="openApplyModal()">＋</div>
+  <div class="my-app-btn" id="btnMyApp" onclick="openMyApplications()">我的申请</div>
+
+  <!-- 申请上架弹窗 -->
+  <div class="modal-mask" id="applyMask">
+    <div class="modal-panel">
+      <div class="modal-title" id="applyTitle">申请上架</div>
+      <div>
+        <div class="fgroup"><label class="flabel">名称 *</label><input class="finput" id="applyName" placeholder="请输入名称"></div>
+        <div class="fgroup"><label class="flabel">价格 *</label><input class="finput" id="applyPrice" type="number" placeholder="请输入价格"></div>
+        <div class="fgroup"><label class="flabel">单位 *</label><input class="finput" id="applyUnit" placeholder="如：袋/10斤、只、斤"></div>
+        <div class="fgroup"><label class="flabel">描述</label><textarea class="finput" id="applyDesc" placeholder="请输入描述"></textarea></div>
+        <div class="fgroup"><label class="flabel">图片</label><input class="finput" type="file" accept="image/*" id="applyImgInput" onchange="previewApplyImg(event)" style="padding:6px"><img class="img-preview" id="applyImgPreview"></div>
+        <div class="fgroup"><label class="flabel">所属村庄 *</label><select class="finput" id="applyVillage"><option value="">请选择村庄</option></select></div>
+      </div>
+      <button class="btn-primary" style="margin-top:14px" onclick="submitApplication()">提交申请</button>
+      <div class="modal-close" onclick="closeApplyModal()">取 消</div>
+    </div>
+  </div>
+
+  <!-- 我的申请弹窗 -->
+  <div class="modal-mask" id="myAppMask">
+    <div class="modal-panel">
+      <div class="modal-title">我的申请</div>
+      <div id="myAppList" style="min-height:100px"></div>
+      <button class="btn-primary" style="margin-top:14px;background:#999" onclick="closeMyAppModal()">关 闭</button>
+    </div>
   </div>
 
   <script>// village-h5 数据层
@@ -593,7 +793,323 @@ function logout() {
   localStorage.removeItem('village_user')
 }</script>
   <script>
-    function init() {
+    // ===== food 申请上架+编辑功能 =====
+    var currentApplyId = null;
+
+    function updateFabVisibility() {
+      var user = Storage.get('user', null);
+      var fab = document.getElementById('fabApply');
+      var btn = document.getElementById('btnMyApp');
+      if (!user) { fab.style.display = 'none'; btn.style.display = 'none'; return; }
+      var regs = Storage.get('village_registrations', []);
+      var reg = null;
+      for (var i = 0; i < regs.length; i++) {
+        if ((user.phone && regs[i].phone === user.phone) || regs[i].id === user.id) { reg = regs[i]; break; }
+      }
+      var isVillager = reg && (reg.role === 'villager' || reg.role === 'head' || reg.role === 'township');
+      fab.style.display = isVillager ? 'flex' : 'none';
+      btn.style.display = isVillager ? 'block' : 'none';
+    }
+
+    function openApplyModal(appId) {
+      var user = Storage.get('user', null);
+      if (!user) { toast('请先登录'); return; }
+      currentApplyId = appId || null;
+      document.getElementById('applyTitle').textContent = currentApplyId ? '编辑申请' : '申请上架';
+      var sel = document.getElementById('applyVillage');
+      var villages = Storage.get('villages', []);
+      var opt = '<option value="">请选择村庄</option>';
+      for (var i = 0; i < villages.length; i++) {
+        opt += '<option value="' + villages[i].name + '">' + villages[i].name + '</option>';
+      }
+      sel.innerHTML = opt;
+      document.getElementById('applyName').value = '';
+      document.getElementById('applyPrice').value = '';
+      document.getElementById('applyUnit').value = '';
+      document.getElementById('applyDesc').value = '';
+      document.getElementById('applyImgInput').value = '';
+      var pv = document.getElementById('applyImgPreview');
+      pv.src = ''; pv.style.display = 'none';
+      if (currentApplyId) {
+        var apps = Storage.get('food_applications', []);
+        var a = null;
+        for (var i = 0; i < apps.length; i++) { if (apps[i].id === currentApplyId) { a = apps[i]; break; } }
+        if (a) {
+          document.getElementById('applyName').value = a.name || '';
+          document.getElementById('applyPrice').value = a.price || '';
+          document.getElementById('applyUnit').value = a.unit || '';
+          document.getElementById('applyDesc').value = a.desc || '';
+          sel.value = a.village || '';
+          if (a.img) { pv.src = a.img; pv.style.display = 'block'; }
+        }
+      }
+      document.getElementById('applyMask').classList.add('show');
+    }
+
+    function closeApplyModal() {
+      document.getElementById('applyMask').classList.remove('show');
+      currentApplyId = null;
+    }
+
+    function previewApplyImg(event) {
+      var file = event.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var pv = document.getElementById('applyImgPreview');
+        pv.src = e.target.result; pv.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function submitApplication() {
+      var name = document.getElementById('applyName').value.trim();
+      var price = document.getElementById('applyPrice').value.trim();
+      var unit = document.getElementById('applyUnit').value.trim();
+      var desc = document.getElementById('applyDesc').value.trim();
+      var village = document.getElementById('applyVillage').value;
+      if (!name) { toast('请输入名称'); return; }
+      if (!price) { toast('请输入价格'); return; }
+      if (!unit) { toast('请输入单位'); return; }
+      if (!village) { toast('请选择村庄'); return; }
+      var user = Storage.get('user', null);
+      var pv = document.getElementById('applyImgPreview');
+      var imgData = (pv.src && pv.style.display !== 'none') ? pv.src : '';
+      var apps = Storage.get('food_applications', []);
+      if (currentApplyId) {
+        for (var i = 0; i < apps.length; i++) {
+          if (apps[i].id === currentApplyId) {
+            apps[i].name = name; apps[i].price = price; apps[i].unit = unit;
+            apps[i].desc = desc; apps[i].village = village;
+            if (imgData) apps[i].img = imgData;
+            apps[i].status = '待审核'; apps[i].submitTime = Date.now();
+            apps[i].reviewTime = null; apps[i].reviewNote = '';
+            break;
+          }
+        }
+        Storage.set('food_applications', apps);
+        toast('修改成功，已重新提交审核');
+      } else {
+        apps.push({
+          id: genId(), name: name, price: price, unit: unit,
+          desc: desc, img: imgData, village: village,
+          applicantName: user ? (user.nickName || '') : '',
+          applicantId: user ? (user.id || '') : '',
+          status: '待审核', submitTime: Date.now(),
+          reviewTime: null, reviewNote: ''
+        });
+        Storage.set('food_applications', apps);
+        toast('申请已提交，等待村主任审核');
+      }
+      closeApplyModal();
+    }
+
+    function openMyApplications() {
+      var user = Storage.get('user', null);
+      if (!user) { toast('请先登录'); return; }
+      var apps = (Storage.get('food_applications', []) || []).filter(function(a){
+        return a.applicantId === user.id || (a.applicantName && user.nickName && a.applicantName === user.nickName);
+      });
+      var html = '';
+      if (apps.length === 0) {
+        html = '<div style="text-align:center;color:#999;padding:30px 0;font-size:14px">暂无申请记录</div>';
+      } else {
+        for (var i = 0; i < apps.length; i++) {
+          var a = apps[i];
+          var sc = a.status === '已通过' ? 'approved' : (a.status === '已拒绝' ? 'rejected' : 'pending');
+          var st = a.status === '待审核' ? '⏳ 待审核' : (a.status === '已通过' ? '✅ 已通过' : '❌ 已拒绝');
+          var ce = a.status !== '已通过';
+          html += '<div class="app-card ' + sc + '">' +
+            '<div class="app-card-top"><span class="app-card-name">' + a.name + '</span>' +
+            '<span class="app-card-status ' + sc + '">' + st + '</span></div>' +
+            '<div class="app-card-meta">价格: ¥' + a.price + '/' + a.unit + '　村庄: ' + a.village + '</div>' +
+            (a.reviewNote ? '<div class="app-card-meta" style="color:#F44336">审核备注: ' + a.reviewNote + '</div>' : '') +
+            (ce ? '<div class="app-card-actions"><button class="btn-edit" onclick="editApplication(\'' + a.id + '\')">编辑</button><button class="btn-delete" onclick="deleteApplication(\'' + a.id + '\')">删除</button></div>' : '') +
+            '</div>';
+        }
+      }
+      document.getElementById('myAppList').innerHTML = html;
+      document.getElementById('myAppMask').classList.add('show');
+    }
+
+    function closeMyAppModal() {
+      document.getElementById('myAppMask').classList.remove('show');
+    }
+
+    function editApplication(id) {
+      closeMyAppModal();
+      setTimeout(function() { openApplyModal(id); }, 300);
+    }
+
+    function deleteApplication(id) {
+      if (!confirm('确定删除该申请？')) return;
+      var apps = Storage.get('food_applications', []);
+      apps = apps.filter(function(x) { return x.id !== id; });
+      Storage.set('food_applications', apps);
+      toast('已删除');
+      openMyApplications();
+    }
+    // ===== 结束 =====
+
+        // ===== food 申请上架+编辑功能 =====
+    var currentApplyId = null;
+
+    function updateFabVisibility() {
+      var user = Storage.get('user', null);
+      var fab = document.getElementById('fabApply');
+      var btn = document.getElementById('btnMyApp');
+      if (!user) { fab.style.display = 'none'; btn.style.display = 'none'; return; }
+      var regs = Storage.get('village_registrations', []);
+      var reg = null;
+      for (var i = 0; i < regs.length; i++) {
+        if ((user.phone && regs[i].phone === user.phone) || regs[i].id === user.id) { reg = regs[i]; break; }
+      }
+      var isVillager = reg && (reg.role === 'villager' || reg.role === 'head' || reg.role === 'township');
+      fab.style.display = isVillager ? 'flex' : 'none';
+      btn.style.display = isVillager ? 'block' : 'none';
+    }
+
+    function openApplyModal(appId) {
+      var user = Storage.get('user', null);
+      if (!user) { toast('请先登录'); return; }
+      currentApplyId = appId || null;
+      document.getElementById('applyTitle').textContent = currentApplyId ? '编辑申请' : '申请上架';
+      var sel = document.getElementById('applyVillage');
+      var villages = Storage.get('villages', []);
+      var opt = '<option value="">请选择村庄</option>';
+      for (var i = 0; i < villages.length; i++) {
+        opt += '<option value="' + villages[i].name + '">' + villages[i].name + '</option>';
+      }
+      sel.innerHTML = opt;
+      document.getElementById('applyName').value = '';
+      document.getElementById('applyPrice').value = '';
+      document.getElementById('applyUnit').value = '';
+      document.getElementById('applyDesc').value = '';
+      document.getElementById('applyImgInput').value = '';
+      var pv = document.getElementById('applyImgPreview');
+      pv.src = ''; pv.style.display = 'none';
+      if (currentApplyId) {
+        var apps = Storage.get('food_applications', []);
+        var a = null;
+        for (var i = 0; i < apps.length; i++) { if (apps[i].id === currentApplyId) { a = apps[i]; break; } }
+        if (a) {
+          document.getElementById('applyName').value = a.name || '';
+          document.getElementById('applyPrice').value = a.price || '';
+          document.getElementById('applyUnit').value = a.unit || '';
+          document.getElementById('applyDesc').value = a.desc || '';
+          sel.value = a.village || '';
+          if (a.img) { pv.src = a.img; pv.style.display = 'block'; }
+        }
+      }
+      document.getElementById('applyMask').classList.add('show');
+    }
+
+    function closeApplyModal() {
+      document.getElementById('applyMask').classList.remove('show');
+      currentApplyId = null;
+    }
+
+    function previewApplyImg(event) {
+      var file = event.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var pv = document.getElementById('applyImgPreview');
+        pv.src = e.target.result; pv.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function submitApplication() {
+      var name = document.getElementById('applyName').value.trim();
+      var price = document.getElementById('applyPrice').value.trim();
+      var unit = document.getElementById('applyUnit').value.trim();
+      var desc = document.getElementById('applyDesc').value.trim();
+      var village = document.getElementById('applyVillage').value;
+      if (!name) { toast('请输入名称'); return; }
+      if (!price) { toast('请输入价格'); return; }
+      if (!unit) { toast('请输入单位'); return; }
+      if (!village) { toast('请选择村庄'); return; }
+      var user = Storage.get('user', null);
+      var pv = document.getElementById('applyImgPreview');
+      var imgData = (pv.src && pv.style.display !== 'none') ? pv.src : '';
+      var apps = Storage.get('food_applications', []);
+      if (currentApplyId) {
+        for (var i = 0; i < apps.length; i++) {
+          if (apps[i].id === currentApplyId) {
+            apps[i].name = name; apps[i].price = price; apps[i].unit = unit;
+            apps[i].desc = desc; apps[i].village = village;
+            if (imgData) apps[i].img = imgData;
+            apps[i].status = '待审核'; apps[i].submitTime = Date.now();
+            apps[i].reviewTime = null; apps[i].reviewNote = '';
+            break;
+          }
+        }
+        Storage.set('food_applications', apps);
+        toast('修改成功，已重新提交审核');
+      } else {
+        apps.push({
+          id: genId(), name: name, price: price, unit: unit,
+          desc: desc, img: imgData, village: village,
+          applicantName: user ? (user.nickName || '') : '',
+          applicantId: user ? (user.id || '') : '',
+          status: '待审核', submitTime: Date.now(),
+          reviewTime: null, reviewNote: ''
+        });
+        Storage.set('food_applications', apps);
+        toast('申请已提交，等待村主任审核');
+      }
+      closeApplyModal();
+    }
+
+    function openMyApplications() {
+      var user = Storage.get('user', null);
+      if (!user) { toast('请先登录'); return; }
+      var apps = (Storage.get('food_applications', []) || []).filter(function(a){
+        return a.applicantId === user.id || (a.applicantName && user.nickName && a.applicantName === user.nickName);
+      });
+      var html = '';
+      if (apps.length === 0) {
+        html = '<div style="text-align:center;color:#999;padding:30px 0;font-size:14px">暂无申请记录</div>';
+      } else {
+        for (var i = 0; i < apps.length; i++) {
+          var a = apps[i];
+          var sc = a.status === '已通过' ? 'approved' : (a.status === '已拒绝' ? 'rejected' : 'pending');
+          var st = a.status === '待审核' ? '⏳ 待审核' : (a.status === '已通过' ? '✅ 已通过' : '❌ 已拒绝');
+          var ce = a.status !== '已通过';
+          html += '<div class="app-card ' + sc + '">' +
+            '<div class="app-card-top"><span class="app-card-name">' + a.name + '</span>' +
+            '<span class="app-card-status ' + sc + '">' + st + '</span></div>' +
+            '<div class="app-card-meta">价格: ¥' + a.price + '/' + a.unit + '　村庄: ' + a.village + '</div>' +
+            (a.reviewNote ? '<div class="app-card-meta" style="color:#F44336">审核备注: ' + a.reviewNote + '</div>' : '') +
+            (ce ? '<div class="app-card-actions"><button class="btn-edit" onclick="editApplication(\'' + a.id + '\')">编辑</button><button class="btn-delete" onclick="deleteApplication(\'' + a.id + '\')">删除</button></div>' : '') +
+            '</div>';
+        }
+      }
+      document.getElementById('myAppList').innerHTML = html;
+      document.getElementById('myAppMask').classList.add('show');
+    }
+
+    function closeMyAppModal() {
+      document.getElementById('myAppMask').classList.remove('show');
+    }
+
+    function editApplication(id) {
+      closeMyAppModal();
+      setTimeout(function() { openApplyModal(id); }, 300);
+    }
+
+    function deleteApplication(id) {
+      if (!confirm('确定删除该申请？')) return;
+      var apps = Storage.get('food_applications', []);
+      apps = apps.filter(function(x) { return x.id !== id; });
+      Storage.set('food_applications', apps);
+      toast('已删除');
+      openMyApplications();
+    }
+    // ===== 结束 =====
+
+        function init() {
       const params = new URLSearchParams(location.search)
       const id = params.get('id')
       const all = Storage.get('villages', DB.villages) || []

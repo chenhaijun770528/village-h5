@@ -396,7 +396,140 @@ body {
   .func-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .func-item { padding: 12px 4px; }
   .func-text { font-size: 11px; }
-}</style>
+}
+
+/* 悬浮按钮 */
+.fab {
+  position: fixed;
+  right: 20px;
+  bottom: 90px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2E7D32, #4CAF50);
+  color: white;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  box-shadow: 0 4px 12px rgba(46,125,50,0.4);
+  cursor: pointer;
+  z-index: 200;
+}
+
+.fab:active { transform: scale(0.9); }
+
+/* 我的申请按钮 */
+.my-app-btn {
+  position: fixed;
+  right: 20px;
+  bottom: 154px;
+  background: white;
+  color: #2E7D32;
+  border: 1px solid #2E7D32;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12px;
+  display: none;
+  cursor: pointer;
+  z-index: 200;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.my-app-btn:active { background: #f0f7f0; }
+
+/* 弹窗遮罩 */
+.modal-mask {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.modal-mask.show { display: flex; }
+
+/* 弹窗面板 */
+.modal-panel {
+  background: white;
+  width: 100%;
+  max-height: 85vh;
+  border-radius: 16px 16px 0 0;
+  padding: 20px 16px;
+  overflow-y: auto;
+  animation: slideUp 0.3s;
+}
+
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.modal-panel h3 {
+  text-align: center;
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+.modal-close {
+  text-align: center;
+  color: #999;
+  padding: 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* 申请卡片 */
+.app-card {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-left: 4px solid #FF9800;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.app-card.status-pass { border-left-color: #4CAF50; }
+.app-card.status-reject { border-left-color: #F44336; }
+
+.app-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.app-card-name { font-size: 14px; font-weight: bold; color: #333; }
+.app-card-status { font-size: 12px; }
+.app-card-status.waiting { color: #FF9800; }
+.app-card-status.pass { color: #4CAF50; }
+.app-card-status.reject { color: #F44336; }
+
+.app-card-info { font-size: 12px; color: #999; margin-bottom: 8px; }
+.app-card-actions { display: flex; gap: 8px; }
+.app-card-actions button {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid #e0e0e0;
+  background: white;
+}
+
+.app-card-actions .btn-edit { color: #2E7D32; border-color: #2E7D32; }
+.app-card-actions .btn-delete { color: #F44336; border-color: #F44336; }
+.app-card-actions .btn-tag { color: #999; border-color: #e0e0e0; }
+
+/* 图片预览 */
+.img-preview {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-top: 8px;
+  display: none;
+}
+</style>
 </head>
 <body>
   <div class="header">
@@ -417,10 +550,59 @@ body {
     <div class="tab-item" onclick="goPage('profile.html')"><span class="tab-icon">👤</span><span class="tab-text">我的</span></div>
   </div>
 
+  <!-- 我的申请按钮 -->
+  <div class="my-app-btn" id="myAppBtn" onclick="openMyApplications()">我的申请</div>
+  <!-- 申请上架悬浮按钮 -->
+  <div class="fab" id="fabBtn" onclick="openApplyModal()">＋</div>
+
+  <!-- 申请上架弹窗 -->
+  <div class="modal-mask" id="applyModal">
+    <div class="modal-panel">
+      <h3 id="applyModalTitle">申请上架</h3>
+      <div class="form-group">
+        <label class="form-label">名称 *</label>
+        <input class="form-input" id="applyName" placeholder="请输入名称">
+      </div>
+      <div class="form-group">
+        <label class="form-label">价格 *</label>
+        <input class="form-input" id="applyPrice" type="number" placeholder="请输入价格">
+      </div>
+      <div class="form-group">
+        <label class="form-label">单位 *</label>
+        <input class="form-input" id="applyUnit" placeholder="如：袋/10斤、只、斤">
+      </div>
+      <div class="form-group">
+        <label class="form-label">描述</label>
+        <textarea class="form-input" id="applyDesc" rows="3" placeholder="请输入描述"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">图片</label>
+        <input type="file" id="applyImgInput" accept="image/*" onchange="previewApplyImg(event)" style="font-size:13px">
+        <img class="img-preview" id="applyImgPreview">
+      </div>
+      <div class="form-group">
+        <label class="form-label">所属村庄 *</label>
+        <select class="form-input" id="applyVillage"></select>
+      </div>
+      <input type="hidden" id="applyEditId" value="">
+      <button class="btn-primary" onclick="submitApplication()">提交申请</button>
+      <div class="modal-close" onclick="closeApplyModal()">取消</div>
+    </div>
+  </div>
+
+  <!-- 我的申请弹窗 -->
+  <div class="modal-mask" id="myAppModal">
+    <div class="modal-panel">
+      <h3>我的申请</h3>
+      <div id="myAppList"></div>
+      <div class="modal-close" onclick="closeMyAppModal()">关闭</div>
+    </div>
+  </div>
+
   <script>// village-h5 数据层
 // 模拟数据（后续可替换为真实API）
 
-const DB = {
+var DB = {
   // 村庄数据
   villages: [
     {
@@ -540,34 +722,35 @@ const DB = {
 function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5) }
 
 function formatTime(ts) {
-  const d = new Date(ts)
-  const now = Date.now()
-  const diff = now - ts
+  var d = new Date(ts)
+  var now = Date.now()
+  var diff = now - ts
   if (diff < 60000) return '刚刚'
   if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前'
   if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前'
   return d.toLocaleDateString('zh-CN')
 }
 
-function toast(msg, duration = 2000) {
-  const existing = document.querySelector('.toast')
+function toast(msg, duration) {
+  duration = duration || 2000
+  var existing = document.querySelector('.toast')
   if (existing) existing.remove()
-  const el = document.createElement('div')
+  var el = document.createElement('div')
   el.className = 'toast'
   el.textContent = msg
   document.body.appendChild(el)
-  setTimeout(() => el.remove(), duration)
+  setTimeout(function() { el.remove() }, duration)
 }
 
 // 存储
-const Storage = {
-  get(key, defaultVal) {
+var Storage = {
+  get: function(key, defaultVal) {
     try {
-      const v = localStorage.getItem('village_' + key)
+      var v = localStorage.getItem('village_' + key)
       return v ? JSON.parse(v) : defaultVal
-    } catch { return defaultVal }
+    } catch(e) { return defaultVal }
   },
-  set(key, val) {
+  set: function(key, val) {
     localStorage.setItem('village_' + key, JSON.stringify(val))
   }
 }
@@ -589,10 +772,10 @@ function initSampleData() {
 }
 
 // 用户
-let currentUser = Storage.get('user', null)
+var currentUser = Storage.get('user', null)
 
 function login(nickName, avatarUrl) {
-  currentUser = { id: genId(), nickName, avatarUrl, time: Date.now() }
+  currentUser = { id: genId(), nickName: nickName, avatarUrl: avatarUrl, time: Date.now() }
   Storage.set('user', currentUser)
   return currentUser
 }
@@ -602,37 +785,77 @@ function logout() {
   localStorage.removeItem('village_user')
 }</script>
   <script>
-    let pageIndex = 0
-    const pageSize = 6
+    var pageIndex = 0
+    var pageSize = 6
+    var currentApplyImgBase64 = ''
 
-    function init() {
-      renderProducts()
+    function checkLoginAndVillager() {
+      var user = Storage.get('user', null)
+      if (!user) {
+        toast('请先登录')
+        return null
+      }
+      var role = user.role || ''
+      if (role !== '村民' && role !== '村主任') {
+        toast('仅村民可申请上架')
+        return null
+      }
+      return user
     }
 
-    function renderProducts() {
-      const all = DB.products
-      const list = all.slice(0, (pageIndex + 1) * pageSize)
-      const hasMore = all.length > list.length
-      document.getElementById('loadMore').style.display = hasMore ? 'block' : 'none'
-
-      document.getElementById('productGrid').innerHTML = list.map(p => `
-        <div class="goods-card" onclick="goDetail('${p.id}')">
-          <img class="goods-img" src="${p.img}" alt="${p.name}">
-          <div class="goods-info">
-            <div class="goods-name">${p.name}</div>
-            <div style="font-size:12px;color:#999;margin:2px 0">${p.desc}</div>
-            <div class="goods-price">¥${p.price}<span style="font-size:11px;font-weight:normal;color:#999">/${p.unit}</span></div>
-            <div style="font-size:11px;color:#999">已售 ${p.sales}</div>
-            <button class="goods-btn" onclick="event.stopPropagation();goOrder('${p.id}')">立即下单</button>
-          </div>
-        </div>`).join('')
+    function updateFabVisibility() {
+      var user = Storage.get('user', null)
+      if (!user) {
+        document.getElementById('fabBtn').style.display = 'none'
+        document.getElementById('myAppBtn').style.display = 'none'
+        return
+      }
+      var role = user.role || ''
+      if (role === '村民' || role === '村主任') {
+        document.getElementById('fabBtn').style.display = 'flex'
+        document.getElementById('myAppBtn').style.display = 'block'
+      } else {
+        document.getElementById('fabBtn').style.display = 'none'
+        document.getElementById('myAppBtn').style.display = 'none'
+      }
     }
 
-    function loadMore() { pageIndex++; renderProducts() }
-    function goPage(url) { location.href = url }
-    function goDetail(id) { toast('详情页开发中') }
-    function goOrder(id) { location.href = 'product-order.html?id=' + id }
-    init()
-  </script>
-</body>
-</html>
+    function openApplyModal(appId) {
+      var user = checkLoginAndVillager()
+      if (!user) return
+
+      document.getElementById('applyName').value = ''
+      document.getElementById('applyPrice').value = ''
+      document.getElementById('applyUnit').value = ''
+      document.getElementById('applyDesc').value = ''
+      document.getElementById('applyImgInput').value = ''
+      document.getElementById('applyImgPreview').style.display = 'none'
+      document.getElementById('applyEditId').value = ''
+      currentApplyImgBase64 = ''
+      document.getElementById('applyModalTitle').textContent = '申请上架'
+
+      var villageSelect = document.getElementById('applyVillage')
+      var villages = Storage.get('villages', DB.villages) || []
+      villageSelect.innerHTML = villages.map(function(v) {
+        return '<option value="' + v.id + '">' + v.name + '</option>'
+      }).join('')
+
+      if (appId) {
+        document.getElementById('applyModalTitle').textContent = '编辑申请'
+        document.getElementById('applyEditId').value = appId
+        var apps = Storage.get('village_product_applications', []) || []
+        var app = null
+        for (var i = 0; i < apps.length; i++) {
+          if (apps[i].id === appId) { app = apps[i]; break }
+        }
+        if (app) {
+          document.getElementById('applyName').value = app.name
+          document.getElementById('applyPrice').value = app.price
+          document.getElementById('applyUnit').value = app.unit
+          document.getElementById('applyDesc').value = app.desc || ''
+          document.getElementById('applyVillage').value = app.village
+          if (app.img) {
+            currentApplyImgBase64 = app.img
+            var preview = document.getElementById('applyImgPreview')
+            preview.src = app.img
+            preview.style.display
