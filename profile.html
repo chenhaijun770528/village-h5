@@ -3,395 +3,487 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>个人中心</title>
+  <title>个人中心 - 村庄平台</title>
   <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif; background-color: #f5f5f5; color: #333; font-size: 14px; line-height: 1.5; }
-.header { position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(135deg, #2E7D32, #4CAF50); color: white; padding: 12px 16px; z-index: 100; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
-.header-title { font-size: 18px; font-weight: bold; }
-.header-back { font-size: 20px; cursor: pointer; padding: 4px 8px; }
-.container { padding: 60px 16px 80px; max-width: 750px; margin: 0 auto; }
-.profile-header { background: linear-gradient(135deg, #2E7D32, #4CAF50); color: white; padding: 30px 16px; text-align: center; }
-.avatar { width: 70px; height: 70px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.3); font-size: 36px; line-height: 70px; background: rgba(255,255,255,0.2); margin: 0 auto 10px; }
-.nickname { font-size: 18px; font-weight: bold; }
-.profile-stats { display: flex; justify-content: space-around; padding: 16px; background: white; margin-bottom: 12px; border-radius: 12px; }
-.profile-stat { text-align: center; cursor: pointer; }
-.profile-stat-num { font-size: 18px; font-weight: bold; color: #2E7D32; }
-.profile-stat-label { font-size: 11px; color: #999; }
-.menu-list { background: white; border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
-.menu-item { padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
-.menu-item:last-child { border-bottom: none; }
-.menu-item-left { display: flex; align-items: center; gap: 10px; }
-.menu-icon { font-size: 20px; }
-.menu-name { font-size: 14px; color: #333; }
-.menu-arrow { color: #ccc; font-size: 16px; }
-.tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 8px rgba(0,0,0,0.08); z-index: 100; }
-.tab-item { text-align: center; cursor: pointer; padding: 4px 0; }
-.tab-icon { font-size: 24px; display: block; }
-.tab-text { font-size: 11px; color: #999; margin-top: 2px; }
-.tab-item.active .tab-text { color: #2E7D32; }
-.form-group { margin-bottom: 16px; }
-.form-label { font-size: 14px; color: #666; margin-bottom: 6px; display: block; }
-.form-input { width: 100%; padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; outline: none; }
-.form-input:focus { border-color: #2E7D32; }
-.btn-primary { width: 100%; padding: 12px; background: #2E7D32; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
-.btn-primary:active { background: #1B5E20; }
-.share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: flex-end; }
-.share-modal.show { display: flex; }
-.share-panel { background: white; width: 100%; padding: 20px; border-radius: 16px 16px 0 0; max-height: 90vh; overflow-y: auto; }
-.share-title { text-align: center; font-size: 14px; color: #666; margin-bottom: 16px; }
-.share-close { margin-top: 12px; text-align: center; color: #999; padding: 10px; cursor: pointer; }
-.toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.75); color: white; padding: 12px 24px; border-radius: 8px; font-size: 14px; z-index: 9999; animation: fadeIn 0.3s; }
-@keyframes fadeIn { from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      font-size: 14px;
+    }
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #2E7D32, #4CAF50);
+      color: white;
+      padding: 12px 16px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .header-title { font-size: 18px; font-weight: bold; }
+    .header-back { font-size: 20px; cursor: pointer; padding: 4px 8px; }
+    .container { padding: 60px 16px 80px; max-width: 750px; margin: 0 auto; }
+
+    /* 用户信息卡 */
+    .user-card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .user-avatar { font-size: 52px; }
+    .user-info { flex: 1; }
+    .user-name { font-size: 17px; font-weight: bold; color: #222; }
+    .user-account { font-size: 12px; color: #999; margin-top: 3px; }
+    .role-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-top: 6px;
+    }
+    .role-none { background: #f5f5f5; color: #999; }
+    .role-active { background: #E8F5E9; color: #2E7D32; }
+    .role-pending { background: #FFF3E0; color: #E65100; }
+
+    /* 快捷功能 */
+    .section-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #888;
+      margin-bottom: 10px;
+      padding-left: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .menu-list {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      margin-bottom: 16px;
+    }
+    .menu-item {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .menu-item:last-child { border-bottom: none; }
+    .menu-item:active { background: #f9f9f9; }
+    .menu-icon { font-size: 22px; margin-right: 12px; }
+    .menu-text { flex: 1; font-size: 15px; color: #333; }
+    .menu-arrow { font-size: 18px; color: #ccc; }
+    .menu-badge {
+      background: #F44336;
+      color: white;
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      margin-right: 8px;
+      font-weight: bold;
+    }
+
+    /* 村庄管理面板 */
+    .village-panel {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .village-panel-title {
+      font-size: 15px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* 审核列表项 */
+    .audit-item {
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-left: 4px solid #FF9800;
+    }
+    .audit-item.approved { border-left-color: #4CAF50; }
+    .audit-item.rejected { border-left-color: #F44336; }
+    .audit-name { font-size: 14px; font-weight: bold; color: #333; }
+    .audit-info { font-size: 12px; color: #888; margin: 3px 0; }
+    .audit-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .audit-actions button {
+      flex: 1;
+      padding: 6px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-a-approve { background: #4CAF50; color: white; }
+    .btn-a-reject { background: #F44336; color: white; }
+
+    /* 空状态 */
+    .empty-state {
+      text-align: center;
+      padding: 28px;
+      color: #bbb;
+      font-size: 14px;
+    }
+
+    /* 注册审核提示 */
+    .pending-notice {
+      background: #FFF8E1;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: #795548;
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+
+    /* 退出按钮 */
+    .btn-logout {
+      width: 100%;
+      padding: 13px;
+      background: white;
+      color: #F44336;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .toast {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 12px 28px;
+      border-radius: 10px;
+      font-size: 14px;
+      z-index: 9999;
+    }
   </style>
 </head>
 <body>
   <div class="header">
     <span class="header-back" onclick="history.back()">←</span>
-    <span class="header-title">👤 个人中心</span>
+    <span class="header-title">个人中心</span>
     <span style="width:40px"></span>
   </div>
 
-  <div class="container">
-    <div class="profile-header" id="userSection">
-      <div class="avatar" id="avatar">👤</div>
-      <div class="nickname" id="nickname">未登录</div>
-      <div style="font-size:12px;opacity:0.8;margin-top:4px" id="userTip">点击登录后可享受更多服务</div>
-    </div>
-
-    <div class="profile-stats">
-      <div class="profile-stat" onclick="goPage('favorites.html')">
-        <div class="profile-stat-num" id="favCount">0</div>
-        <div class="profile-stat-label">收藏</div>
-      </div>
-      <div class="profile-stat" onclick="goPage('history.html')">
-        <div class="profile-stat-num" id="histCount">0</div>
-        <div class="profile-stat-label">浏览</div>
-      </div>
-      <div class="profile-stat" onclick="goPage('reviews.html')">
-        <div class="profile-stat-num" id="reviewCount">0</div>
-        <div class="profile-stat-label">点评</div>
-      </div>
-    </div>
-
-    <div class="menu-list" id="menuList">
-      <div class="menu-item" onclick="goPage('favorites.html')">
-        <div class="menu-item-left"><span class="menu-icon">⭐</span><span class="menu-name">我的收藏</span></div>
-        <span class="menu-arrow">›</span>
-      </div>
-      <div class="menu-item" onclick="goPage('history.html')">
-        <div class="menu-item-left"><span class="menu-icon">🕐</span><span class="menu-name">浏览历史</span></div>
-        <span class="menu-arrow">›</span>
-      </div>
-      <div class="menu-item" onclick="goPage('reviews.html')">
-        <div class="menu-item-left"><span class="menu-icon">📝</span><span class="menu-name">我的点评</span></div>
-        <span class="menu-arrow">›</span>
-      </div>
-      <div class="menu-item" onclick="goPage('message-board.html')">
-        <div class="menu-item-left"><span class="menu-icon">💬</span><span class="menu-name">留言板</span></div>
-        <span class="menu-arrow">›</span>
-      </div>
-      <div class="menu-item" onclick="goPage('agricultural-products.html')">
-        <div class="menu-item-left"><span class="menu-icon">🛒</span><span class="menu-name">农产品</span></div>
-        <span class="menu-arrow">›</span>
-      </div>
-      <div class="menu-item" onclick="goPage('country-camping.html')">
-        <div class="menu-item-left"><span class="menu-icon">🏕️</span><span class="menu-name">乡村露营</span></div>
-        <span class="menu-arrow">›</span>
-      </div>
-    </div>
-
-    <!-- 管理员入口 -->
-    <div id="adminSection" style="display:none">
-      <div class="menu-list" style="border:2px solid #FFE082;background:#FFFDE7">
-        <div class="menu-item" onclick="openAdminPanel()" style="cursor:pointer">
-          <div class="menu-item-left">
-            <span class="menu-icon">🔐</span>
-            <span class="menu-name" style="color:#F57C00;font-weight:bold">管理员面板</span>
-          </div>
-          <span class="menu-arrow" style="color:#F57C00" id="adminBadge"></span>
-        </div>
-      </div>
-    </div>
-
-    <div id="logoutBtn" style="display:none;margin-top:16px">
-      <button class="btn-primary" style="background:#999" onclick="logout()">退出登录</button>
-    </div>
-  </div>
-
-  <div class="tab-bar">
-    <div class="tab-item" onclick="goPage('index.html')">
-      <span class="tab-icon">🏠</span><span class="tab-text">首页</span>
-    </div>
-    <div class="tab-item" onclick="goPage('register.html')">
-      <span class="tab-icon">📝</span><span class="tab-text">注册</span>
-    </div>
-    <div class="tab-item active" onclick="goPage('profile.html')">
-      <span class="tab-icon">👤</span><span class="tab-text">我的</span>
-    </div>
-  </div>
-
-  <!-- 普通登录弹窗 -->
-  <div class="share-modal" id="loginModal">
-    <div class="share-panel">
-      <div class="share-title">登录</div>
-      <div style="padding:0 8px">
-        <div class="form-group">
-          <label class="form-label">昵称</label>
-          <input class="form-input" id="loginName" placeholder="请输入昵称" value="">
-        </div>
-      </div>
-      <button class="btn-primary" style="margin-top:12px" onclick="doLogin()">确认登录</button>
-      <div class="share-close" onclick="closeLogin()">取消</div>
-    </div>
-  </div>
-
-  <!-- 管理员登录弹窗 -->
-  <div class="share-modal" id="adminLoginModal">
-    <div class="share-panel">
-      <div class="share-title">🔐 管理员登录</div>
-      <div style="padding:0 8px">
-        <div class="form-group">
-          <label class="form-label">管理员账号</label>
-          <input class="form-input" id="adminUser" placeholder="请输入管理员账号" value="admin">
-        </div>
-        <div class="form-group">
-          <label class="form-label">密码</label>
-          <input class="form-input" id="adminPass" type="password" placeholder="请输入密码" value="admin123">
-        </div>
-      </div>
-      <button class="btn-primary" style="margin-top:12px" onclick="doAdminLogin()">登录</button>
-      <div class="share-close" onclick="closeAdminLogin()">取消</div>
-    </div>
-  </div>
-
-  <!-- 管理员审核面板 -->
-  <div class="share-modal" id="adminPanel">
-    <div class="share-panel">
-      <div class="share-title">🔐 管理员面板</div>
-      <div style="margin-bottom:16px">
-        <div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:8px">📋 待审核村长申请</div>
-        <div id="adminAppList"></div>
-      </div>
-      <div style="margin-bottom:16px">
-        <div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:8px">✅ 最近审核记录</div>
-        <div id="adminHistoryList" style="max-height:200px;overflow-y:auto"></div>
-      </div>
-      <button class="btn-primary" style="margin-top:12px;background:#999" onclick="closeAdminPanel()">关闭面板</button>
-    </div>
+  <div class="container" id="mainContent">
+    加载中...
   </div>
 
   <script>
-var DB = { villages:[], products:[], camps:[], roles:[], messages:[], favorites:[], history:[] };
-var genId = function() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); };
-var toast = function(msg, duration) {
-  duration = duration || 2000;
-  var existing = document.querySelector('.toast');
-  if (existing) existing.remove();
-  var el = document.createElement('div');
-  el.className = 'toast';
-  el.textContent = msg;
-  document.body.appendChild(el);
-  setTimeout(function() { el.remove(); }, duration);
-};
-var Storage = {
-  get: function(key, defaultVal) {
-    try {
-      var v = localStorage.getItem('village_' + key);
-      return v ? JSON.parse(v) : defaultVal;
-    } catch(e) { return defaultVal; }
-  },
-  set: function(key, val) {
-    localStorage.setItem('village_' + key, JSON.stringify(val));
-  }
-};
-
-var isAdmin = false;
-
-function init() {
-  isAdmin = Storage.get('isAdmin', false);
-  var user = Storage.get('user', null);
-  if (user) {
-    document.getElementById('nickname').textContent = user.nickName || '用户';
-    document.getElementById('avatar').textContent = '👤';
-    document.getElementById('userTip').textContent = '欢迎回来！';
-    document.getElementById('logoutBtn').style.display = 'block';
-  } else {
-    document.getElementById('userSection').style.cursor = 'pointer';
-    document.getElementById('userSection').onclick = function() {
-      document.getElementById('loginModal').classList.add('show');
+    var Storage = {
+      get: function(key, defaultVal) {
+        try {
+          var v = localStorage.getItem(key);
+          return v ? JSON.parse(v) : defaultVal;
+        } catch(e) { return defaultVal; }
+      },
+      set: function(key, val) {
+        localStorage.setItem(key, JSON.stringify(val));
+      }
     };
-  }
-  if (isAdmin) {
-    document.getElementById('adminSection').style.display = 'block';
-    updateAdminBadge();
-  } else {
-    document.getElementById('adminSection').style.display = 'none';
-  }
-  document.getElementById('favCount').textContent = (Storage.get('favorites', []) || []).length;
-  document.getElementById('histCount').textContent = (Storage.get('history', []) || []).length;
-  document.getElementById('reviewCount').textContent = (Storage.get('reviews', []) || []).length;
-}
 
-function updateAdminBadge() {
-  var apps = Storage.get('township_applications', []);
-  var pending = apps.filter(function(a) { return a.status === '待审核'; });
-  var badge = document.getElementById('adminBadge');
-  if (badge) badge.textContent = pending.length > 0 ? pending.length + '条待审' : '';
-}
-
-function doLogin() {
-  var name = document.getElementById('loginName').value.trim();
-  if (!name) { toast('请输入昵称'); return; }
-  var user = { id: genId(), nickName: name, time: Date.now() };
-  Storage.set('user', user);
-  toast('登录成功');
-  document.getElementById('loginModal').classList.remove('show');
-  init();
-}
-
-function closeLogin() {
-  document.getElementById('loginModal').classList.remove('show');
-}
-
-function doAdminLogin() {
-  var u = document.getElementById('adminUser').value.trim();
-  var p = document.getElementById('adminPass').value;
-  if (u === 'admin' && p === 'admin123') {
-    Storage.set('isAdmin', true);
-    isAdmin = true;
-    document.getElementById('adminLoginModal').classList.remove('show');
-    toast('管理员登录成功');
-    init();
-  } else {
-    toast('账号或密码错误');
-  }
-}
-
-function closeAdminLogin() {
-  document.getElementById('adminLoginModal').classList.remove('show');
-}
-
-function openAdminPanel() {
-  if (!isAdmin) {
-    document.getElementById('adminLoginModal').classList.add('show');
-    return;
-  }
-  renderAdminList();
-  document.getElementById('adminPanel').classList.add('show');
-}
-
-function renderAdminList() {
-  var apps = Storage.get('township_applications', []);
-  var pending = apps.filter(function(a) { return a.status === '待审核'; });
-  var history = apps.filter(function(a) { return a.status !== '待审核'; }).slice(0, 20);
-
-  var listEl = document.getElementById('adminAppList');
-  if (pending.length === 0) {
-    listEl.innerHTML = '<div style="text-align:center;color:#999;font-size:13px;padding:16px;background:#f5f5f5;border-radius:8px">暂无待审核申请</div>';
-  } else {
-    var html = '';
-    for (var i = 0; i < pending.length; i++) {
-      var a = pending[i];
-      html += '<div style="background:#fff3e0;border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid #FFE082">' +
-        '<div style="font-size:14px;font-weight:bold;margin-bottom:4px">' + a.name + ' <span style="color:#FF9800">[' + a.village + ']</span></div>' +
-        '<div style="font-size:12px;color:#666;margin-bottom:2px">手机: ' + a.phone + ' | 任职: ' + (a.years || '未填') + '</div>' +
-        '<div style="font-size:12px;color:#999;margin-bottom:8px">' + (a.province || '') + ' ' + (a.city || '') + ' ' + (a.address || '') + '</div>' +
-        '<div style="display:flex;gap:6px">' +
-        '<button onclick="approveTownship(\'' + a.id + '\')" style="flex:1;padding:8px;background:#2E7D32;color:white;border:none;border-radius:4px;font-size:13px;cursor:pointer;font-weight:bold">✅ 通过</button>' +
-        '<button onclick="rejectTownship(\'' + a.id + '\')" style="flex:1;padding:8px;background:#F44336;color:white;border:none;border-radius:4px;font-size:13px;cursor:pointer;font-weight:bold">❌ 拒绝</button>' +
-        '</div></div>';
+    var currentUser = Storage.get('village_user', null);
+    if (!currentUser) {
+      location.href = 'login.html';
     }
-    listEl.innerHTML = html;
-  }
 
-  var histEl = document.getElementById('adminHistoryList');
-  if (history.length === 0) {
-    histEl.innerHTML = '<div style="text-align:center;color:#999;font-size:13px;padding:12px">暂无审核记录</div>';
-  } else {
-    var hhtml = '';
-    for (var j = 0; j < history.length; j++) {
-      var h = history[j];
-      var icon = h.status === '已通过' ? '✅' : '❌';
-      var color = h.status === '已通过' ? '#2E7D32' : '#F44336';
-      hhtml += '<div style="padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:13px">' +
-        '<span style="color:' + color + '">' + icon + '</span> ' +
-        '<strong>' + h.name + '</strong> [' + h.village + '] ' +
-        '<span style="color:' + color + '">' + h.status + '</span>' +
+    var ROLES_MAP = {
+      'township': { icon: '👔', name: '村主任', color: '#2E7D32' },
+      'villager': { icon: '🏠', name: '村民', color: '#4CAF50' },
+      'tourist': { icon: '🎒', name: '游客', color: '#2196F3' },
+      'market': { icon: '🏪', name: '超市老板', color: '#FF9800' },
+      'construction': { icon: '🏗️', name: '建筑公司', color: '#795548' },
+      'teacher': { icon: '📚', name: '老师', color: '#9C27B0' },
+      'student': { icon: '🎓', name: '大学生', color: '#00BCD4' },
+      'lawyer': { icon: '⚖️', name: '律师', color: '#607D8B' },
+      'truck': { icon: '🚛', name: '货运司机', color: '#8D6E63' },
+      'carpool': { icon: '🚗', name: '顺风车', color: '#009688' },
+      'massage': { icon: '💆', name: '按摩技师', color: '#E91E63' }
+    };
+
+    function toast(msg) {
+      var el = document.createElement('div');
+      el.className = 'toast';
+      el.textContent = msg;
+      document.body.appendChild(el);
+      setTimeout(function() { el.remove(); }, 2000);
+    }
+
+    function renderPage() {
+      var container = document.getElementById('mainContent');
+      var role = ROLES_MAP[currentUser.currentRole] || null;
+      var roleText = '未选择角色';
+      var roleCls = 'role-none';
+      var roleTag = '<span class="role-badge role-none">❓ 未选择角色</span>';
+
+      if (currentUser.currentRole && currentUser.currentRole !== 'none') {
+        if (role) {
+          roleText = role.name;
+          roleTag = '<span class="role-badge role-active">' + role.icon + ' ' + role.name + '</span>';
+        }
+      }
+
+      // 获取我的所有注册记录
+      var regs = Storage.get('village_registrations', []);
+      var myRegs = [];
+      for (var i = 0; i < regs.length; i++) {
+        if (regs[i].accountId === currentUser.id) {
+          myRegs.push(regs[i]);
+        }
+      }
+
+      // 查找待我审核的（村主任角色）
+      var pendingForMe = [];
+      if (currentUser.currentRole === 'township') {
+        // 查找注册身份为"村民"且状态为"待审核"的
+        for (var j = 0; j < regs.length; j++) {
+          if (regs[j].role === '村民' && regs[j].status === '待审核') {
+            pendingForMe.push(regs[j]);
+          }
+        }
+      }
+
+      var html = '';
+
+      // 用户信息卡
+      html += '<div class="user-card">' +
+        '<div class="user-avatar">👤</div>' +
+        '<div class="user-info">' +
+        '<div class="user-name">' + currentUser.account + '</div>' +
+        '<div class="user-account">账号：' + currentUser.account + '</div>' +
+        roleTag +
+        '</div>' +
         '</div>';
+
+      // 待审核提示
+      if (myRegs.length > 0) {
+        var latestReg = myRegs[0];
+        if (latestReg.status === '待审核') {
+          html += '<div class="pending-notice">⏳ 您的「' + latestReg.role + '」申请正在审核中，请耐心等待。<br>审核通过后您将自动获得相应功能权限。</div>';
+        } else if (latestReg.status === '已拒绝') {
+          html += '<div class="pending-notice">❌ 您的「' + latestReg.role + '」申请已被拒绝，如有疑问请联系管理员。</div>';
+        }
+      }
+
+      // 村主任专属：我的村庄按钮
+      if (currentUser.currentRole === 'township') {
+        // 查找当前用户对应的村庄
+        var myVillage = null;
+        var villages = Storage.get('villages', []);
+        for (var vi = 0; vi < villages.length; vi++) {
+          if (villages[vi].chief && villages[vi].chief.name === currentUser.currentRoleName) {
+            myVillage = villages[vi];
+            break;
+          }
+        }
+        // 没有村庄 → 创建入口
+        if (!myVillage) {
+          html += '<div class="village-panel">' +
+            '<div class="village-panel-title">🏘️ 我的村庄</div>' +
+            '<div style="text-align:center;padding:10px 0;">' +
+            '<div style="font-size:48px;margin-bottom:8px;">🏡</div>' +
+            '<div style="font-size:14px;color:#888;margin-bottom:12px;">您还没有村庄信息</div>' +
+            '<button onclick="createMyVillage()" style="padding:10px 24px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;">创建村庄</button>' +
+            '</div>' +
+            '</div>';
+        } else {
+          html += '<div class="village-panel">' +
+            '<div class="village-panel-title">🏘️ 我的村庄「' + myVillage.name + '」</div>' +
+            '<div style="font-size:13px;color:#666;margin-bottom:12px;">' +
+            '📍 ' + (myVillage.province || '') + ' ' + (myVillage.city || '') + '<br>' +
+            '📞 村长：' + (myVillage.chief ? myVillage.chief.name : '未知') + ' ' + (myVillage.chief && myVillage.chief.phone ? myVillage.chief.phone : '') + '<br>' +
+            '👥 人口：' + (myVillage.population || '待完善') + '</div>' +
+            '<button onclick="editMyVillage()" style="width:100%;padding:10px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;margin-bottom:8px;">✏️ 编辑村庄信息</button>' +
+            '</div>';
+        }
+
+        // 村主任审核村民申请
+        html += '<div class="village-panel">' +
+          '<div class="village-panel-title">👥 村民加入审核' +
+          (pendingForMe.length > 0 ? ' <span style="background:#F44336;color:white;font-size:12px;padding:2px 8px;border-radius:10px;font-weight:bold;">' + pendingForMe.length + '</span>' : '') +
+          '</div>';
+
+        if (pendingForMe.length === 0) {
+          html += '<div class="empty-state">暂无待审核的村民申请</div>';
+        } else {
+          for (var pi = 0; pi < pendingForMe.length; pi++) {
+            var p = pendingForMe[pi];
+            html += '<div class="audit-item">' +
+              '<div class="audit-name">🏠 ' + (p.name || '未知') + '</div>' +
+              '<div class="audit-info">村庄：' + (p.village || '未知') + ' | 手机：' + (p.phone || '未知') + '</div>' +
+              '<div class="audit-info">申请时间：' + (p.applyTime ? new Date(p.applyTime).toLocaleDateString('zh-CN') : '') + '</div>' +
+              '<div class="audit-actions">' +
+              '<button class="btn-a-approve" onclick="approveVillager(\'' + p.id + '\')">✅ 通过</button>' +
+              '<button class="btn-a-reject" onclick="rejectVillager(\'' + p.id + '\')">❌ 拒绝</button>' +
+              '</div>' +
+              '</div>';
+          }
+        }
+        html += '</div>';
+      }
+
+      // 菜单
+      html += '<div class="section-title">快捷功能</div>';
+      html += '<div class="menu-list">';
+
+      if (currentUser.currentRole === 'none') {
+        html += '<div class="menu-item" onclick="location.href=\'select-role.html\'">' +
+          '<span class="menu-icon\">🎯</span><span class="menu-text">选择/注册角色</span><span class="menu-arrow">›</span></div>';
+      } else {
+        html += '<div class="menu-item" onclick="location.href=\'select-role.html\'">' +
+          '<span class="menu-icon">🔄</span><span class="menu-text">切换角色</span><span class="menu-arrow">›</span></div>';
+      }
+
+      html += '<div class="menu-item" onclick="location.href=\'index.html\'">' +
+        '<span class="menu-icon">🏠</span><span class="menu-text">返回首页</span><span class="menu-arrow">›</span></div>' +
+        '</div>';
+
+      // 我的注册记录
+      if (myRegs.length > 0) {
+        html += '<div class="section-title">我的注册</div><div class="menu-list">';
+        for (var ri = 0; ri < myRegs.length; ri++) {
+          var r = myRegs[ri];
+          var rMap = ROLES_MAP[r.role] ? ROLES_MAP[r.role] : { icon: '👤', name: r.role };
+          var statusCls = r.status === '已通过' ? 'role-active' : (r.status === '已拒绝' ? 'role-rejected' : 'role-pending');
+          var statusIcon = r.status === '已通过' ? '✅' : (r.status === '已拒绝' ? '❌' : '⏳');
+          html += '<div class="menu-item">' +
+            '<span class="menu-icon">' + rMap.icon + '</span>' +
+            '<span class="menu-text">' + r.role + (r.name ? ' - ' + r.name : '') + '</span>' +
+            '<span class="role-badge ' + statusCls + '">' + statusIcon + ' ' + r.status + '</span>' +
+            '</div>';
+        }
+        html += '</div>';
+      }
+
+      // 退出
+      html += '<div style="margin-top:16px;">' +
+        '<button class="btn-logout" onclick="doLogout()">🚪 退出登录</button>' +
+        '</div>';
+
+      container.innerHTML = html;
     }
-    histEl.innerHTML = hhtml;
-  }
-}
 
-function approveTownship(id) {
-  var apps = Storage.get('township_applications', []);
-  var idx = -1;
-  for (var i = 0; i < apps.length; i++) { if (apps[i].id === id) { idx = i; break; } }
-  if (idx === -1) return;
-  var app = apps[idx];
-  app.status = '已通过';
-  app.reviewTime = Date.now();
-  apps[idx] = app;
-  Storage.set('township_applications', apps);
+    // 村主任审核村民
+    function approveVillager(regId) {
+      var regs = Storage.get('village_registrations', []);
+      for (var i = 0; i < regs.length; i++) {
+        if (regs[i].id === regId) {
+          regs[i].status = '已通过';
+          regs[i].reviewTime = Date.now();
+          break;
+        }
+      }
+      Storage.set('village_registrations', regs);
+      toast('已通过！该村民已激活');
+      renderPage();
+    }
 
-  var villages = Storage.get('villages', []);
-  villages.unshift({
-    id: 'v_' + id,
-    name: app.village,
-    province: app.province || '',
-    city: app.city || '',
-    population: '0',
-    totalArea: '',
-    description: '由' + app.name + '担任村主任的村庄',
-    chief: { name: app.name, phone: app.phone, years: app.years, address: app.address },
-    scenery: [],
-    food: [],
-    images: [],
-    status: '已注册',
-    registeredBy: id
-  });
-  Storage.set('villages', villages);
+    function rejectVillager(regId) {
+      if (!confirm('确定拒绝该村民申请？')) return;
+      var regs = Storage.get('village_registrations', []);
+      for (var i = 0; i < regs.length; i++) {
+        if (regs[i].id === regId) {
+          regs[i].status = '已拒绝';
+          regs[i].reviewTime = Date.now();
+          break;
+        }
+      }
+      Storage.set('village_registrations', regs);
+      toast('已拒绝');
+      renderPage();
+    }
 
-  var chiefs = Storage.get('townships', []);
-  chiefs.unshift({ id: id, name: app.name, phone: app.phone, village: app.village, time: app.time, approvedTime: Date.now() });
-  Storage.set('townships', chiefs);
+    // 创建村庄（村主任）
+    function createMyVillage() {
+      var name = prompt('请输入村庄名称：');
+      if (!name || !name.trim()) return;
+      var province = prompt('请输入省份（选填）：') || '';
+      var city = prompt('请输入城市（选填）：') || '';
 
-  toast('已通过！' + app.name + ' 成为[' + app.village + ']村主任');
-  renderAdminList();
-  updateAdminBadge();
-}
+      var villages = Storage.get('villages', []);
+      villages.push({
+        id: 'v_' + Date.now(),
+        name: name.trim(),
+        province: province.trim(),
+        city: city.trim(),
+        population: '',
+        totalArea: '',
+        farmlandArea: '',
+        description: '',
+        chief: { name: currentUser.currentRoleName || currentUser.account, phone: '' },
+        images: [],
+        createTime: Date.now()
+      });
+      Storage.set('villages', villages);
+      toast('村庄创建成功！');
+      renderPage();
+    }
 
-function rejectTownship(id) {
-  var apps = Storage.get('township_applications', []);
-  var idx = -1;
-  for (var i = 0; i < apps.length; i++) { if (apps[i].id === id) { idx = i; break; } }
-  if (idx === -1) return;
-  var app = apps[idx];
-  app.status = '已拒绝';
-  app.reviewTime = Date.now();
-  apps[idx] = app;
-  Storage.set('township_applications', apps);
-  toast('已拒绝[' + app.village + ']的村长申请');
-  renderAdminList();
-  updateAdminBadge();
-}
+    // 编辑村庄（村主任）
+    function editMyVillage() {
+      var villages = Storage.get('villages', []);
+      var myVillage = null;
+      var myIdx = -1;
+      for (var vi = 0; vi < villages.length; vi++) {
+        if (villages[vi].chief && villages[vi].chief.name === currentUser.currentRoleName) {
+          myVillage = villages[vi];
+          myIdx = vi;
+          break;
+        }
+      }
+      if (!myVillage) { toast('未找到村庄'); return; }
 
-function closeAdminPanel() {
-  document.getElementById('adminPanel').classList.remove('show');
-}
+      var name = prompt('村庄名称：', myVillage.name);
+      if (name === null) return;
+      var population = prompt('人口：', myVillage.population || '');
+      if (population === null) return;
+      var desc = prompt('村庄简介：', myVillage.description || '');
+      if (desc === null) return;
 
-function logout() {
-  if (!confirm('确定退出登录？')) return;
-  localStorage.removeItem('village_user');
-  localStorage.removeItem('isAdmin');
-  isAdmin = false;
-  toast('已退出');
-  init();
-}
+      villages[myIdx].name = name.trim() || myVillage.name;
+      villages[myIdx].population = population.trim();
+      villages[myIdx].description = desc.trim();
+      Storage.set('villages', villages);
+      toast('村庄信息已更新！');
+      renderPage();
+    }
 
-function goPage(url) { location.href = url; }
-init();
+    function doLogout() {
+      if (!confirm('确定退出登录？')) return;
+      Storage.set('village_user', null);
+      location.href = 'login.html';
+    }
+
+    renderPage();
   </script>
 </body>
 </html>
