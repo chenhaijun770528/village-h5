@@ -140,16 +140,16 @@
   </div>
 
   <script>
-    // Storage封装（无prefix，因为账号体系独立）
+    // Storage封装（带village_前缀，与旧页面一致）
     var Storage = {
       get: function(key, defaultVal) {
         try {
-          var v = localStorage.getItem(key);
+          var v = localStorage.getItem('village_' + key);
           return v ? JSON.parse(v) : defaultVal;
         } catch(e) { return defaultVal; }
       },
       set: function(key, val) {
-        localStorage.setItem(key, JSON.stringify(val));
+        localStorage.setItem('village_' + key, JSON.stringify(val));
       }
     };
 
@@ -182,7 +182,7 @@
       }
 
       // 查找账号
-      var accounts = Storage.get('village_accounts', []);
+      var accounts = Storage.get('accounts', []);
       var found = null;
       for (var i = 0; i < accounts.length; i++) {
         if (accounts[i].account === account) {
@@ -207,7 +207,7 @@
       }
 
       // 登录成功！保存当前会话
-      Storage.set('village_user', found);
+      Storage.set('user', found);
 
       toast('登录成功！');
       setTimeout(function() {
@@ -228,7 +228,7 @@
 
     // 如果已经登录且有角色，直接跳转
     (function() {
-      var user = Storage.get('village_user', null);
+      var user = Storage.get('user', null);
       if (user && user.currentRole && user.currentRole !== 'none') {
         location.href = 'index.html';
       }
