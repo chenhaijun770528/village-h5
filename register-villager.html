@@ -642,8 +642,8 @@ function logout() {
       var villageName = villageSelect ? villageSelect.value : ''
       if (!villageName) { toast('请选择所在村庄'); return }
 
-      // 获取当前登录账号
-      var currentAccount = Storage.get('village_user', null)
+      // 获取当前登录账号（Storage已带village_前缀，用短key）
+      var currentAccount = Storage.get('user', null)
       if (!currentAccount) {
         toast('请先登录');
         setTimeout(function() { location.href = 'login.html' }, 1500);
@@ -664,9 +664,10 @@ function logout() {
         reviewTime: null
       }
 
-      var regs = Storage.get('village_registrations', [])
+      // 存入统一注册表（Storage已带village_前缀，用短key）
+      var regs = Storage.get('registrations', [])
       regs.unshift(data)
-      Storage.set('village_registrations', regs)
+      Storage.set('registrations', regs)
 
       toast('注册已提交，等待村主任审核！')
       setTimeout(function() { location.href = 'select-role.html' }, 1500)
