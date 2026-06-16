@@ -403,9 +403,8 @@ body {
 <body>
   <!-- 顶部导航 -->
   <div class="header">
-    <span class="header-back" onclick="history.back()">←</span>
     <span class="header-title">🏘️ 村庄开发</span>
-    <span style="width:40px"></span>
+    <span onclick="goProfile()" style="font-size:13px;cursor:pointer;display:flex;align-items:center;gap:4px;">👤 我的</span>
   </div>
 
   <div class="container">
@@ -788,6 +787,15 @@ function logout() {
 
     function goPage(url) {
       location.href = url
+    }
+
+    function goProfile() {
+      var user = localStorage.getItem('village_user')
+      if (!user) {
+        location.href = 'login.html'
+      } else {
+        location.href = 'profile.html'
+      }
     }
 
     function callChief(phone) {
