@@ -129,12 +129,12 @@
     var Storage = {
       get: function(key, defaultVal) {
         try {
-          var v = localStorage.getItem(key);
+          var v = localStorage.getItem('village_' + key);
           return v ? JSON.parse(v) : defaultVal;
         } catch(e) { return defaultVal; }
       },
       set: function(key, val) {
-        localStorage.setItem(key, JSON.stringify(val));
+        localStorage.setItem('village_' + key, JSON.stringify(val));
       }
     };
 
@@ -198,7 +198,7 @@
       }
 
       // 检查账号是否已存在
-      var accounts = Storage.get('village_accounts', []);
+      var accounts = Storage.get('accounts', []);
       for (var i = 0; i < accounts.length; i++) {
         if (accounts[i].account === account) {
           errorMsg.textContent = '该账号已被注册';
@@ -218,7 +218,7 @@
       };
 
       accounts.unshift(newAccount);
-      Storage.set('village_accounts', accounts);
+      Storage.set('accounts', accounts);
 
       toast('注册成功！请登录');
       setTimeout(function() { location.href = 'login.html'; }, 1500);
