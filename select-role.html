@@ -192,16 +192,16 @@
     var Storage = {
       get: function(key, defaultVal) {
         try {
-          var v = localStorage.getItem(key);
+          var v = localStorage.getItem('village_' + key);
           return v ? JSON.parse(v) : defaultVal;
         } catch(e) { return defaultVal; }
       },
       set: function(key, val) {
-        localStorage.setItem(key, JSON.stringify(val));
+        localStorage.setItem('village_' + key, JSON.stringify(val));
       }
     };
 
-    var currentUser = Storage.get('village_user', null);
+    var currentUser = Storage.get('user', null);
     if (!currentUser) {
       location.href = 'login.html';
     }
@@ -233,7 +233,7 @@
 
     function logout() {
       if (!confirm('确定要退出登录吗？')) return;
-      Storage.set('village_user', null);
+      Storage.set('user', null);
       location.href = 'login.html';
     }
 
@@ -294,7 +294,7 @@
       var role = ROLES.find(function(r) { return r.id === selectedRole; });
 
       // 检查该角色是否已有待审核或已通过的注册
-      var regs = Storage.get('village_registrations', []);
+      var regs = Storage.get('registrations', []);
       var existing = null;
       for (var i = 0; i < regs.length; i++) {
         if (regs[i].accountId === currentUser.id && regs[i].role === role.name) {
@@ -320,7 +320,7 @@
 
     function renderMyRegistrations() {
       var list = document.getElementById('regList');
-      var regs = Storage.get('village_registrations', []);
+      var regs = Storage.get('registrations', []);
       var myRegs = [];
       for (var i = 0; i < regs.length; i++) {
         if (regs[i].accountId === currentUser.id) {
@@ -373,9 +373,9 @@
             // 审核通过，更新账号当前角色并跳转
             currentUser.currentRole = getRoleIdByName(latest.role);
             currentUser.currentRoleId = latest.id;
-            Storage.set('village_user', currentUser);
+            Storage.set('user', currentUser);
             // 更新accounts
-            var accounts = Storage.get('village_accounts', []);
+            var accounts = Storage.get('accounts', []);
             for (var j = 0; j < accounts.length; j++) {
               if (accounts[j].id === currentUser.id) {
                 accounts[j].currentRole = currentUser.currentRole;
@@ -383,7 +383,7 @@
                 break;
               }
             }
-            Storage.set('village_accounts', accounts);
+            Storage.set('accounts', accounts);
             toast('审核通过！');
             setTimeout(function() { location.href = 'index.html'; }, 1500);
           }
@@ -408,7 +408,7 @@
 
     // 页面加载时：检查是否有已通过的注册（管理员/村主任刚审核完）
     function checkApprovedRoles() {
-      var regs = Storage.get('village_registrations', []);
+      var regs = Storage.get('registrations', []);
       var myApproved = null;
       for (var i = 0; i < regs.length; i++) {
         if (regs[i].accountId === currentUser.id && regs[i].status === '已通过') {
@@ -423,10 +423,10 @@
         currentUser.currentRole = roleId;
         currentUser.currentRoleId = myApproved.id;
         currentUser.currentRoleName = myApproved.name;
-        Storage.set('village_user', currentUser);
+        Storage.set('user', currentUser);
 
         // 更新账号列表
-        var accounts = Storage.get('village_accounts', []);
+        var accounts = Storage.get('accounts', []);
         for (var j = 0; j < accounts.length; j++) {
           if (accounts[j].id === currentUser.id) {
             accounts[j].currentRole = roleId;
@@ -435,7 +435,7 @@
             break;
           }
         }
-        Storage.set('village_accounts', accounts);
+        Storage.set('accounts', accounts);
 
         toast('「' + myApproved.role + '」审核已通过，角色已开通！');
         setTimeout(function() { location.href = 'index.html'; }, 1500);
