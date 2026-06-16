@@ -513,7 +513,7 @@ function approveChief(appId) {
 
   // 3. 【新增】同步到 village_registrations（统一注册表）
   if (app.accountId) {
-    var regs = Storage.get('village_registrations', []);
+    var regs = Storage.get('registrations', []);
     regs.unshift({
       id: app.id,
       accountId: app.accountId,
@@ -528,10 +528,10 @@ function approveChief(appId) {
       applyTime: app.applyTime || Date.now(),
       reviewTime: Date.now()
     });
-    Storage.set('village_registrations', regs);
+    Storage.set('registrations', regs);
 
     // 4. 【新增】给用户账号开通村主任角色
-    var accounts = Storage.get('village_accounts', []);
+    var accounts = Storage.get('accounts', []);
     for (var ai = 0; ai < accounts.length; ai++) {
       if (accounts[ai].id === app.accountId) {
         accounts[ai].currentRole = 'township';
@@ -540,7 +540,7 @@ function approveChief(appId) {
         break;
       }
     }
-    Storage.set('village_accounts', accounts);
+    Storage.set('accounts', accounts);
   }
 
   toast('已通过！用户角色已开通，可直接登录使用');
