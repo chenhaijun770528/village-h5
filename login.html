@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>鐧诲綍</title>
+  <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+  background-color: #f5f5f5;
+  color: #333;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  background: linear-gradient(135deg, #2E7D32, #4CAF50);
+  color: white;
+  padding: 12px 16px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.header-title { font-size: 18px; font-weight: bold; }
+.header-back { font-size: 20px; cursor: pointer; padding: 4px 8px; }
+.container {
+  padding: 80px 16px 40px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+.login-card {
+  background: white;
+  border-radius: 12px;
+  padding: 32px 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+.login-title {
+  text-align: center;
+  font-size: 22px;
+  font-weight: bold;
+  color: #2E7D32;
+  margin-bottom: 8px;
+}
+.login-subtitle {
+  text-align: center;
+  font-size: 13px;
+  color: #999;
+  margin-bottom: 24px;
+}
+.form-group { margin-bottom: 16px; }
+.form-label {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 6px;
+  display: block;
+}
+.form-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-input:focus { border-color: #2E7D32; }
+.btn-login {
+  width: 100%;
+  padding: 14px;
+  background: #2E7D32;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 8px;
+}
+.btn-login:active { background: #1B5E20; }
+.btn-register {
+  width: 100%;
+  padding: 12px;
+  background: white;
+  color: #2E7D32;
+  border: 1px solid #2E7D32;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 12px;
+}
+.divider {
+  text-align: center;
+  margin: 20px 0;
+  color: #999;
+  font-size: 12px;
+}
+.test-account {
+  background: #FFF8E1;
+  border: 1px solid #FFE082;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 16px;
+  font-size: 12px;
+  color: #F57C00;
+}
+.test-account strong { color: #E65100; }
+.toast {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.75);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 9999;
+  animation: fadeIn 0.3s;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</head>
+<body>
+  <div class="header">
+    <span class="header-back" onclick="history.back()">鈫?/span>
+    <span class="header-title">馃攼 鐧诲綍</span>
+    <span style="width:40px"></span>
+  </div>
+
+  <div class="container">
+    <div class="login-card">
+      <div class="login-title">馃彉锔?鏉戝簞骞冲彴</div>
+      <div class="login-subtitle">鐧诲綍鍚庝韩鍙楁洿澶氭湇鍔?/div>
+
+      <div class="form-group">
+        <label class="form-label">璐﹀彿</label>
+        <input class="form-input" id="account" placeholder="璇疯緭鍏ヨ处鍙? maxlength="20">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">瀵嗙爜</label>
+        <input class="form-input" id="password" type="password" placeholder="璇疯緭鍏ュ瘑鐮? maxlength="20">
+      </div>
+
+      <button class="btn-login" onclick="doLogin()">鐧?褰?/button>
+
+      <div class="divider">杩樻病鏈夎处鍙凤紵</div>
+      <button class="btn-register" onclick="location.href='register.html'">绔嬪嵆娉ㄥ唽</button>
+
+      <div class="test-account">
+        <strong>娴嬭瘯璐﹀彿锛?/strong>1001-9999锛屽瘑鐮?123456<br>
+        <strong>绠＄悊鍛橈細</strong>admin锛屽瘑鐮?admin123
+      </div>
+    </div>
+  </div>
+
+<script>
+var Storage = {
+  get: function(key, defaultVal) {
+    try {
+      var v = localStorage.getItem('village_' + key);
+      return v ? JSON.parse(v) : defaultVal;
+    } catch(e) { return defaultVal; }
+  },
+  set: function(key, val) {
+    localStorage.setItem('village_' + key, JSON.stringify(val));
+  }
+};
+
+function toast(msg) {
+  var el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function() { el.remove(); }, 2000);
+}
+
+function doLogin() {
+  var account = document.getElementById('account').value.trim();
+  var password = document.getElementById('password').value.trim();
+
+  if (!account || !password) {
+    toast('璇疯緭鍏ヨ处鍙峰拰瀵嗙爜');
+    return;
+  }
+
+  // 绠＄悊鍛樼櫥褰?  if (account === 'admin' && password === 'admin123') {
+    sessionStorage.setItem('village_admin_logged', 'true');
+    toast('绠＄悊鍛樼櫥褰曟垚鍔?);
+    setTimeout(function() { location.href = 'admin.html'; }, 1000);
+    return;
+  }
+
+  // 鏅€氱敤鎴风櫥褰?- 妫€鏌?village_account
+  var accounts = Storage.get('account', []);
+  var found = null;
+  for (var i = 0; i < accounts.length; i++) {
+    if (accounts[i].account === account && accounts[i].password === password) {
+      found = accounts[i];
+      break;
+    }
+  }
+
+  if (!found) {
+    toast('璐﹀彿鎴栧瘑鐮侀敊璇?);
+    return;
+  }
+
+  // 妫€鏌ョ敤鎴锋敞鍐屼俊鎭?  var registrations = Storage.get('registrations', []);
+  var userInfo = null;
+  for (var j = 0; j < registrations.length; j++) {
+    if (registrations[j].accountId === found.id) {
+      userInfo = registrations[j];
+      break;
+    }
+  }
+
+  // 淇濆瓨鐧诲綍鐘舵€?  var loginData = {
+    id: found.id,
+    account: found.account,
+    loginTime: Date.now()
+  };
+  if (userInfo) {
+    loginData.role = userInfo.role;
+    loginData.name = userInfo.name;
+    loginData.village = userInfo.village;
+  }
+  Storage.set('user', loginData);
+
+  toast('鐧诲綍鎴愬姛');
+  setTimeout(function() { location.href = 'index.html'; }, 1000);
+}
+
+// 鍒濆鍖栨祴璇曡处鍙凤紙棣栨浣跨敤鏃讹級
+function initTestAccounts() {
+  var accounts = Storage.get('account', []);
+  if (accounts.length === 0) {
+    // 鍒涘缓100涓祴璇曡处鍙?    for (var i = 1001; i <= 1100; i++) {
+      accounts.push({
+        id: 'user_' + i,
+        account: String(i),
+        password: '123456',
+        createTime: Date.now()
+      });
+    }
+    Storage.set('account', accounts);
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initTestAccounts);
+} else {
+  initTestAccounts();
+}
+</script>
+</body>
+</html>
