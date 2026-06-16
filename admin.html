@@ -489,12 +489,12 @@ function approveChief(appId) {
   }
   if (!app) { toast('申请不存在'); return; }
 
-  // 更新申请状态
+  // 1. 更新申请状态
   apps[appIdx].status = '已通过';
-  apps[appIdx].updateTime = Date.now();
+  apps[appIdx].reviewTime = Date.now();
   Storage.set('township_applications', apps);
 
-  // 写入村庄列表
+  // 2. 写入村庄列表
   var villages = Storage.get('villages', []);
   villages.push({
     id: app.id,
@@ -511,7 +511,39 @@ function approveChief(appId) {
   });
   Storage.set('villages', villages);
 
-  toast('已通过，村庄已添加到列表');
+  // 3. 【新增】同步到 village_registrations（统一注册表）
+  if (app.accountId) {
+    var regs = Storage.get('village_registrations', []);
+    regs.unshift({
+      id: app.id,
+      accountId: app.accountId,
+      accountName: app.accountName || '',
+      role: '村主任',
+      name: app.name,
+      phone: app.phone,
+      village: app.village,
+      province: app.province || '',
+      city: app.city || '',
+      status: '已通过',
+      applyTime: app.applyTime || Date.now(),
+      reviewTime: Date.now()
+    });
+    Storage.set('village_registrations', regs);
+
+    // 4. 【新增】给用户账号开通村主任角色
+    var accounts = Storage.get('village_accounts', []);
+    for (var ai = 0; ai < accounts.length; ai++) {
+      if (accounts[ai].id === app.accountId) {
+        accounts[ai].currentRole = 'township';
+        accounts[ai].currentRoleId = app.id;
+        accounts[ai].currentRoleName = app.name;
+        break;
+      }
+    }
+    Storage.set('village_accounts', accounts);
+  }
+
+  toast('已通过！用户角色已开通，可直接登录使用');
   loadChiefApplications();
 }
 
