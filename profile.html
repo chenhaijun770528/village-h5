@@ -202,16 +202,16 @@
     var Storage = {
       get: function(key, defaultVal) {
         try {
-          var v = localStorage.getItem(key);
+          var v = localStorage.getItem('village_' + key);
           return v ? JSON.parse(v) : defaultVal;
         } catch(e) { return defaultVal; }
       },
       set: function(key, val) {
-        localStorage.setItem(key, JSON.stringify(val));
+        localStorage.setItem('village_' + key, JSON.stringify(val));
       }
     };
 
-    var currentUser = Storage.get('village_user', null);
+    var currentUser = Storage.get('user', null);
     if (!currentUser) {
       location.href = 'login.html';
     }
@@ -253,7 +253,7 @@
       }
 
       // 获取我的所有注册记录
-      var regs = Storage.get('village_registrations', []);
+      var regs = Storage.get('registrations', []);
       var myRegs = [];
       for (var i = 0; i < regs.length; i++) {
         if (regs[i].accountId === currentUser.id) {
@@ -394,7 +394,7 @@
 
     // 村主任审核村民
     function approveVillager(regId) {
-      var regs = Storage.get('village_registrations', []);
+      var regs = Storage.get('registrations', []);
       for (var i = 0; i < regs.length; i++) {
         if (regs[i].id === regId) {
           regs[i].status = '已通过';
@@ -402,14 +402,14 @@
           break;
         }
       }
-      Storage.set('village_registrations', regs);
+      Storage.set('registrations', regs);
       toast('已通过！该村民已激活');
       renderPage();
     }
 
     function rejectVillager(regId) {
       if (!confirm('确定拒绝该村民申请？')) return;
-      var regs = Storage.get('village_registrations', []);
+      var regs = Storage.get('registrations', []);
       for (var i = 0; i < regs.length; i++) {
         if (regs[i].id === regId) {
           regs[i].status = '已拒绝';
@@ -417,7 +417,7 @@
           break;
         }
       }
-      Storage.set('village_registrations', regs);
+      Storage.set('registrations', regs);
       toast('已拒绝');
       renderPage();
     }
@@ -479,7 +479,7 @@
 
     function doLogout() {
       if (!confirm('确定退出登录？')) return;
-      Storage.set('village_user', null);
+      Storage.set('user', null);
       location.href = 'login.html';
     }
 
