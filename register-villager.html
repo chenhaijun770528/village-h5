@@ -630,28 +630,46 @@ function logout() {
 }</script>
   <script>
     function submit() {
-      const name = document.getElementById('name').value.trim()
-      const phone = document.getElementById('phone').value.trim()
-      const village = document.getElementById('village').value.trim()
+      var name = document.getElementById('name').value.trim()
+      var phone = document.getElementById('phone').value.trim()
 
       if (!name) { toast('请输入姓名'); return }
       if (!phone || !/^1\d{10}$/.test(phone)) { toast('请输入正确的手机号'); return }
 
-      const data = {
-        role: '村民', name, phone,
-        village: document.getElementById('village').value.trim(),
+      // 从已注册村庄列表中选择
+      var villages = Storage.get('villages', [])
+      var villageSelect = document.getElementById('village')
+      var villageName = villageSelect ? villageSelect.value : ''
+      if (!villageName) { toast('请选择所在村庄'); return }
+
+      // 获取当前登录账号
+      var currentAccount = Storage.get('village_user', null)
+      if (!currentAccount) {
+        toast('请先登录');
+        setTimeout(function() { location.href = 'login.html' }, 1500);
+        return;
+      }
+
+      var data = {
+        id: genId(),
+        accountId: currentAccount.id,
+        accountName: currentAccount.account,
+        role: '村民', name: name, phone: phone,
+        village: villageName,
         address: document.getElementById('address').value.trim(),
         idcard: document.getElementById('idcard').value.trim(),
         note: document.getElementById('note').value.trim(),
-        time: Date.now()
+        status: '待审核',
+        applyTime: Date.now(),
+        reviewTime: null
       }
 
-      const users = Storage.get('registered_users', [])
-      users.unshift(data)
-      Storage.set('registered_users', users)
+      var regs = Storage.get('village_registrations', [])
+      regs.unshift(data)
+      Storage.set('village_registrations', regs)
 
-      toast('注册成功！')
-      setTimeout(() => location.href = 'index.html', 1500)
+      toast('注册已提交，等待村主任审核！')
+      setTimeout(function() { location.href = 'select-role.html' }, 1500)
     }
   </script>
 </body>
