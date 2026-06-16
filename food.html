@@ -212,7 +212,7 @@ body {
 .app-card-status.reject { color: #F44336; }
 
 .app-card-info { font-size: 12px; color: #999; margin-bottom: 8px; }
-.app-card-actions { display: flex; gap: 8px; }
+.app-card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .app-card-actions button {
   padding: 4px 12px;
   border-radius: 4px;
@@ -359,42 +359,62 @@ function goPage(url) {
   window.location.href = url;
 }
 
+// Canvas图片压缩
+function compressImage(file, maxWidth, maxHeight, quality, callback) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var ctx = canvas.getContext('2d');
+      var width = img.width;
+      var height = img.height;
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width;
+        width = maxWidth;
+      }
+      if (height > maxHeight) {
+        width = (width * maxHeight) / height;
+        height = maxHeight;
+      }
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+      callback(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 // 初始化示例数据
 function initSampleData() {
-  // 初始化村庄数据
   if (!Storage.get('villages', null)) {
     var defaultVillages = [
       {
-        id: 'v1',
-        name: '幸福村',
-        province: '江苏省',
-        city: '苏州市',
-        population: '3280',
-        totalArea: '4500',
-        farmlandArea: '2800',
-        commercialArea: '200',
-        description: '幸福村位于苏州市郊区，环境优美，基础设施完善，是著名的生态农业示范村。',
-        chief: { name: '张建国', phone: '13800138001' },
-        images: []
+        id: 'v1', name: '幸福村', province: '江苏省', city: '苏州市',
+        population: '3280', totalArea: '4500', farmlandArea: '2800',
+        description: '幸福村位于苏州市郊区，环境优美，著名的生态农业示范村。',
+        chief: { name: '张建国', phone: '13800138001' }, images: []
       },
       {
-        id: 'v2',
-        name: '阳光村',
-        province: '广东省',
-        city: '广州市',
-        population: '4560',
-        totalArea: '6200',
-        farmlandArea: '3500',
-        commercialArea: '350',
-        description: '阳光村是广州市郊的现代化农村，积极发展乡村旅游和生态农业。',
-        chief: { name: '李明华', phone: '13800138002' },
-        images: []
+        id: 'v2', name: '阳光村', province: '广东省', city: '广州市',
+        population: '4560', totalArea: '6200', farmlandArea: '3500',
+        description: '阳光村是广州市郊的现代化农村，积极发展乡村旅游。',
+        chief: { name: '李明华', phone: '13800138002' }, images: []
       }
     ];
     Storage.set('villages', defaultVillages);
   }
-  
-  // 初始化美食申请数据
+  // 美食正式列表
+  if (!Storage.get('foods', null)) {
+    Storage.set('foods', [
+      { id: 'f1', name: '农家土鸡', price: '98', unit: '只', desc: '散养土鸡，肉质鲜嫩', sales: 189, village: '幸福村', villageId: 'v1', img: '' },
+      { id: 'f2', name: '新鲜虾仁', price: '58', unit: '斤', desc: '本地河虾，当日捕捞', sales: 256, village: '阳光村', villageId: 'v2', img: '' },
+      { id: 'f3', name: '手工年糕', price: '25', unit: '斤', desc: '传统工艺，口感软糯', sales: 312, village: '幸福村', villageId: 'v1', img: '' }
+    ]);
+  }
+  // 美食申请列表
   if (!Storage.get('food_applications', null)) {
     Storage.set('food_applications', []);
   }
@@ -407,45 +427,145 @@ function init() {
   updateFabVisibility();
 }
 
-// 加载美食列表
+// 加载美食列表（正式列表 + 村长待审核申请）
 function loadFoods() {
   var grid = document.getElementById('foodGrid');
-  var foods = [
-    { id: 'f1', name: '农家土鸡', price: '98', unit: '只', desc: '散养土鸡，肉质鲜嫩', sales: 189 },
-    { id: 'f2', name: '新鲜虾仁', price: '58', unit: '斤', desc: '本地河虾，当日捕捞', sales: 256 },
-    { id: 'f3', name: '手工年糕', price: '25', unit: '斤', desc: '传统工艺，口感软糯', sales: 312 }
-  ];
-  
+  var foods = Storage.get('foods', []);
+  var user = Storage.get('user', null);
+  var isVillageChief = user && user.role === '村主任';
+
+  var pendingApps = [];
+  if (isVillageChief) {
+    var allApps = Storage.get('food_applications', []);
+    var villages = Storage.get('villages', []);
+    var chiefVillageId = null;
+    for (var vi = 0; vi < villages.length; vi++) {
+      if (villages[vi].chief && villages[vi].chief.name === user.nickName) {
+        chiefVillageId = villages[vi].id;
+        break;
+      }
+    }
+    for (var ai = 0; ai < allApps.length; ai++) {
+      if (allApps[ai].villageId === chiefVillageId && allApps[ai].status === 'waiting') {
+        pendingApps.push(allApps[ai]);
+      }
+    }
+  }
+
+  var displayItems = [];
+  for (var pi = 0; pi < foods.length; pi++) {
+    displayItems.push({ type: 'food', data: foods[pi] });
+  }
+  for (var ai2 = 0; ai2 < pendingApps.length; ai2++) {
+    displayItems.push({ type: 'pending', data: pendingApps[ai2] });
+  }
+
   grid.innerHTML = '';
-  foods.forEach(function(f) {
+
+  if (displayItems.length === 0) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><span class="empty-icon">🍜</span><div>暂无美食</div></div>';
+    return;
+  }
+
+  for (var i = 0; i < displayItems.length; i++) {
+    var item = displayItems[i];
     var card = document.createElement('div');
     card.className = 'goods-card';
-    card.innerHTML = '<div class="goods-img" style="background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:48px;">🍜</div>' +
-      '<div class="goods-info">' +
-      '<div class="goods-name">' + f.name + '</div>' +
-      '<div class="goods-price">¥' + f.price + '<span style="font-size:12px;color:#999;font-weight:normal;">/' + f.unit + '</span></div>' +
-      '<button class="goods-btn">预订</button>' +
-      '</div>';
+
+    if (item.type === 'pending') {
+      var imgHtml = item.data.img
+        ? '<div class="goods-img" style="background:#f0f0f0;display:flex;align-items:center;justify-content:center;"><img src="' + item.data.img + '" style="width:100%;height:120px;object-fit:cover;" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'🍜\'"></div>'
+        : '<div class="goods-img" style="background:#fff3e0;display:flex;align-items:center;justify-content:center;font-size:48px;">⏳</div>';
+      card.innerHTML = imgHtml +
+        '<div class="goods-info">' +
+        '<div class="goods-name" style="color:#FF9800;">[待审核] ' + item.data.name + '</div>' +
+        '<div class="goods-price">¥' + item.data.price + '<span style="font-size:12px;color:#999;font-weight:normal;">/' + item.data.unit + '</span></div>' +
+        '<div style="font-size:11px;color:#999;margin-top:2px;">申请人：' + item.data.userName + '</div>' +
+        '<div style="display:flex;gap:4px;margin-top:4px;">' +
+        '<button class="goods-btn" style="background:#4CAF50;flex:1;" onclick="approveItem(\'' + item.data.id + '\')">通过</button>' +
+        '<button class="goods-btn" style="background:#F44336;flex:1;" onclick="rejectItem(\'' + item.data.id + '\')">拒绝</button>' +
+        '</div>' +
+        '</div>';
+    } else {
+      var pimg = item.data.img
+        ? '<img src="' + item.data.img + '" style="width:100%;height:120px;object-fit:cover;" onerror="this.parentElement.innerHTML=\'🍜\'">'
+        : '🍜';
+      card.innerHTML = '<div class="goods-img" style="background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:48px;">' + pimg + '</div>' +
+        '<div class="goods-info">' +
+        '<div class="goods-name">' + item.data.name + '</div>' +
+        '<div class="goods-price">¥' + item.data.price + '<span style="font-size:12px;color:#999;font-weight:normal;">/' + item.data.unit + '</span></div>' +
+        '<button class="goods-btn">预订</button>' +
+        '</div>';
+    }
+
     grid.appendChild(card);
-  });
+  }
 }
 
-// 检查登录和权限
+// ========== 村长审核功能 ==========
+
+// 通过申请
+function approveItem(appId) {
+  if (!confirm('确定通过此申请？通过后该美食将上架。')) return;
+
+  var apps = Storage.get('food_applications', []);
+  var app = null;
+  var appIdx = -1;
+  for (var i = 0; i < apps.length; i++) {
+    if (apps[i].id === appId) { app = apps[i]; appIdx = i; break; }
+  }
+  if (!app) { toast('申请不存在'); return; }
+
+  apps[appIdx].status = 'pass';
+  apps[appIdx].updateTime = Date.now();
+  Storage.set('food_applications', apps);
+
+  var foods = Storage.get('foods', []);
+  foods.push({
+    id: app.id,
+    name: app.name,
+    price: app.price,
+    unit: app.unit,
+    desc: app.desc || '',
+    sales: 0,
+    village: app.village,
+    villageId: app.villageId,
+    img: app.img || '',
+    createTime: Date.now()
+  });
+  Storage.set('foods', foods);
+
+  toast('已通过申请，美食已上架');
+  loadFoods();
+}
+
+// 拒绝申请
+function rejectItem(appId) {
+  if (!confirm('确定拒绝此申请？')) return;
+
+  var apps = Storage.get('food_applications', []);
+  for (var i = 0; i < apps.length; i++) {
+    if (apps[i].id === appId) {
+      apps[i].status = 'reject';
+      apps[i].updateTime = Date.now();
+      break;
+    }
+  }
+  Storage.set('food_applications', apps);
+  toast('已拒绝该申请');
+  loadFoods();
+}
+
+// ========== 村民申请功能 ==========
+
 function checkLoginAndVillager() {
   var user = Storage.get('user', null);
-  if (!user) {
-    toast('请先登录');
-    return null;
-  }
+  if (!user) { toast('请先登录'); return null; }
   var role = user.role || '';
-  if (role !== '村民' && role !== '村主任') {
-    toast('仅村民可申请上架');
-    return null;
-  }
+  if (role !== '村民' && role !== '村主任') { toast('仅村民可申请上架'); return null; }
   return user;
 }
 
-// 更新FAB按钮可见性
 function updateFabVisibility() {
   var user = Storage.get('user', null);
   if (!user) {
@@ -463,14 +583,12 @@ function updateFabVisibility() {
   }
 }
 
-// 打开申请弹窗
 var currentApplyImgBase64 = '';
 
 function openApplyModal(appId) {
   var user = checkLoginAndVillager();
   if (!user) return;
-  
-  // 重置表单
+
   document.getElementById('applyName').value = '';
   document.getElementById('applyPrice').value = '';
   document.getElementById('applyUnit').value = '';
@@ -480,100 +598,107 @@ function openApplyModal(appId) {
   document.getElementById('applyEditId').value = '';
   currentApplyImgBase64 = '';
   document.getElementById('applyModalTitle').textContent = '申请上架美食';
-  
-  // 加载村庄列表
+
   var villageSelect = document.getElementById('applyVillage');
   var villages = Storage.get('villages', []);
-  villageSelect.innerHTML = villages.map(function(v) {
-    return '<option value="' + v.id + '">' + v.name + '</option>';
-  }).join('');
-  
-  // 如果是编辑模式
+  var options = '';
+  for (var vi = 0; vi < villages.length; vi++) {
+    options += '<option value="' + villages[vi].id + '">' + villages[vi].name + '</option>';
+  }
+  villageSelect.innerHTML = options;
+
+  for (var ci = 0; ci < villages.length; ci++) {
+    if (villages[ci].chief && villages[ci].chief.name === user.nickName) {
+      villageSelect.value = villages[ci].id;
+      break;
+    }
+  }
+
   if (appId) {
     document.getElementById('applyModalTitle').textContent = '编辑美食申请';
     document.getElementById('applyEditId').value = appId;
-    
+
     var apps = Storage.get('food_applications', []);
-    var app = null;
-    for (var i = 0; i < apps.length; i++) {
-      if (apps[i].id === appId) { app = apps[i]; break; }
-    }
-    
-    if (app) {
-      document.getElementById('applyName').value = app.name;
-      document.getElementById('applyPrice').value = app.price;
-      document.getElementById('applyUnit').value = app.unit;
-      document.getElementById('applyDesc').value = app.desc || '';
-      document.getElementById('applyVillage').value = app.village;
-      
-      if (app.img) {
-        currentApplyImgBase64 = app.img;
-        var preview = document.getElementById('applyImgPreview');
-        preview.src = app.img;
-        preview.style.display = 'block';
+    for (var ei = 0; ei < apps.length; ei++) {
+      if (apps[ei].id === appId) {
+        document.getElementById('applyName').value = apps[ei].name;
+        document.getElementById('applyPrice').value = apps[ei].price;
+        document.getElementById('applyUnit').value = apps[ei].unit;
+        document.getElementById('applyDesc').value = apps[ei].desc || '';
+        document.getElementById('applyVillage').value = apps[ei].villageId || apps[ei].village;
+        if (apps[ei].img) {
+          currentApplyImgBase64 = apps[ei].img;
+          var preview = document.getElementById('applyImgPreview');
+          preview.src = apps[ei].img;
+          preview.style.display = 'block';
+        }
+        break;
       }
     }
   }
-  
+
   document.getElementById('applyModal').classList.add('show');
 }
 
-// 关闭申请弹窗
 function closeApplyModal() {
   document.getElementById('applyModal').classList.remove('show');
 }
 
-// 预览申请图片
 function previewApplyImg(event) {
   var file = event.target.files[0];
   if (!file) return;
-  
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    currentApplyImgBase64 = e.target.result;
+  compressImage(file, 800, 600, 0.7, function(dataUrl) {
+    currentApplyImgBase64 = dataUrl;
     var preview = document.getElementById('applyImgPreview');
-    preview.src = e.target.result;
+    preview.src = dataUrl;
     preview.style.display = 'block';
-  };
-  reader.readAsDataURL(file);
+  });
 }
 
-// 提交申请
 function submitApplication() {
   var user = checkLoginAndVillager();
   if (!user) return;
-  
+
   var name = document.getElementById('applyName').value.trim();
   var price = document.getElementById('applyPrice').value.trim();
   var unit = document.getElementById('applyUnit').value.trim();
   var desc = document.getElementById('applyDesc').value.trim();
-  var village = document.getElementById('applyVillage').value;
+  var villageId = document.getElementById('applyVillage').value;
   var editId = document.getElementById('applyEditId').value;
-  
-  if (!name || !price || !unit || !village) {
+
+  if (!name || !price || !unit || !villageId) {
     toast('请填写完整信息');
     return;
   }
-  
+
+  var villages = Storage.get('villages', []);
+  var villageName = '';
+  for (var vi = 0; vi < villages.length; vi++) {
+    if (villages[vi].id === villageId) { villageName = villages[vi].name; break; }
+  }
+
   var apps = Storage.get('food_applications', []);
-  
+
   if (editId) {
-    // 编辑模式
-    for (var i = 0; i < apps.length; i++) {
-      if (apps[i].id === editId) {
-        apps[i].name = name;
-        apps[i].price = price;
-        apps[i].unit = unit;
-        apps[i].desc = desc;
-        apps[i].village = village;
-        apps[i].img = currentApplyImgBase64 || apps[i].img;
-        apps[i].updateTime = Date.now();
+    var found = false;
+    for (var ei = 0; ei < apps.length; ei++) {
+      if (apps[ei].id === editId) {
+        if (apps[ei].userId !== user.id) { toast('无权编辑此申请'); return; }
+        apps[ei].name = name;
+        apps[ei].price = price;
+        apps[ei].unit = unit;
+        apps[ei].desc = desc;
+        apps[ei].villageId = villageId;
+        apps[ei].village = villageName;
+        apps[ei].img = currentApplyImgBase64 || apps[ei].img || '';
+        apps[ei].updateTime = Date.now();
+        found = true;
         break;
       }
     }
+    if (!found) { toast('申请不存在'); return; }
     toast('申请修改成功');
   } else {
-    // 新增模式
     var newApp = {
       id: genId(),
       userId: user.id,
@@ -582,85 +707,92 @@ function submitApplication() {
       price: price,
       unit: unit,
       desc: desc,
-      village: village,
-      img: currentApplyImgBase64,
-      status: 'waiting', // waiting/pass/reject
+      villageId: villageId,
+      village: villageName,
+      img: currentApplyImgBase64 || '',
+      status: 'waiting',
       createTime: Date.now(),
       updateTime: Date.now()
     };
     apps.push(newApp);
     toast('申请提交成功');
   }
-  
+
   Storage.set('food_applications', apps);
   closeApplyModal();
 }
 
-// 打开我的申请列表
 function openMyApplications() {
   var user = Storage.get('user', null);
-  if (!user) {
-    toast('请先登录');
-    return;
-  }
-  
+  if (!user) { toast('请先登录'); return; }
+
   var apps = Storage.get('food_applications', []);
-  var myApps = apps.filter(function(app) {
-    return app.userId === user.id;
-  });
-  
+  var myApps = [];
+  for (var i = 0; i < apps.length; i++) {
+    if (apps[i].userId === user.id) myApps.push(apps[i]);
+  }
+
   var listEl = document.getElementById('myAppList');
-  
+
   if (myApps.length === 0) {
     listEl.innerHTML = '<div class="empty-state"><span class="empty-icon">📋</span><div>暂无申请记录</div></div>';
   } else {
     listEl.innerHTML = '';
-    myApps.forEach(function(app) {
+    for (var mi = 0; mi < myApps.length; mi++) {
+      var app = myApps[mi];
       var card = document.createElement('div');
       card.className = 'app-card status-' + app.status;
-      
-      var statusText = '';
-      if (app.status === 'waiting') statusText = '待审核';
-      else if (app.status === 'pass') statusText = '已通过';
-      else if (app.status === 'reject') statusText = '已拒绝';
-      
-      card.innerHTML = '<div class="app-card-top">' +
+      var statusText = app.status === 'waiting' ? '待审核' : app.status === 'pass' ? '已通过' : '已拒绝';
+      var imgHtml = app.img
+        ? '<img src="' + app.img + '" style="width:60px;height:60px;object-fit:cover;border-radius:6px;margin-top:6px;" onerror="this.style.display=\'none\'">'
+        : '';
+      var actionsHtml = '';
+      if (app.status === 'waiting') {
+        actionsHtml =
+          '<button class="btn-edit" onclick="openApplyModal(\'' + app.id + '\')">编辑</button>' +
+          '<button class="btn-delete" onclick="deleteApplication(\'' + app.id + '\')">删除</button>';
+      }
+      card.innerHTML =
+        '<div class="app-card-top">' +
         '<span class="app-card-name">' + app.name + '</span>' +
         '<span class="app-card-status ' + app.status + '">' + statusText + '</span>' +
         '</div>' +
-        '<div class="app-card-info">价格：¥' + app.price + '/' + app.unit + '</div>' +
-        '<div class="app-card-actions">' +
-        '<button class="btn-edit" onclick="openApplyModal(\'' + app.id + '\')">编辑</button>' +
-        '<button class="btn-delete" onclick="deleteApplication(\'' + app.id + '\')">删除</button>' +
-        '</div>';
-      
+        '<div class="app-card-info">价格：¥' + app.price + '/' + app.unit + ' | 村庄：' + app.village + '</div>' +
+        imgHtml +
+        '<div class="app-card-actions" style="margin-top:8px;">' + actionsHtml + '</div>';
       listEl.appendChild(card);
-    });
+    }
   }
-  
+
   document.getElementById('myAppModal').classList.add('show');
 }
 
-// 关闭我的申请弹窗
 function closeMyAppModal() {
   document.getElementById('myAppModal').classList.remove('show');
 }
 
-// 删除申请
 function deleteApplication(appId) {
   if (!confirm('确定要删除此申请吗？')) return;
-  
+
+  var user = Storage.get('user', null);
   var apps = Storage.get('food_applications', []);
-  apps = apps.filter(function(app) {
-    return app.id !== appId;
-  });
-  
-  Storage.set('food_applications', apps);
+  var newApps = [];
+  var deleted = false;
+  for (var i = 0; i < apps.length; i++) {
+    if (apps[i].id === appId) {
+      if (apps[i].userId !== user.id) { toast('无权删除此申请'); return; }
+      deleted = true;
+    } else {
+      newApps.push(apps[i]);
+    }
+  }
+  if (!deleted) { toast('申请不存在'); return; }
+
+  Storage.set('food_applications', newApps);
   toast('删除成功');
-  openMyApplications(); // 刷新列表
+  openMyApplications();
 }
 
-// 页面加载完成后初始化
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
