@@ -108,7 +108,8 @@ var Storage = {
 };
 
 function submit() {
-  var currentAccount = Storage.get('village_user', null);
+  // Storage已带village_前缀，用短key读登录状态
+  var currentAccount = Storage.get('user', null);
   if (!currentAccount) {
     toast('请先登录');
     setTimeout(function() { location.href = 'login.html' }, 1500);
