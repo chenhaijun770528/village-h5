@@ -140,6 +140,76 @@
     .btn-a-approve { background: #4CAF50; color: white; }
     .btn-a-reject { background: #F44336; color: white; }
 
+    /* 弹窗 */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-box {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      width: 92%;
+      max-width: 500px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .modal-form-group {
+      margin-bottom: 12px;
+    }
+    .modal-label {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 4px;
+      display: block;
+    }
+    .modal-label .req { color: #F44336; }
+    .modal-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .modal-input:focus { border-color: #2E7D32; }
+    .modal-textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      height: 80px;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+    .modal-btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .modal-btn-save { background: #2E7D32; color: white; }
+    .modal-btn-cancel { background: #f5f5f5; color: #666; margin-top: 6px; }
+
     /* 空状态 */
     .empty-state {
       text-align: center;
@@ -312,7 +382,7 @@
             '<div style="text-align:center;padding:10px 0;">' +
             '<div style="font-size:48px;margin-bottom:8px;">🏡</div>' +
             '<div style="font-size:14px;color:#888;margin-bottom:12px;">您还没有村庄信息</div>' +
-            '<button onclick="createMyVillage()" style="padding:10px 24px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;">创建村庄</button>' +
+            '<button onclick="openVillageModal(true)" style="padding:10px 24px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;">创建村庄</button>' +
             '</div>' +
             '</div>';
         } else {
@@ -321,8 +391,12 @@
             '<div style="font-size:13px;color:#666;margin-bottom:12px;">' +
             '📍 ' + (myVillage.province || '') + ' ' + (myVillage.city || '') + '<br>' +
             '📞 村长：' + (myVillage.chief ? myVillage.chief.name : '未知') + ' ' + (myVillage.chief && myVillage.chief.phone ? myVillage.chief.phone : '') + '<br>' +
-            '👥 人口：' + (myVillage.population || '待完善') + '</div>' +
-            '<button onclick="editMyVillage()" style="width:100%;padding:10px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;margin-bottom:8px;">✏️ 编辑村庄信息</button>' +
+            '👥 人口：' + (myVillage.population || '待完善') + ' 人<br>' +
+            '📐 总面积：' + (myVillage.totalArea || '待完善') + ' 亩 | 农田：' + (myVillage.farmlandArea || '待完善') + ' 亩<br>' +
+            '🏠 地址：' + (myVillage.address || '待完善') + '<br>' +
+            (myVillage.description ? '📝 ' + myVillage.description + '<br>' : '') +
+            '</div>' +
+            '<button onclick="openVillageModal(false)" style="width:100%;padding:10px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;margin-bottom:8px;">✏️ 编辑村庄信息</button>' +
             '</div>';
         }
 
@@ -422,58 +496,91 @@
       renderPage();
     }
 
-    // 创建村庄（村主任）
-    function createMyVillage() {
-      var name = prompt('请输入村庄名称：');
-      if (!name || !name.trim()) return;
-      var province = prompt('请输入省份（选填）：') || '';
-      var city = prompt('请输入城市（选填）：') || '';
-
+    // 获取当前村主任的村庄
+    function getMyVillage() {
       var villages = Storage.get('villages', []);
-      villages.push({
-        id: 'v_' + Date.now(),
-        name: name.trim(),
-        province: province.trim(),
-        city: city.trim(),
-        population: '',
-        totalArea: '',
-        farmlandArea: '',
-        description: '',
-        chief: { name: currentUser.currentRoleName || currentUser.account, phone: '' },
-        images: [],
-        createTime: Date.now()
-      });
-      Storage.set('villages', villages);
-      toast('村庄创建成功！');
-      renderPage();
-    }
-
-    // 编辑村庄（村主任）
-    function editMyVillage() {
-      var villages = Storage.get('villages', []);
-      var myVillage = null;
-      var myIdx = -1;
       for (var vi = 0; vi < villages.length; vi++) {
         if (villages[vi].chief && villages[vi].chief.name === currentUser.currentRoleName) {
-          myVillage = villages[vi];
-          myIdx = vi;
-          break;
+          return { village: villages[vi], index: vi };
         }
       }
-      if (!myVillage) { toast('未找到村庄'); return; }
+      return null;
+    }
 
-      var name = prompt('村庄名称：', myVillage.name);
-      if (name === null) return;
-      var population = prompt('人口：', myVillage.population || '');
-      if (population === null) return;
-      var desc = prompt('村庄简介：', myVillage.description || '');
-      if (desc === null) return;
+    // 打开村庄编辑弹窗
+    function openVillageModal(isCreate) {
+      window._villageIsCreate = isCreate;
+      var data = null;
+      if (!isCreate) {
+        var r = getMyVillage();
+        if (!r) { toast('未找到村庄'); return; }
+        data = r.village;
+      }
+      var v = data || {};
+      var html = '<div class="modal-overlay" id="villageModal" onclick="closeVillageModal(event)">' +
+        '<div class="modal-box" onclick="event.stopPropagation()">' +
+        '<div class="modal-title">' + (isCreate ? '🏡 创建村庄' : '✏️ 编辑村庄信息') + '</div>' +
+        '<div class="modal-form-group"><label class="modal-label"><span class="req">*</span> 村庄名称</label><input class="modal-input" id="vf_name" value="' + (v.name||'') + '" placeholder="请输入村庄名称"></div>' +
+        '<div class="modal-form-group"><label class="modal-label">省份</label><input class="modal-input" id="vf_province" value="' + (v.province||'') + '" placeholder="如：江苏省"></div>' +
+        '<div class="modal-form-group"><label class="modal-label">城市</label><input class="modal-input" id="vf_city" value="' + (v.city||'') + '" placeholder="如：苏州市"></div>' +
+        '<div class="modal-form-group"><label class="modal-label">人口（人）</label><input class="modal-input" id="vf_population" value="' + (v.population||'') + '" placeholder="如：1200"></div>' +
+        '<div class="modal-form-group"><label class="modal-label">总面积（亩）</label><input class="modal-input" id="vf_totalArea" value="' + (v.totalArea||'') + '" placeholder="如：5000"></div>' +
+        '<div class="modal-form-group"><label class="modal-label">农田面积（亩）</label><input class="modal-input" id="vf_farmlandArea" value="' + (v.farmlandArea||'') + '" placeholder="如：3000"></div>' +
+        '<div class="modal-form-group"><label class="modal-label">村委地址</label><input class="modal-input" id="vf_address" value="' + (v.address||'') + '" placeholder="村委办公地址"></div>' +
+        '<div class="modal-form-group"><label class="modal-label">村长电话</label><input class="modal-input" id="vf_phone" value="' + (v.phone||'') + '" placeholder="联系电话"></div>' +
+        '<div class="modal-form-group"><label class="modal-label">村庄简介</label><textarea class="modal-textarea" id="vf_description" placeholder="介绍村庄特色、产业等">' + (v.description||'') + '</textarea></div>' +
+        '<button class="modal-btn modal-btn-save" onclick="saveVillage()">💾 保存</button>' +
+        '<button class="modal-btn modal-btn-cancel" onclick="closeVillageModal()">取消</button>' +
+        '</div></div>';
+      var wrapper = document.createElement('div');
+      wrapper.id = 'villageModalWrapper';
+      wrapper.innerHTML = html;
+      document.body.appendChild(wrapper);
+    }
 
-      villages[myIdx].name = name.trim() || myVillage.name;
-      villages[myIdx].population = population.trim();
-      villages[myIdx].description = desc.trim();
+    function closeVillageModal(e) {
+      if (e && e.target && e.target.id !== 'villageModal') return;
+      var w = document.getElementById('villageModalWrapper');
+      if (w) w.remove();
+    }
+
+    function saveVillage() {
+      var name = document.getElementById('vf_name').value.trim();
+      if (!name) { toast('请输入村庄名称'); return; }
+      var villages = Storage.get('villages', []);
+      if (window._villageIsCreate) {
+        villages.push({
+          id: 'v_' + Date.now(),
+          name: name,
+          province: document.getElementById('vf_province').value.trim(),
+          city: document.getElementById('vf_city').value.trim(),
+          population: document.getElementById('vf_population').value.trim(),
+          totalArea: document.getElementById('vf_totalArea').value.trim(),
+          farmlandArea: document.getElementById('vf_farmlandArea').value.trim(),
+          address: document.getElementById('vf_address').value.trim(),
+          description: document.getElementById('vf_description').value.trim(),
+          chief: { name: currentUser.currentRoleName || currentUser.account, phone: document.getElementById('vf_phone').value.trim() },
+          images: [],
+          createTime: Date.now()
+        });
+        toast('村庄创建成功！');
+      } else {
+        var r = getMyVillage();
+        if (!r) { toast('未找到村庄'); return; }
+        var idx = r.index;
+        villages[idx].name = name;
+        villages[idx].province = document.getElementById('vf_province').value.trim();
+        villages[idx].city = document.getElementById('vf_city').value.trim();
+        villages[idx].population = document.getElementById('vf_population').value.trim();
+        villages[idx].totalArea = document.getElementById('vf_totalArea').value.trim();
+        villages[idx].farmlandArea = document.getElementById('vf_farmlandArea').value.trim();
+        villages[idx].address = document.getElementById('vf_address').value.trim();
+        villages[idx].description = document.getElementById('vf_description').value.trim();
+        villages[idx].chief.phone = document.getElementById('vf_phone').value.trim();
+        toast('村庄信息已更新！');
+      }
       Storage.set('villages', villages);
-      toast('村庄信息已更新！');
+      closeVillageModal();
       renderPage();
     }
 
