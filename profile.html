@@ -395,6 +395,7 @@
             '📐 总面积：' + (myVillage.totalArea || '待完善') + ' 亩 | 农田：' + (myVillage.farmlandArea || '待完善') + ' 亩<br>' +
             '🏠 地址：' + (myVillage.address || '待完善') + '<br>' +
             (myVillage.description ? '📝 ' + myVillage.description + '<br>' : '') +
+            (myVillage.images && myVillage.images.length ? '<div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap;">' + myVillage.images.map(function(img){ return '<img src="' + img + '" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">'; }).join('') + '</div>' : '') +
             '</div>' +
             '<button onclick="openVillageModal(false)" style="width:100%;padding:10px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;margin-bottom:8px;">✏️ 编辑村庄信息</button>' +
             '</div>';
@@ -517,7 +518,9 @@
         data = r.village;
       }
       var v = data || {};
-      var html = '<div class="modal-overlay" id="villageModal" onclick="closeVillageModal(event)">' +
+      window._villageImages = data && data.images ? data.images.slice() : [];
+      var html = '<div class="modal-overlay" id="villageModal" onclick="closeVillageModal(event)">'
+ +
         '<div class="modal-box" onclick="event.stopPropagation()">' +
         '<div class="modal-title">' + (isCreate ? '🏡 创建村庄' : '✏️ 编辑村庄信息') + '</div>' +
         '<div class="modal-form-group"><label class="modal-label"><span class="req">*</span> 村庄名称</label><input class="modal-input" id="vf_name" value="' + (v.name||'') + '" placeholder="请输入村庄名称"></div>' +
@@ -529,6 +532,11 @@
         '<div class="modal-form-group"><label class="modal-label">村委地址</label><input class="modal-input" id="vf_address" value="' + (v.address||'') + '" placeholder="村委办公地址"></div>' +
         '<div class="modal-form-group"><label class="modal-label">村长电话</label><input class="modal-input" id="vf_phone" value="' + (v.phone||'') + '" placeholder="联系电话"></div>' +
         '<div class="modal-form-group"><label class="modal-label">村庄简介</label><textarea class="modal-textarea" id="vf_description" placeholder="介绍村庄特色、产业等">' + (v.description||'') + '</textarea></div>' +
+        '<div class="modal-form-group"><label class="modal-label">村庄图片（最多6张）</label>' +
+        '<input type="file" accept="image/*" multiple id="vf_images" onchange="previewVillageImages()" style="display:none">' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;" id="vf_imagePreview"></div>' +
+        '<button type="button" onclick="document.getElementById(\'vf_images\').click()" style="margin-top:8px;padding:8px 16px;background:#f5f5f5;color:#666;border:none;border-radius:8px;font-size:13px;cursor:pointer">📷 选择图片</button>' +
+        '</div>' +
         '<button class="modal-btn modal-btn-save" onclick="saveVillage()">💾 保存</button>' +
         '<button class="modal-btn modal-btn-cancel" onclick="closeVillageModal()">取消</button>' +
         '</div></div>';
@@ -536,6 +544,7 @@
       wrapper.id = 'villageModalWrapper';
       wrapper.innerHTML = html;
       document.body.appendChild(wrapper);
+      setTimeout(function() { renderVillageImagePreview(); }, 100);
     }
 
     function closeVillageModal(e) {
@@ -560,7 +569,7 @@
           address: document.getElementById('vf_address').value.trim(),
           description: document.getElementById('vf_description').value.trim(),
           chief: { name: currentUser.currentRoleName || currentUser.account, phone: document.getElementById('vf_phone').value.trim() },
-          images: [],
+          images: window._villageImages || [],
           createTime: Date.now()
         });
         toast('村庄创建成功！');
@@ -577,11 +586,79 @@
         villages[idx].address = document.getElementById('vf_address').value.trim();
         villages[idx].description = document.getElementById('vf_description').value.trim();
         villages[idx].chief.phone = document.getElementById('vf_phone').value.trim();
+        villages[idx].images = window._villageImages || [];
         toast('村庄信息已更新！');
       }
       Storage.set('villages', villages);
       closeVillageModal();
       renderPage();
+    }
+
+    // 图片选择 + Canvas压缩
+    function previewVillageImages() {
+      var files = document.getElementById('vf_images').files;
+      if (!files || !files.length) return;
+      var max = 6;
+      var existing = window._villageImages || [];
+      if (existing.length + files.length > max) {
+        toast('最多上传6张图片');
+        return;
+      }
+      var loaded = 0;
+      for (var fi = 0; fi < files.length; fi++) {
+        (function(file) {
+          var reader = new FileReader();
+          reader.onload = function(e) {
+            var img = new Image();
+            img.onload = function() {
+              var canvas = document.createElement('canvas');
+              var ctx = canvas.getContext('2d');
+              var w = img.width, h = img.height;
+              var maxDim = 800;
+              if (w > maxDim || h > maxDim) {
+                if (w > h) { h = h * maxDim / w; w = maxDim; }
+                else { w = w * maxDim / h; h = maxDim; }
+              }
+              canvas.width = w; canvas.height = h;
+              ctx.drawImage(img, 0, 0, w, h);
+              var dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+              if (dataUrl.length > 200000) {
+                dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+              }
+              window._villageImages = window._villageImages || [];
+              window._villageImages.push(dataUrl);
+              renderVillageImagePreview();
+              loaded++;
+              if (loaded === files.length) {
+                document.getElementById('vf_images').value = '';
+              }
+            };
+            img.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        })(files[fi]);
+      }
+    }
+
+    // 渲染图片预览
+    function renderVillageImagePreview() {
+      var imgs = window._villageImages || [];
+      var html = '';
+      for (var i = 0; i < imgs.length; i++) {
+        html += '<div style="position:relative;display:inline-block;margin:4px;">' +
+          '<img src="' + imgs[i] + '" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:2px solid #e0e0e0;">' +
+          '<div onclick="removeVillageImg(' + i + ')" style="position:absolute;top:-8px;right:-8px;background:#F44336;color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.3)">×</div>' +
+          '</div>';
+      }
+      var preview = document.getElementById('vf_imagePreview');
+      if (preview) preview.innerHTML = html;
+    }
+
+    // 删除某张图片
+    function removeVillageImg(idx) {
+      window._villageImages = window._villageImages || [];
+      window._villageImages.splice(idx, 1);
+      renderVillageImagePreview();
     }
 
     function doLogout() {
