@@ -601,10 +601,14 @@ function logout() {
     function submit() {
       const name = document.getElementById('name').value.trim(), phone = document.getElementById('phone').value.trim()
       if (!name || !phone) { toast('请填写必填项'); return }
-      const users = Storage.get('registered_users', [])
-      users.unshift({ role: '按摩技师', name, phone, skill: document.getElementById('skill').value, years: document.getElementById('years').value, photo: window._massagePhoto || '', regAddress: document.getElementById('regAddress').value.trim(), curAddress: document.getElementById('curAddress').value.trim(), time: Date.now() })
-      Storage.set('registered_users', users)
-      toast('注册成功！'); setTimeout(() => location.href = 'index.html', 1500)
+      var account = Storage.get('account', null);
+      var regs = Storage.get('registrations', []);
+      var newReg = { id: genId(), role: '按摩师', name: name, phone: phone, skill: document.getElementById('skill').value, years: document.getElementById('years').value, photo: function genId(){return Date.now().toString(36)+Math.random().toString(36).substr(2,5)}
+window._massagePhoto || '', regAddress: document.getElementById('regAddress').value.trim(), curAddress: document.getElementById('curAddress').value.trim(), accountId: account ? account.id : '', accountName: account ? account.name : '', status: '待审核', time: Date.now() };
+      regs.unshift(newReg);
+      Storage.set('registrations', regs);
+      toast('提交成功，请等待审核！'); setTimeout(function(){ location.href = 'index.html'; }, 1500); return;
+      
     }
       // 证件照预览 + Canvas压缩
     window._massagePhoto = '';
