@@ -427,9 +427,9 @@ const DB = {
       description: '幸福村位于苏州市郊区，环境优美，基础设施完善，是著名的生态农业示范村。村内有千年古银杏树、多彩田园，是周末休闲的好去处。',
       chief: { name: '张建国', phone: '13800138001' },
       scenery: [
-        { id: 's1', title: '千年古银杏', desc: '树龄超过800年，树高25米，胸围6米', img: 'https://picsum.photos/seed/scene1/400/300' },
-        { id: 's2', title: '多彩田园', desc: '四季变换的稻田画，色彩斑斓', img: 'https://picsum.photos/seed/scene2/400/300' },
-        { id: 's3', title: '荷塘月色', desc: '夏季荷花盛开，清香四溢', img: 'https://picsum.photos/seed/scene3/400/300' }
+        { id: 's1', title: '千年古银杏', desc: '树龄超过800年，树高25米，胸围6米', img: 'https://picsum.photos/seed/scene1/400/300', category: '树林' },
+        { id: 's2', title: '多彩田园', desc: '四季变换的稻田画，色彩斑斓', img: 'https://picsum.photos/seed/scene2/400/300', category: '农村风貌' },
+        { id: 's3', title: '荷塘月色', desc: '夏季荷花盛开，清香四溢', img: 'https://picsum.photos/seed/scene3/400/300', category: '湖' }
       ],
       food: [
         { id: 'f1', name: '农家土鸡', price: '98', unit: '只', desc: '散养土鸡，肉质鲜嫩', img: 'https://picsum.photos/seed/food1/400/300' },
@@ -450,7 +450,7 @@ const DB = {
       description: '阳光村是广州市郊的现代化农村，积极发展乡村旅游和生态农业。村内有大型草莓采摘园、农家乐设施，是城市居民周末体验田园生活的好选择。',
       chief: { name: '李明华', phone: '13800138002' },
       scenery: [
-        { id: 's4', title: '草莓采摘园', desc: '50亩有机草莓，个大味甜', img: 'https://picsum.photos/seed/scene4/400/300' },
+        { id: 's4', title: '草莓采摘园', desc: '50亩有机草莓，个大味甜', img: 'https://picsum.photos/seed/scene4/400/300', category: '农村风貌' },
         { id: 's5', title: '阳光花海', desc: '百亩花田，四季花开', img: 'https://picsum.photos/seed/scene5/400/300' }
       ],
       food: [
@@ -471,9 +471,9 @@ const DB = {
       description: '青山村坐落于长株潭后花园，森林覆盖率超过70%，空气清新，是天然的氧吧。村内有古民居、古井等历史遗迹，适合徒步探险和研学旅行。',
       chief: { name: '王志强', phone: '13800138003' },
       scenery: [
-        { id: 's6', title: '古民居群', desc: '保存完好的明清古建筑', img: 'https://picsum.photos/seed/scene6/400/300' },
-        { id: 's7', title: '千年古井', desc: '井水清澈，冬暖夏凉', img: 'https://picsum.photos/seed/scene7/400/300' },
-        { id: 's8', title: '竹林氧吧', desc: '百亩竹林，呼吸自然', img: 'https://picsum.photos/seed/scene8/400/300' }
+        { id: 's6', title: '古民居群', desc: '保存完好的明清古建筑', img: 'https://picsum.photos/seed/scene6/400/300', category: '农村风貌' },
+        { id: 's7', title: '千年古井', desc: '井水清澈，冬暖夏凉', img: 'https://picsum.photos/seed/scene7/400/300', category: '农村风貌' },
+        { id: 's8', title: '竹林氧吧', desc: '百亩竹林，呼吸自然', img: 'https://picsum.photos/seed/scene8/400/300', category: '树林' }
       ],
       food: [
         { id: 'f6', name: '竹林土鸡', price: '108', unit: '只', desc: '竹林散养，营养丰富', img: 'https://picsum.photos/seed/food6/400/300' },
@@ -618,14 +618,38 @@ function logout() {
         <div class="detail-meta">📍 ${v.province} ${v.city}</div>
       </div>
 
-      <!-- 图片展示 -->
-      <div class="detail-section">
-        <h3>🏞️ 村庄风光</h3>
-        <div class="img-grid">
-          ${(v.images || []).map(img => `<img src="${img}" onclick="previewImg(this.src)" style="cursor:pointer">`).join('')}
-          ${(v.scenery || []).map(s => `<img src="${s.img}" onclick="previewImg(this.src)" style="cursor:pointer" title="${s.title}">`).join('')}
-        </div>
-      </div>
+      var SCENE_CATS = [
+        { key: '湖', icon: '🌊', label: '湖泊水域' },
+        { key: '山', icon: '⛰️', label: '山地风光' },
+        { key: '河', icon: '🏞️', label: '河流溪涧' },
+        { key: '树林', icon: '🌲', label: '森林树木' },
+        { key: '农村风貌', icon: '🌾', label: '田园村落' }
+      ];
+      var allScenes = v.scenery || [];
+      var sceneHtml = '<div class="detail-section"><h3>🏞️ 村庄风光</h3></div>';
+      var hasCatScene = allScenes.some(function(s) { return s.category; });
+      if (hasCatScene) {
+        SCENE_CATS.forEach(function(cat) {
+          var items = allScenes.filter(function(s) { return (s.category || '农村风貌') === cat.key; });
+          if (!items.length) return;
+          sceneHtml += '<div class="detail-section" style="padding-top:0">' +
+            '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:10px">' + cat.icon + ' ' + cat.label + ' <span style="font-size:12px;color:#999;font-weight:normal">(' + items.length + '处)</span></div>' +
+            '<div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;">' +
+            items.map(function(s) {
+              return '<div style="flex-shrink:0;width:140px">' +
+                '<img src="' + s.img + '" style="width:140px;height:100px;object-fit:cover;border-radius:10px;cursor:pointer" onclick="previewImg(this.src)">' +
+                '<div style="font-size:12px;color:#333;font-weight:bold;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + s.title + '</div>' +
+                '<div style="font-size:11px;color:#999;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + s.desc + '</div></div>';
+            }).join('') + '</div></div>';
+        });
+      } else {
+        // Fallback: show all as img-grid
+        sceneHtml += '<div class="detail-section" style="padding-top:0">' +
+          '<div class="img-grid">' +
+          (v.images||[]).map(function(img){ return '<img src="'+img+'" onclick="previewImg(this.src)" style="cursor:pointer">'; }).join('') +
+          allScenes.map(function(s){ return '<img src="'+s.img+'" onclick="previewImg(this.src)" style="cursor:pointer" title="'+s.title+'">'; }).join('') +
+          '</div></div>';
+      }
 
       <!-- 基本信息 -->
       <div class="detail-section">
