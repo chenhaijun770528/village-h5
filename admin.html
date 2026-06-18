@@ -253,9 +253,9 @@ function toast(msg, duration) {
   setTimeout(function() { el.remove(); }, duration);
 }
 
-// 管理员账号（硬编码）
-var ADMIN_ACCOUNT = 'admin';
-var ADMIN_PASSWORD = 'admin123';
+// 管理员账号（支持修改，存储在localStorage）
+var ADMIN_ACCOUNT = localStorage.getItem('village_admin_account') || 'admin';
+var ADMIN_PASSWORD = localStorage.getItem('village_admin_password') || 'admin123';
 
 // 当前状态
 var isLoggedIn = false;
@@ -296,7 +296,7 @@ function showLogin() {
     '<input class="form-input" id="adminPassword" type="password" placeholder="请输入管理员密码" value="admin123">' +
     '</div>' +
     '<button class="btn-admin" onclick="adminLogin()">登录</button>' +
-    '<div style="text-align:center;font-size:12px;color:#999;margin-top:12px;">默认账号：admin / admin123</div>' +
+    '<div style="text-align:center;font-size:12px;color:#999;margin-top:12px;">' + (ADMIN_ACCOUNT === 'admin' && ADMIN_PASSWORD === 'admin123' ? '默认账号：admin / admin123' : '账号密码已修改') + '</div>' +
     '</div>';
 }
 
@@ -320,6 +320,48 @@ function adminLogin() {
   showAdminPanel();
 }
 
+// 修改管理员账号密码
+function showChangeAdmin() {
+  var modal = document.createElement('div');
+  modal.id = 'changeAdminModal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
+  modal.innerHTML =
+    '<div style="background:white;border-radius:12px;padding:24px;width:90%;max-width:360px;">' +
+    '<div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:16px;">⚙️ 修改管理员账号</div>' +
+    '<div class="form-group"><label class="form-label">新账号</label><input class="form-input" id="newAdminAccount" value="' + ADMIN_ACCOUNT + '" placeholder="输入新账号"></div>' +
+    '<div class="form-group"><label class="form-label">新密码</label><input class="form-input" id="newAdminPassword" type="password" placeholder="输入新密码"></div>' +
+    '<div class="form-group"><label class="form-label">确认新密码</label><input class="form-input" id="confirmAdminPassword" type="password" placeholder="再次输入新密码"></div>' +
+    '<div style="display:flex;gap:8px;margin-top:16px;">' +
+    '<button onclick="saveAdminAccount()" style="flex:1;padding:10px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;">保存</button>' +
+    '<button onclick="closeChangeAdmin()" style="flex:1;padding:10px;background:#999;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;">取消</button>' +
+    '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+}
+
+function closeChangeAdmin() {
+  var modal = document.getElementById('changeAdminModal');
+  if (modal) modal.remove();
+}
+
+function saveAdminAccount() {
+  var newAccount = document.getElementById('newAdminAccount').value.trim();
+  var newPassword = document.getElementById('newAdminPassword').value;
+  var confirmPassword = document.getElementById('confirmAdminPassword').value;
+
+  if (!newAccount) { toast('账号不能为空'); return; }
+  if (!newPassword) { toast('请输入新密码'); return; }
+  if (newPassword !== confirmPassword) { toast('两次密码不一致'); return; }
+  if (newPassword.length < 4) { toast('密码至少4位'); return; }
+
+  ADMIN_ACCOUNT = newAccount;
+  ADMIN_PASSWORD = newPassword;
+  localStorage.setItem('village_admin_account', newAccount);
+  localStorage.setItem('village_admin_password', newPassword);
+  closeChangeAdmin();
+  toast('账号密码修改成功，下次登录生效');
+}
+
 function adminLogout() {
   if (!confirm('确定要退出登录吗？')) return;
   isLoggedIn = false;
@@ -333,6 +375,7 @@ function showAdminPanel() {
   container.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
     '<div style="font-size:16px;font-weight:bold;color:#333;">👋 管理员面板</div>' +
+    '<button onclick="showChangeAdmin()" style="padding:4px 12px;background:#2E7D32;color:white;border:none;border-radius:4px;font-size:12px;cursor:pointer;margin-right:8px;">⚙️ 修改账号</button>' +
     '<button onclick="adminLogout()" style="padding:4px 12px;background:#F44336;color:white;border:none;border-radius:4px;font-size:12px;cursor:pointer;">退出登录</button>' +
     '</div>' +
 
