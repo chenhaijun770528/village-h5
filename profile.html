@@ -537,6 +537,7 @@
         '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;" id="vf_imagePreview"></div>' +
         '<button type="button" onclick="document.getElementById(\'vf_images\').click()" style="margin-top:8px;padding:8px 16px;background:#f5f5f5;color:#666;border:none;border-radius:8px;font-size:13px;cursor:pointer">📷 选择图片</button>' +
         '</div>' +
+        '<div style="margin-top:16px;padding-top:16px;border-top:2px solid #E8F5E9;"><div style="font-size:15px;font-weight:bold;color:#2E7D32;margin-bottom:12px;">🏞️ 风景图片管理</div><div id="vf_scenerySections"></div></div>' +
         '<button class="modal-btn modal-btn-save" onclick="saveVillage()">💾 保存</button>' +
         '<button class="modal-btn modal-btn-cancel" onclick="closeVillageModal()">取消</button>' +
         '</div></div>';
@@ -663,47 +664,73 @@
       renderVillageImagePreview();
     }
 
-    // ===== 风景管理 =====
-    var SCENERY_CATS = ["湖", "山", "河", "树林", "农村风貌"];
+    // ===== 风景管理（按分类板块式） =====
+    var SCENERY_CATS = [
+      { key: "湖", label: "湖", icon: "🌊", color: "#1565C0" },
+      { key: "山", label: "山", icon: "⛰️", color: "#5D4037" },
+      { key: "河", label: "河", icon: "🏞️", color: "#00838F" },
+      { key: "树林", label: "树林", icon: "🌲", color: "#2E7D32" },
+      { key: "农村风貌", label: "农村风貌", icon: "🌾", color: "#F57F17" }
+    ];
     
     function initSceneryEditor(data) {
       window._villageScenery = (data && data.scenery) ? JSON.parse(JSON.stringify(data.scenery)) : [];
-      renderSceneryList();
+      renderScenerySections();
     }
     
-    function renderSceneryList() {
-      var items = window._villageScenery || [];
+    function renderScenerySections() {
+      var container = document.getElementById("vf_scenerySections");
+      if (!container) return;
       var html = "";
-      for (var i = 0; i < items.length; i++) {
-        var s = items[i];
-        html += '<div style="background:#f9f9f9;border:1px solid #e0e0e0;border-radius:10px;padding:12px;margin-bottom:10px;">' +
-          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
-          '<span style="font-size:14px;font-weight:bold;color:#333;">📍 ' + (s.title || "未命名风景") + '</span>' +
-          '<span onclick="removeSceneryItem(\'' + i + '\')" style="color:#F44336;cursor:pointer;font-size:18px;font-weight:bold;" title="删除">×</span>' +
-          '</div>' +
-          (s.img ? '<img src="' + s.img + '" style="width:100%;max-height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px;">' : '') +
-          '<div style="font-size:12px;color:#666;">' + (s.desc || "") + ' <span style="background:#E8F5E9;color:#2E7D32;padding:1px 6px;border-radius:4px;font-size:11px;">' + (s.category || "农村风貌") + '</span></div>' +
-          '<div style="margin-top:6px;"><button onclick="editSceneryItem(\'' + i + '\')" style="padding:4px 12px;background:white;border:1px solid #ccc;border-radius:6px;font-size:12px;cursor:pointer;">✏️ 编辑</button></div>' +
+      for (var ci = 0; ci < SCENERY_CATS.length; ci++) {
+        var cat = SCENERY_CATS[ci];
+        var items = [];
+        for (var si = 0; si < window._villageScenery.length; si++) {
+          if (window._villageScenery[si].category === cat.key) items.push({item: window._villageScenery[si], globalIdx: si});
+        }
+        html += '<div style="background:#FAFAFA;border:1px solid #E0E0E0;border-radius:12px;padding:12px;margin-bottom:12px;">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+          '<span style="font-size:14px;font-weight:bold;color:' + cat.color + ';">' + cat.icon + ' ' + cat.label + '</span>' +
+          '<button onclick="addSceneryToCat(\'' + cat.key + '\')" style="padding:4px 10px;background:' + cat.color + ';color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer;">＋ 添加</button>' +
           '</div>';
+        if (items.length === 0) {
+          html += '<div style="text-align:center;color:#bbb;font-size:12px;padding:8px 0;">暂无' + cat.label + '图片</div>';
+        } else {
+          html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">';
+          for (var ii = 0; ii < items.length; ii++) {
+            var s = items[ii].item;
+            var gi = items[ii].globalIdx;
+            html += '<div style="position:relative;border-radius:8px;overflow:hidden;background:#e8f5e9;">' +
+              (s.img ? '<img src="' + s.img + '" style="width:100%;height:80px;object-fit:cover;">' : '<div style="width:100%;height:80px;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:24px;">' + cat.icon + '</div>') +
+              '<div style="font-size:11px;padding:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (s.title || "未命名") + '</div>' +
+              '<div style="position:absolute;top:2px;right:2px;display:flex;gap:2px;">' +
+              '<span onclick="editSceneryAt(\'' + gi + '\')" style="background:rgba(255,255,255,0.9);border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;">✏️</span>' +
+              '<span onclick="removeSceneryAt(\'' + gi + '\')" style="background:rgba(255,255,255,0.9);border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;">×</span>' +
+              '</div></div>';
+          }
+          html += '</div>';
+        }
+        html += '</div>';
       }
-      if (!items.length) html = '<div style="text-align:center;color:#999;font-size:13px;padding:16px 0;">暂无风景，点击下方按钮添加</div>';
-      var el = document.getElementById("vf_sceneryList");
-      if (el) el.innerHTML = html;
+      container.innerHTML = html;
     }
     
-    function addSceneryItem() { openSceneryForm(-1); }
+    function addSceneryToCat(catKey) { openSceneryForm(-1, catKey); }
+    function editSceneryAt(idx) { openSceneryForm(idx, null); }
+    function removeSceneryAt(idx) {
+      if (!confirm("确定删除这个风景？")) return;
+      window._villageScenery.splice(idx, 1);
+      renderScenerySections();
+    }
     
-    function editSceneryItem(idx) { openSceneryForm(idx); }
-    
-    function openSceneryItem(idx) { openSceneryForm(idx); }
-    
-    function openSceneryForm(idx) {
+    function openSceneryForm(idx, defaultCat) {
       var isNew = (idx < 0);
       var s = isNew ? {} : (window._villageScenery[idx] || {});
+      if (isNew && defaultCat) s.category = defaultCat;
       var catOptions = "";
       for (var ci = 0; ci < SCENERY_CATS.length; ci++) {
-        var selected = (s.category === SCENERY_CATS[ci]) ? "selected" : "";
-        catOptions += "<option value=\"" + SCENERY_CATS[ci] + "\" " + selected + ">" + SCENERY_CATS[ci] + "</option>";
+        var selected = (s.category === SCENERY_CATS[ci].key) ? "selected" : "";
+        catOptions += "<option value=\"" + SCENERY_CATS[ci].key + "\" " + selected + ">" + SCENERY_CATS[ci].icon + " " + SCENERY_CATS[ci].label + "</option>";
       }
       var formHtml = '<div class="modal-overlay" id="sceneryModal" onclick="closeSceneryForm(event)">' +
         '<div class="modal-box" onclick="event.stopPropagation()" style="max-height:90vh;overflow-y:auto;">' +
@@ -742,21 +769,21 @@
       reader.onload = function(e) {
         var img = new Image();
         img.onload = function() {
-          var canvas = document.createElement("canvas");
-          var ctx = canvas.getContext("2d");
+          var maxW = 800, maxH = 600, quality = 0.7;
           var w = img.width, h = img.height;
-          var maxDim = 800;
-          if (w > maxDim || h > maxDim) {
-            if (w > h) { h = h * maxDim / w; w = maxDim; }
-            else { w = w * maxDim / h; h = maxDim; }
+          if (w > maxW || h > maxH) {
+            var ratio = Math.min(maxW / w, maxH / h);
+            w = Math.round(w * ratio);
+            h = Math.round(h * ratio);
           }
-          canvas.width = w; canvas.height = h;
+          var canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          var ctx = canvas.getContext("2d");
           ctx.drawImage(img, 0, 0, w, h);
-          var dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-          if (dataUrl.length > 200000) dataUrl = canvas.toDataURL("image/jpeg", 0.5);
-          window._sceneryTmpImg = dataUrl;
-          var prev = document.getElementById("sf_imgPreview");
-          if (prev) prev.innerHTML = '<img src="' + dataUrl + '" style="width:100%;max-height:150px;object-fit:cover;border-radius:8px;">';
+          window._sceneryTmpImg = canvas.toDataURL("image/jpeg", quality);
+          var preview = document.getElementById("sf_imgPreview");
+          if (preview) preview.innerHTML = '<img src="' + window._sceneryTmpImg + '" style="width:100%;max-height:150px;object-fit:cover;border-radius:8px;">';
           var cur = document.getElementById("sf_currentImg");
           if (cur) cur.style.display = "none";
         };
@@ -765,7 +792,7 @@
       reader.readAsDataURL(file);
     }
     
-    function saveSceneryItem(idxStr) {
+    function saveSceneryItem(idx) {
       var title = document.getElementById("sf_title").value.trim();
       if (!title) { toast("请输入风景名称"); return; }
       var item = {
@@ -773,24 +800,16 @@
         title: title,
         desc: document.getElementById("sf_desc").value.trim(),
         category: document.getElementById("sf_category").value,
-        img: window._sceneryTmpImg || null
+        img: window._sceneryTmpImg || ""
       };
-      var idx = parseInt(idxStr);
-      if (idx >= 0) {
-        item.id = (window._villageScenery[idx] && window._villageScenery[idx].id) || item.id;
+      if (idx >= 0 && window._villageScenery[idx]) {
+        item.id = window._villageScenery[idx].id || item.id;
         window._villageScenery[idx] = item;
       } else {
         window._villageScenery.push(item);
       }
       closeSceneryForm();
-      renderSceneryList();
-      toast(isNew ? "风景已添加" : "风景已更新");
-    }
-    
-    function removeSceneryItem(idx) {
-      if (!confirm("确定删除这个风景？")) return;
-      window._villageScenery.splice(idx, 1);
-      renderSceneryList();
+      renderScenerySections();
     }
 
     function doLogout() {
