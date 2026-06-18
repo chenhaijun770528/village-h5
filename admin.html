@@ -1,3 +1,29 @@
+}
+
+
+
+  // 🗃️ 已处理记录
+  var processed = [];
+  for (var pi2 = 0; pi2 < regs.length; pi2++) {
+    if (regs[pi2].status !== '待审核') processed.push(regs[pi2]);
+  }
+  if (processed.length > 0) {
+    panel.innerHTML += '<div style="margin-top:16px;font-size:14px;font-weight:bold;color:#333;margin-bottom:12px;">📋 已处理记录（' + processed.length + '条）</div>';
+    for (var pi3 = 0; pi3 < processed.length; pi3++) {
+      var reg2 = processed[pi3];
+      var icon2 = roleIcons[reg2.role] || '👤';
+      var statusColor2 = reg2.status === '已通过' ? '#4CAF50' : '#F44336';
+      panel.innerHTML += '<div class="app-card">' +
+        '<div class="app-card-name">' + icon2 + ' ' + (reg2.name || '未知') + ' <span style="font-size:12px;color:' + statusColor2 + ';background:' + (reg2.status === '已通过' ? '#E8F5E9' : '#FFEBEE') + ';padding:1px 8px;border-radius:4px;margin-left:4px;">' + (reg2.role || '未知') + '</span>' +
+        ' <span style="font-size:11px;color:' + statusColor2 + ';">[' + reg2.status + ']</span></div>' +
+        '<div class="app-card-info">村庄：' + (reg2.village || '无') + ' | 手机：' + (reg2.phone || '无') + '</div>' +
+        '<div class="app-card-info">账号：' + (reg2.accountName || reg2.accountId || '无') + ' | 地区：' + (reg2.province || '') + ' ' + (reg2.city || '') + '</div>' +
+        '<div class="app-card-actions">' +
+        '<button class="btn-delete" onclick="deleteRole(\'' + reg2.id + '\')">🗑️ 删除</button>' +
+        '</div>' +
+        '</div>';
+    }
+  }
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -697,8 +723,32 @@ function loadRoleApplications() {
       '<div class="app-card-actions">' +
       '<button class="btn-approve" onclick="approveRole(\'' + reg.id + '\')">✅ 通过</button>' +
       '<button class="btn-reject" onclick="rejectRole(\'' + reg.id + '\')">❌ 拒绝</button>' +
+      '<button class="btn-delete" onclick="deleteRole(\'' + reg.id + '\')">🗑️ 删除</button>' +
       '</div>' +
       '</div>';
+  }
+
+  // 🗃️ 已处理记录
+  var processed = [];
+  for (var pi2 = 0; pi2 < regs.length; pi2++) {
+    if (regs[pi2].status !== '待审核') processed.push(regs[pi2]);
+  }
+  if (processed.length > 0) {
+    panel.innerHTML += '<div style="margin-top:16px;font-size:14px;font-weight:bold;color:#333;margin-bottom:12px;">📋 已处理记录（' + processed.length + '条）</div>';
+    for (var pi3 = 0; pi3 < processed.length; pi3++) {
+      var reg2 = processed[pi3];
+      var icon2 = roleIcons[reg2.role] || '👤';
+      var statusColor2 = reg2.status === '已通过' ? '#4CAF50' : '#F44336';
+      panel.innerHTML += '<div class="app-card">' +
+        '<div class="app-card-name">' + icon2 + ' ' + (reg2.name || '未知') + ' <span style="font-size:12px;color:' + statusColor2 + ';background:' + (reg2.status === '已通过' ? '#E8F5E9' : '#FFEBEE') + ';padding:1px 8px;border-radius:4px;margin-left:4px;">' + (reg2.role || '未知') + '</span>' +
+        ' <span style="font-size:11px;color:' + statusColor2 + ';">[' + reg2.status + ']</span></div>' +
+        '<div class="app-card-info">村庄：' + (reg2.village || '无') + ' | 手机：' + (reg2.phone || '无') + '</div>' +
+        '<div class="app-card-info">账号：' + (reg2.accountName || reg2.accountId || '无') + ' | 地区：' + (reg2.province || '') + ' ' + (reg2.city || '') + '</div>' +
+        '<div class="app-card-actions">' +
+        '<button class="btn-delete" onclick="deleteRole(\'' + reg2.id + '\')">🗑️ 删除</button>' +
+        '</div>' +
+        '</div>';
+    }
   }
 }
 
@@ -727,7 +777,36 @@ function approveRole(regId) {
   loadRoleApplications();
 }
 
-function rejectRole(regId) {
+
+
+// 删除角色注册
+function deleteRole(regId) {
+  if (!confirm('确定删除此角色注册记录？该操作不可恢复。')) return;
+  var regs = Storage.get('registrations', []);
+  var reg = null;
+  for (var i = 0; i < regs.length; i++) {
+    if (regs[i].id === regId) {
+      reg = regs[i];
+      regs.splice(i, 1);
+      break;
+    }
+  }
+  Storage.set('registrations', regs);
+  if (reg && reg.accountId) {
+    var accounts = Storage.get('accounts', []);
+    for (var ai = 0; ai < accounts.length; ai++) {
+      if (accounts[ai].id === reg.accountId && accounts[ai].currentRoleId === regId) {
+        delete accounts[ai].currentRole;
+        delete accounts[ai].currentRoleId;
+        delete accounts[ai].currentRoleName;
+        break;
+      }
+    }
+    Storage.set('accounts', accounts);
+  }
+  toast('已删除角色注册记录');
+  loadRoleApplications();
+}function rejectRole(regId) {
   if (!confirm('确定拒绝此注册申请？')) return;
   var regs = Storage.get('registrations', []);
   for (var i = 0; i < regs.length; i++) {
