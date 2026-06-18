@@ -391,6 +391,9 @@ body {
 .form-row-label { width: 100px; font-size: 14px; color: #666; flex-shrink: 0; }
 .form-row-value { flex: 1; font-size: 14px; color: #333; }
 
+/* 风景分类Tab */
+.scenery-tab { transition: all 0.2s; }
+
 /* 响应式 */
 @media (max-width: 375px) {
   .func-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
@@ -424,9 +427,9 @@ const DB = {
       description: '幸福村位于苏州市郊区，环境优美，基础设施完善，是著名的生态农业示范村。村内有千年古银杏树、多彩田园，是周末休闲的好去处。',
       chief: { name: '张建国', phone: '13800138001' },
       scenery: [
-        { id: 's1', title: '千年古银杏', desc: '树龄超过800年，树高25米，胸围6米', img: 'https://picsum.photos/seed/scene1/400/300' },
-        { id: 's2', title: '多彩田园', desc: '四季变换的稻田画，色彩斑斓', img: 'https://picsum.photos/seed/scene2/400/300' },
-        { id: 's3', title: '荷塘月色', desc: '夏季荷花盛开，清香四溢', img: 'https://picsum.photos/seed/scene3/400/300' }
+        { id: 's1', title: '千年古银杏', desc: '树龄超过800年，树高25米，胸围6米', img: 'https://picsum.photos/seed/scene1/400/300', category: '树林' },
+        { id: 's2', title: '多彩田园', desc: '四季变换的稻田画，色彩斑斓', img: 'https://picsum.photos/seed/scene2/400/300', category: '农村风貌' },
+        { id: 's3', title: '荷塘月色', desc: '夏季荷花盛开，清香四溢', img: 'https://picsum.photos/seed/scene3/400/300', category: '湖' }
       ],
       food: [
         { id: 'f1', name: '农家土鸡', price: '98', unit: '只', desc: '散养土鸡，肉质鲜嫩', img: 'https://picsum.photos/seed/food1/400/300' },
@@ -447,7 +450,7 @@ const DB = {
       description: '阳光村是广州市郊的现代化农村，积极发展乡村旅游和生态农业。村内有大型草莓采摘园、农家乐设施，是城市居民周末体验田园生活的好选择。',
       chief: { name: '李明华', phone: '13800138002' },
       scenery: [
-        { id: 's4', title: '草莓采摘园', desc: '50亩有机草莓，个大味甜', img: 'https://picsum.photos/seed/scene4/400/300' },
+        { id: 's4', title: '草莓采摘园', desc: '50亩有机草莓，个大味甜', img: 'https://picsum.photos/seed/scene4/400/300', category: '农村风貌' },
         { id: 's5', title: '阳光花海', desc: '百亩花田，四季花开', img: 'https://picsum.photos/seed/scene5/400/300' }
       ],
       food: [
@@ -468,9 +471,9 @@ const DB = {
       description: '青山村坐落于长株潭后花园，森林覆盖率超过70%，空气清新，是天然的氧吧。村内有古民居、古井等历史遗迹，适合徒步探险和研学旅行。',
       chief: { name: '王志强', phone: '13800138003' },
       scenery: [
-        { id: 's6', title: '古民居群', desc: '保存完好的明清古建筑', img: 'https://picsum.photos/seed/scene6/400/300' },
-        { id: 's7', title: '千年古井', desc: '井水清澈，冬暖夏凉', img: 'https://picsum.photos/seed/scene7/400/300' },
-        { id: 's8', title: '竹林氧吧', desc: '百亩竹林，呼吸自然', img: 'https://picsum.photos/seed/scene8/400/300' }
+        { id: 's6', title: '古民居群', desc: '保存完好的明清古建筑', img: 'https://picsum.photos/seed/scene6/400/300', category: '农村风貌' },
+        { id: 's7', title: '千年古井', desc: '井水清澈，冬暖夏凉', img: 'https://picsum.photos/seed/scene7/400/300', category: '农村风貌' },
+        { id: 's8', title: '竹林氧吧', desc: '百亩竹林，呼吸自然', img: 'https://picsum.photos/seed/scene8/400/300', category: '树林' }
       ],
       food: [
         { id: 'f6', name: '竹林土鸡', price: '108', unit: '只', desc: '竹林散养，营养丰富', img: 'https://picsum.photos/seed/food6/400/300' },
@@ -591,6 +594,9 @@ function logout() {
   localStorage.removeItem('village_user')
 }</script>
   <script>
+    window._sceneryCat = 'all';
+    function switchSceneryCat(cat) { window._sceneryCat = cat; init(); }
+
     function init() {
       const params = new URLSearchParams(location.search)
       const id = params.get('id')
@@ -602,18 +608,40 @@ function logout() {
       }
       document.getElementById('pageTitle').textContent = v.name + ' - 风景'
       const scenery = v.scenery || []
-      document.getElementById('content').innerHTML = `
-        <div class="detail-section" style="margin-bottom:12px">
-          <h3 style="color:#2E7D32;font-size:16px;margin-bottom:8px">🏞️ 村庄风光</h3>
-          <p style="color:#666;font-size:13px">${v.name}拥有丰富的自然景观资源，等待您的探索。</p>
-        </div>
-        ${scenery.map(s => `
-        <div class="village-card">
-          <img src="${s.img}" style="width:100%;height:160px;object-fit:cover;border-radius:8px;margin-bottom:8px" onclick="preview(this.src)">
-          <div style="font-size:15px;font-weight:bold;color:#333;margin-bottom:4px">${s.title}</div>
-          <div style="font-size:13px;color:#666">${s.desc}</div>
-        </div>`).join('')}
-        ${scenery.length === 0 ? '<div class="empty-state"><span class="empty-icon">🌄</span><span>暂无风景数据</span></div>' : ''}`
+      var CATEGORIES = [
+        { key: 'all', label: '全部', icon: '🌐' },
+        { key: '湖', label: '湖', icon: '🌊' },
+        { key: '山', label: '山', icon: '⛰️' },
+        { key: '河', label: '河', icon: '🏞️' },
+        { key: '树林', label: '树林', icon: '🌲' },
+        { key: '农村风貌', label: '农村风貌', icon: '🌾' }
+      ];
+      var catCount = { all: scenery.length };
+      CATEGORIES.slice(1).forEach(function(cat) { catCount[cat.key] = 0; });
+      scenery.forEach(function(s) {
+        var cat = s.category || '农村风貌';
+        if (catCount[cat] !== undefined) catCount[cat]++;
+      });
+      var tabHtml = '<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;margin-bottom:12px;">';
+      CATEGORIES.forEach(function(cat) {
+        var count = catCount[cat.key] || 0;
+        var isActive = window._sceneryCat === cat.key;
+        tabHtml += '<div onclick="switchSceneryCat(\'' + cat.key + '\')" ' +
+          'style="flex-shrink:0;padding:6px 14px;background:' + (isActive ? '#2E7D32' : 'white') + ';color:' + (isActive ? 'white' : '#666') + ';border-radius:20px;font-size:13px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.1);font-weight:' + (isActive ? 'bold' : 'normal') + '">' +
+          cat.icon + ' ' + cat.label + (cat.key !== 'all' && count > 0 ? ' ' + count : '') + '</div>';
+      });
+      tabHtml += '</div>';
+      var filtered = window._sceneryCat === 'all' ? scenery : scenery.filter(function(s) { return (s.category || '农村风貌') === window._sceneryCat; });
+      var listHtml = filtered.map(function(s) {
+        var cat = s.category || '农村风貌';
+        return '<div class="village-card" style="margin-bottom:14px">' +
+          '<img src="' + s.img + '" style="width:100%;height:160px;object-fit:cover;border-radius:8px;margin-bottom:8px" onclick="preview(this.src)">' +
+          '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="background:#E8F5E9;color:#2E7D32;font-size:11px;padding:2px 8px;border-radius:10px;">' + cat + '</span></div>' +
+          '<div style="font-size:15px;font-weight:bold;color:#333;margin-bottom:4px">' + s.title + '</div>' +
+          '<div style="font-size:13px;color:#666">' + s.desc + '</div></div>';
+      }).join('');
+      if (filtered.length === 0) listHtml = '<div class="empty-state"><span class="empty-icon">🌄</span><span>该分类暂无风景</span></div>';
+      document.getElementById('content').innerHTML = tabHtml + listHtml;
     }
 
     function preview(src) {
