@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💆 按摩技师</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; background: #f5f5f5; color: #333; font-size: 14px; }
+.header { position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(135deg, #2E7D32, #4CAF50); color: white; padding: 12px 16px; z-index: 100; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+.header-title { font-size: 18px; font-weight: bold; }
+.container { padding: 60px 16px 80px; max-width: 750px; margin: 0 auto; }
+.section-head { font-size: 15px; font-weight: bold; color: #333; margin-bottom: 12px; padding-left: 4px; }
+.massage-card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); display: flex; gap: 14px; }
+.massage-avatar { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 2px solid #2E7D32; flex-shrink: 0; background: #e8f5e9; display: flex; align-items: center; justify-content: center; font-size: 32px; }
+.massage-info { flex: 1; min-width: 0; }
+.massage-name { font-size: 16px; font-weight: bold; color: #2E7D32; margin-bottom: 6px; }
+.massage-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 13px; color: #555; }
+.massage-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.massage-tag { background: #e8f5e9; color: #2E7D32; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+.call-btn { display: inline-flex; align-items: center; gap: 4px; background: #2E7D32; color: white; border: none; padding: 6px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; margin-top: 8px; text-decoration: none; }
+.call-btn:active { background: #1B5E20; }
+.empty-state { text-align: center; padding: 80px 20px; color: #999; }
+.empty-icon { font-size: 64px; display: block; margin-bottom: 16px; }
+.toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.75); color: white; padding: 12px 24px; border-radius: 8px; font-size: 14px; z-index: 9999; animation: fadeIn 0.3s; }
+@keyframes fadeIn { from { opacity: 0; transform: translate(-50%,-50%) scale(0.8); } to { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
+.tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 8px rgba(0,0,0,0.08); z-index: 100; }
+.tab-item { text-align: center; cursor: pointer; padding: 4px 0; }
+.tab-icon { font-size: 24px; display: block; }
+.tab-text { font-size: 11px; color: #999; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <span style="font-size:20px;cursor:pointer;" onclick="history.back()">←</span>
+  <span class="header-title">💆 按摩技师</span>
+  <span style="width:40px"></span>
+</div>
+<div class="container">
+  <div class="section-head">已认证按摩技师 · <span id="count">0</span>人</div>
+  <div id="list"></div>
+</div>
+<div class="tab-bar">
+  <div class="tab-item" onclick="location.href='index.html'">
+    <span class="tab-icon">🏠</span>
+    <span class="tab-text">首页</span>
+  </div>
+  <div class="tab-item" onclick="location.href='register.html'">
+    <span class="tab-icon">📝</span>
+    <span class="tab-text">注册</span>
+  </div>
+  <div class="tab-item" onclick="location.href='profile.html'">
+    <span class="tab-icon">👤</span>
+    <span class="tab-text">我的</span>
+  </div>
+</div>
+<script>
+var Storage = {
+  get: function(k, d) {
+    try { var v = localStorage.getItem("village_" + k); return v ? JSON.parse(v) : d; } catch(e) { return d; }
+  }
+};
+function toast(msg) {
+  var el = document.createElement("div");
+  el.className = "toast";
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function() { el.remove(); }, 2000);
+}
+function init() {
+  var regs = Storage.get("registrations", []);
+  var list = document.getElementById("list");
+  var countEl = document.getElementById("count");
+  var therapists = [];
+  for (var i = 0; i < regs.length; i++) {
+    if (regs[i].role === "按摩师" && regs[i].status === "已通过") {
+      therapists.push(regs[i]);
+    }
+  }
+  countEl.textContent = therapists.length;
+  if (therapists.length === 0) {
+    list.innerHTML = '<div class="empty-state"><span class="empty-icon">💆</span><div>暂无认证按摩技师</div><div style="font-size:12px;margin-top:8px;">欢迎注册成为认证按摩技师</div></div>';
+    return;
+  }
+  var html = "";
+  for (var j = 0; j < therapists.length; j++) {
+    var t = therapists[j];
+    var avatar = t.photo
+      ? '<img src="' + t.photo + '" class="massage-avatar" style="object-fit:cover;">'
+      : '<div class="massage-avatar">💆</div>';
+    var phoneDisplay = t.phone || "未填写";
+    var phoneBtn = t.phone
+      ? '<a href="tel:' + t.phone + '" class="call-btn">📞 联系Ta</a>'
+      : '';
+    var location = t.curAddress || t.regAddress || "未填写";
+    var skillTag = t.skill ? '<span class="massage-tag">' + t.skill + '</span>' : '';
+    var yearsTag = t.years ? '<span class="massage-tag">' + t.years + '年经验</span>' : '';
+    var villageTag = t.village ? '<span class="massage-tag">📍 ' + t.village + '</span>' : '';
+    html += '<div class="massage-card">' +
+      avatar +
+      '<div class="massage-info">' +
+      '<div class="massage-name">' + (t.name || "未知") + '</div>' +
+      '<div class="massage-row">📱 电话：' + phoneDisplay + '</div>' +
+      '<div class="massage-row">📍 ' + location + '</div>' +
+      '<div class="massage-tags">' + skillTag + yearsTag + villageTag + '</div>' +
+      phoneBtn +
+      '</div></div>';
+  }
+  list.innerHTML = html;
+}
+init();
+</script>
+</body>
+</html>
