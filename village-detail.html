@@ -606,19 +606,8 @@ function logout() {
       document.getElementById('pageTitle').textContent = v.name
       document.title = v.name
 
-      const html = `
-      <div class="detail-header">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <div class="detail-title">${v.name}</div>
-          <div class="village-population">
-            <div class="population-number">${v.population}</div>
-            <div class="population-label">人口</div>
-          </div>
-        </div>
-        <div class="detail-meta">📍 ${v.province} ${v.city}</div>
-      </div>
 
-      var SCENE_CATS = [
+var SCENE_CATS = [
         { key: '湖', icon: '🌊', label: '湖泊水域' },
         { key: '山', icon: '⛰️', label: '山地风光' },
         { key: '河', icon: '🏞️', label: '河流溪涧' },
@@ -650,6 +639,12 @@ function logout() {
           allScenes.map(function(s){ return '<img src="'+s.img+'" onclick="previewImg(this.src)" style="cursor:pointer" title="'+s.title+'">'; }).join('') +
           '</div></div>';
       }
+
+      const html = `
+
+
+
+      ${sceneHtml}
 
       <!-- 基本信息 -->
       <div class="detail-section">
@@ -695,7 +690,8 @@ function logout() {
       <!-- 收藏按钮 -->
       <button class="btn-primary" style="margin-top:8px;background:${isFavorited(v.id) ? '#FF9800' : '#2E7D32'}" onclick="toggleFavorite('${v.id}')">
         ${isFavorited(v.id) ? '⭐ 已收藏' : '☆ 收藏村庄'}
-      </button>`
+      </button>
+`
 
       document.getElementById('content').innerHTML = html
 
