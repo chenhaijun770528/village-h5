@@ -597,7 +597,26 @@ function deleteVillage(villageId) {
   var newC = [];
   for (var ci = 0; ci < camps.length; ci++) { if (camps[ci].villageId !== villageId) newC.push(camps[ci]); }
   Storage.set('camps', newC);
-  toast('村庄及关联数据已删除');
+  // 清除该村主任用户账号的角色绑定
+  var accounts = Storage.get('accounts', []);
+  var tApps = Storage.get('township_applications', []);
+  for (var ti = 0; ti < tApps.length; ti++) {
+    if (tApps[ti].id === villageId) {
+      if (tApps[ti].accountId) {
+        for (var ai = 0; ai < accounts.length; ai++) {
+          if (accounts[ai].id === tApps[ti].accountId) {
+            delete accounts[ai].currentRole;
+            delete accounts[ai].currentRoleId;
+            delete accounts[ai].currentRoleName;
+            break;
+          }
+        }
+      }
+      break;
+    }
+  }
+  Storage.set('accounts', accounts);
+  toast('村庄及关联数据已删除，村主任角色已重置');
   loadVillageStats();
 }
 
