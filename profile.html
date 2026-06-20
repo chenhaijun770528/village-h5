@@ -878,7 +878,7 @@
 
 // ===== 村民产品管理函数 =====
 function showProductApps() {
-  var currentUser = Storage.get('current_user');
+  var currentUser = Storage.get('user');
   var apps = Storage.get('product_applications', []).filter(function(p) { 
     return p.sellerId === currentUser.account; 
   });
@@ -919,7 +919,7 @@ function applyProduct() {
   var unit = prompt('单位 (斤/个/箱等):', '斤');
   var stock = prompt('库存数量:', '100');
   
-  var currentUser = Storage.get('current_user');
+  var currentUser = Storage.get('user');
   var myReg = Storage.get('registrations', []).find(function(r) { return r.account === currentUser.account && r.role === '村民'; });
   
   var app = {
@@ -944,7 +944,7 @@ function applyProduct() {
 }
 
 function showMyOrders() {
-  var currentUser = Storage.get('current_user');
+  var currentUser = Storage.get('user');
   var orders = Storage.get('orders', []).filter(function(o) { 
     return o.sellerId === currentUser.account; 
   });
@@ -977,7 +977,7 @@ function showMyOrders() {
 
 // ===== 村主任审核函数 =====
 function auditProducts() {
-  var currentUser = Storage.get('current_user');
+  var currentUser = Storage.get('user');
   var myVillage = Storage.get('villages', []).find(function(v) { return v.chief && v.chief.name === currentUser.currentRoleName; });
   
   var apps = Storage.get('product_applications', []).filter(function(p) { 
@@ -1053,7 +1053,7 @@ function rejectProduct(id) {
 
 // ===== 美食管理函数 =====
 function showFoodApps() {
-  var currentUser = Storage.get('current_user');
+  var currentUser = Storage.get('user');
   var apps = Storage.get('food_applications', []).filter(function(f) { 
     return f.sellerId === currentUser.account; 
   });
@@ -1089,7 +1089,7 @@ function applyFood() {
   var name = prompt('美食名称:');
   if (!name) return;
   
-  var currentUser = Storage.get('current_user');
+  var currentUser = Storage.get('user');
   var myReg = Storage.get('registrations', []).find(function(r) { return r.account === currentUser.account && r.role === '村民'; });
   
   var app = {
@@ -1112,7 +1112,7 @@ function applyFood() {
 
 // ===== 露营地管理函数 =====
 function showCampApps() {
-  var currentUser = Storage.get('current_user');
+  var currentUser = Storage.get('user');
   var apps = Storage.get('camp_applications', []).filter(function(c) { 
     return c.sellerId === currentUser.account; 
   });
@@ -1148,7 +1148,7 @@ function applyCamp() {
   var name = prompt('露营地名称:');
   if (!name) return;
   
-  var currentUser = Storage.get('current_user');
+  var currentUser = Storage.get('user');
   var myReg = Storage.get('registrations', []).find(function(r) { return r.account === currentUser.account && r.role === '村民'; });
   
   var app = {
@@ -1171,7 +1171,7 @@ function applyCamp() {
 
 // ===== 村主任美食/露营地审核 =====
 function auditFood() {
-  var currentUser = Storage.get('current_user');
+  var currentUser = Storage.get('user');
   var myVillage = Storage.get('villages', []).find(function(v) { return v.chief && v.chief.name === currentUser.currentRoleName; });
   
   var apps = Storage.get('food_applications', []).filter(function(f) { 
@@ -1241,7 +1241,7 @@ function rejectFood(id) {
 }
 
 function auditCamps() {
-  var currentUser = Storage.get('current_user');
+  var currentUser = Storage.get('user');
   var myVillage = Storage.get('villages', []).find(function(v) { return v.chief && v.chief.name === currentUser.currentRoleName; });
   
   var apps = Storage.get('camp_applications', []).filter(function(c) { 
