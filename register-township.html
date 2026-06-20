@@ -143,6 +143,27 @@ function submit() {
   apps.unshift(application);
   Storage.set('township_applications', apps);
 
+  // 同时更新当前账号的 currentRole（含村庄信息）
+  currentAccount.currentRole = {
+    role: 'head',
+    roleName: '村主任',
+    village: village,
+    name: name,
+    phone: phone,
+    status: '待审核'
+  };
+  // 更新 accounts 数组
+  var accounts = Storage.get('accounts', []);
+  for (var i = 0; i < accounts.length; i++) {
+    if (accounts[i].id === currentAccount.id) {
+      accounts[i] = currentAccount;
+      break;
+    }
+  }
+  Storage.set('accounts', accounts);
+  // 更新当前会话
+  Storage.set('user', currentAccount);
+
   toast('申请已提交，请等待管理员审核！');
   setTimeout(function() { location.href = 'select-role.html' }, 2000);
 }
