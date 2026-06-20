@@ -228,9 +228,9 @@
         reviewTime: Date.now()
       };
 
-      var regs = Storage.get('village_registrations', []);
+      var regs = Storage.get('registrations', []);
       regs.unshift(data);
-      Storage.set('village_registrations', regs);
+      Storage.set('registrations', regs);
 
       // 立即开通游客角色
       currentAccount.currentRole = 'tourist';
