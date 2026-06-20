@@ -364,7 +364,57 @@
         }
       }
 
-      // 村主任专属：我的村庄按钮
+      
+      // ===== 村民：我的产品管理 =====
+      if (currentUser.currentRole === 'villager') {
+        html += '<div class="village-panel">' +
+          '<div class="village-panel-title">🛍️ 我的产品管理</div>' +
+          '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;">' +
+            '<div onclick="showProductApps()" style="text-align:center;padding:12px;background:#f5f5f5;border-radius:8px;cursor:pointer;">' +
+              '<div style="font-size:24px;">🥬</div><div style="font-size:12px;color:#666;margin-top:4px;">农产品</div>' +
+            '</div>' +
+            '<div onclick="showFoodApps()" style="text-align:center;padding:12px;background:#f5f5f5;border-radius:8px;cursor:pointer;">' +
+              '<div style="font-size:24px;">🍜</div><div style="font-size:12px;color:#666;margin-top:4px;">美食</div>' +
+            '</div>' +
+            '<div onclick="showCampApps()" style="text-align:center;padding:12px;background:#f5f5f5;border-radius:8px;cursor:pointer;">' +
+              '<div style="font-size:24px;">🏕️</div><div style="font-size:12px;color:#666;margin-top:4px;">露营地</div>' +
+            '</div>' +
+          '</div>' +
+          '<button onclick="showMyOrders()" style="width:100%;padding:10px;background:#2E7D32;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;">📦 查看我的订单</button>' +
+        '</div>';
+      }
+
+      // ===== 村主任：产品审核管理 =====
+      if (currentUser.currentRole === 'township') {
+        var pendingProducts = Storage.get('product_applications', []).filter(function(p) { 
+          return p.village === myVillage.name && p.status === '待审核'; 
+        });
+        var pendingFood = Storage.get('food_applications', []).filter(function(f) { 
+          return f.village === myVillage.name && f.status === '待审核'; 
+        });
+        var pendingCamps = Storage.get('camp_applications', []).filter(function(c) { 
+          return c.village === myVillage.name && c.status === '待审核'; 
+        });
+        
+        var totalPending = pendingProducts.length + pendingFood.length + pendingCamps.length;
+        
+        html += '<div class="village-panel">' +
+          '<div class="village-panel-title">✅ 产品上架审核' + (totalPending > 0 ? ' <span class="menu-badge">' + totalPending + '</span>' : '') + '</div>' +
+          '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">' +
+            '<div onclick="auditProducts()" style="text-align:center;padding:12px;background:#FFF3E0;border-radius:8px;cursor:pointer;position:relative;">' +
+              '<div style="font-size:24px;">🥬</div><div style="font-size:12px;color:#E65100;margin-top:4px;">农产品' + (pendingProducts.length > 0 ? ' (' + pendingProducts.length + ')' : '') + '</div>' +
+            '</div>' +
+            '<div onclick="auditFood()" style="text-align:center;padding:12px;background:#FFF3E0;border-radius:8px;cursor:pointer;position:relative;">' +
+              '<div style="font-size:24px;">🍜</div><div style="font-size:12px;color:#E65100;margin-top:4px;">美食' + (pendingFood.length > 0 ? ' (' + pendingFood.length + ')' : '') + '</div>' +
+            '</div>' +
+            '<div onclick="auditCamps()" style="text-align:center;padding:12px;background:#FFF3E0;border-radius:8px;cursor:pointer;position:relative;">' +
+              '<div style="font-size:24px;">🏕️</div><div style="font-size:12px;color:#E65100;margin-top:4px;">露营' + (pendingCamps.length > 0 ? ' (' + pendingCamps.length + ')' : '') + '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }
+
+// 村主任专属：我的村庄按钮
       if (currentUser.currentRole === 'township') {
         // 查找当前用户对应的村庄
         var myVillage = null;
@@ -824,6 +874,179 @@
     }
 
     renderPage();
-  </script>
+  
+
+// ===== 村民产品管理函数 =====
+function showProductApps() {
+  var apps = Storage.get('product_applications', []).filter(function(p) { 
+    return p.sellerId === currentUser.account; 
+  });
+  var html = '<div style="padding:16px;">' +
+    '<h3 style="margin-bottom:16px;">🥬 我的农产品</h3>' +
+    '<button onclick="applyProduct()" style="width:100%;padding:12px;background:#2E7D32;color:white;border:none;border-radius:8px;margin-bottom:16px;">+ 申请上架农产品</button>';
+  
+  if (apps.length === 0) {
+    html += '<div style="text-align:center;padding:40px;color:#999;">暂无农产品申请</div>';
+  } else {
+    apps.forEach(function(p) {
+      var statusColor = p.status === '已通过' ? '#4CAF50' : (p.status === '待审核' ? '#FF9800' : '#F44336');
+      html += '<div style="background:white;padding:12px;border-radius:8px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+          '<div style="font-weight:bold;">' + p.name + '</div>' +
+          '<span style="color:' + statusColor + ';font-size:12px;">' + p.status + '</span>' +
+        '</div>' +
+        '<div style="color:#666;font-size:12px;margin-top:4px;">¥' + p.price + '/' + p.unit + ' · 库存' + p.stock + '</div>' +
+        '<div style="color:#999;font-size:11px;margin-top:4px;">' + p.village + '</div>' +
+      '</div>';
+    });
+  }
+  html += '</div>';
+  
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;overflow:auto;';
+  modal.innerHTML = '<div style="background:white;min-height:100%;">' + html + '<button onclick="this.closest('.modal').remove()" style="position:fixed;top:10px;right:10px;width:40px;height:40px;border-radius:50%;border:none;background:#f5f5f5;font-size:20px;">×</button></div>';
+  modal.className = 'modal';
+  document.body.appendChild(modal);
+}
+
+function applyProduct() {
+  var name = prompt('农产品名称:');
+  if (!name) return;
+  var price = prompt('价格 (元):');
+  if (!price) return;
+  var unit = prompt('单位 (斤/个/箱等):', '斤');
+  var stock = prompt('库存数量:', '100');
+  
+  var currentUser = Storage.get('current_user');
+  var myReg = Storage.get('registrations', []).find(function(r) { return r.account === currentUser.account && r.role === '村民'; });
+  
+  var app = {
+    id: 'prod_' + Date.now(),
+    name: name,
+    price: parseFloat(price),
+    unit: unit,
+    stock: parseInt(stock),
+    sellerId: currentUser.account,
+    sellerName: currentUser.currentRoleName,
+    village: myReg ? myReg.village : '',
+    status: '待审核',
+    createTime: new Date().toISOString()
+  };
+  
+  var apps = Storage.get('product_applications', []);
+  apps.push(app);
+  Storage.set('product_applications', apps);
+  
+  alert('申请已提交，等待村主任审核');
+  location.reload();
+}
+
+function showMyOrders() {
+  var orders = Storage.get('orders', []).filter(function(o) { 
+    return o.sellerId === currentUser.account; 
+  });
+  
+  var html = '<div style="padding:16px;">' +
+    '<h3 style="margin-bottom:16px;">📦 我的订单</h3>';
+  
+  if (orders.length === 0) {
+    html += '<div style="text-align:center;padding:40px;color:#999;">暂无订单</div>';
+  } else {
+    orders.forEach(function(o) {
+      html += '<div style="background:white;padding:12px;border-radius:8px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">' +
+        '<div style="display:flex;justify-content:space-between;">' +
+          '<div style="font-weight:bold;">' + o.productName + '</div>' +
+          '<div style="color:#2E7D32;font-weight:bold;">¥' + o.total + '</div>' +
+        '</div>' +
+        '<div style="color:#666;font-size:12px;margin-top:4px;">买家: ' + o.buyerName + ' · ' + o.quantity + o.unit + '</div>' +
+        '<div style="color:#999;font-size:11px;margin-top:4px;">' + o.createTime + '</div>' +
+      '</div>';
+    });
+  }
+  html += '</div>';
+  
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;overflow:auto;';
+  modal.innerHTML = '<div style="background:white;min-height:100%;">' + html + '<button onclick="this.closest('.modal').remove()" style="position:fixed;top:10px;right:10px;width:40px;height:40px;border-radius:50%;border:none;background:#f5f5f5;font-size:20px;">×</button></div>';
+  modal.className = 'modal';
+  document.body.appendChild(modal);
+}
+
+// ===== 村主任审核函数 =====
+function auditProducts() {
+  var currentUser = Storage.get('current_user');
+  var myVillage = Storage.get('villages', []).find(function(v) { return v.chief && v.chief.name === currentUser.currentRoleName; });
+  
+  var apps = Storage.get('product_applications', []).filter(function(p) { 
+    return p.village === myVillage.name && p.status === '待审核'; 
+  });
+  
+  var html = '<div style="padding:16px;">' +
+    '<h3 style="margin-bottom:16px;">🥬 农产品审核 (' + apps.length + ')</h3>';
+  
+  if (apps.length === 0) {
+    html += '<div style="text-align:center;padding:40px;color:#999;">暂无待审核申请</div>';
+  } else {
+    apps.forEach(function(p) {
+      html += '<div style="background:white;padding:12px;border-radius:8px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">' +
+        '<div style="font-weight:bold;">' + p.name + '</div>' +
+        '<div style="color:#666;font-size:12px;margin-top:4px;">¥' + p.price + '/' + p.unit + ' · 库存' + p.stock + '</div>' +
+        '<div style="color:#999;font-size:11px;margin-top:4px;">申请人: ' + p.sellerName + '</div>' +
+        '<div style="display:flex;gap:10px;margin-top:10px;">' +
+          '<button onclick="approveProduct('' + p.id + '')" style="flex:1;padding:8px;background:#4CAF50;color:white;border:none;border-radius:4px;">通过</button>' +
+          '<button onclick="rejectProduct('' + p.id + '')" style="flex:1;padding:8px;background:#F44336;color:white;border:none;border-radius:4px;">拒绝</button>' +
+        '</div>' +
+      '</div>';
+    });
+  }
+  html += '</div>';
+  
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;overflow:auto;';
+  modal.innerHTML = '<div style="background:white;min-height:100%;">' + html + '<button onclick="this.closest('.modal').remove()" style="position:fixed;top:10px;right:10px;width:40px;height:40px;border-radius:50%;border:none;background:#f5f5f5;font-size:20px;">×</button></div>';
+  modal.className = 'modal';
+  document.body.appendChild(modal);
+}
+
+function approveProduct(id) {
+  var apps = Storage.get('product_applications', []);
+  var app = apps.find(function(p) { return p.id === id; });
+  if (app) {
+    app.status = '已通过';
+    app.approveTime = new Date().toISOString();
+    Storage.set('product_applications', apps);
+    
+    // Add to products list
+    var products = Storage.get('products', []);
+    products.push({
+      id: app.id,
+      name: app.name,
+      price: app.price,
+      unit: app.unit,
+      stock: app.stock,
+      sellerId: app.sellerId,
+      sellerName: app.sellerName,
+      village: app.village,
+      status: '在售'
+    });
+    Storage.set('products', products);
+    
+    alert('已通过');
+    location.reload();
+  }
+}
+
+function rejectProduct(id) {
+  var apps = Storage.get('product_applications', []);
+  var app = apps.find(function(p) { return p.id === id; });
+  if (app) {
+    app.status = '已拒绝';
+    app.rejectTime = new Date().toISOString();
+    Storage.set('product_applications', apps);
+    alert('已拒绝');
+    location.reload();
+  }
+}
+</script>
 </body>
 </html>
