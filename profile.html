@@ -1049,6 +1049,266 @@ function rejectProduct(id) {
     location.reload();
   }
 }
+
+
+// ===== 美食管理函数 =====
+function showFoodApps() {
+  var currentUser = Storage.get('current_user');
+  var apps = Storage.get('food_applications', []).filter(function(f) { 
+    return f.sellerId === currentUser.account; 
+  });
+  
+  var html = '<div style="padding:16px;">' +
+    '<h3 style="margin-bottom:16px;">🍜 我的美食</h3>' +
+    '<button onclick="applyFood()" style="width:100%;padding:12px;background:#2E7D32;color:white;border:none;border-radius:8px;margin-bottom:16px;">+ 申请上架美食</button>';
+  
+  if (apps.length === 0) {
+    html += '<div style="text-align:center;padding:40px;color:#999;">暂无美食申请</div>';
+  } else {
+    apps.forEach(function(f) {
+      var statusColor = f.status === '已通过' ? '#4CAF50' : (f.status === '待审核' ? '#FF9800' : '#F44336');
+      html += '<div style="background:white;padding:12px;border-radius:8px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+          '<div style="font-weight:bold;">' + f.name + '</div>' +
+          '<span style="color:' + statusColor + ';font-size:12px;">' + f.status + '</span>' +
+        '</div>' +
+        '<div style="color:#666;font-size:12px;margin-top:4px;">' + f.village + '</div>' +
+      '</div>';
+    });
+  }
+  html += '</div>';
+  
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;overflow:auto;';
+  modal.innerHTML = '<div style="background:white;min-height:100%;">' + html + '<button onclick="this.parentElement.parentElement.remove()" style="position:fixed;top:10px;right:10px;width:40px;height:40px;border-radius:50%;border:none;background:#f5f5f5;font-size:20px;">×</button></div>';
+  modal.className = 'modal';
+  document.body.appendChild(modal);
+}
+
+function applyFood() {
+  var name = prompt('美食名称:');
+  if (!name) return;
+  
+  var currentUser = Storage.get('current_user');
+  var myReg = Storage.get('registrations', []).find(function(r) { return r.account === currentUser.account && r.role === '村民'; });
+  
+  var app = {
+    id: 'food_' + Date.now(),
+    name: name,
+    sellerId: currentUser.account,
+    sellerName: currentUser.currentRoleName,
+    village: myReg ? myReg.village : '',
+    status: '待审核',
+    createTime: new Date().toISOString()
+  };
+  
+  var apps = Storage.get('food_applications', []);
+  apps.push(app);
+  Storage.set('food_applications', apps);
+  
+  alert('申请已提交，等待村主任审核');
+  location.reload();
+}
+
+// ===== 露营地管理函数 =====
+function showCampApps() {
+  var currentUser = Storage.get('current_user');
+  var apps = Storage.get('camp_applications', []).filter(function(c) { 
+    return c.sellerId === currentUser.account; 
+  });
+  
+  var html = '<div style="padding:16px;">' +
+    '<h3 style="margin-bottom:16px;">🏕️ 我的露营地</h3>' +
+    '<button onclick="applyCamp()" style="width:100%;padding:12px;background:#2E7D32;color:white;border:none;border-radius:8px;margin-bottom:16px;">+ 申请上架露营地</button>';
+  
+  if (apps.length === 0) {
+    html += '<div style="text-align:center;padding:40px;color:#999;">暂无露营地申请</div>';
+  } else {
+    apps.forEach(function(c) {
+      var statusColor = c.status === '已通过' ? '#4CAF50' : (c.status === '待审核' ? '#FF9800' : '#F44336');
+      html += '<div style="background:white;padding:12px;border-radius:8px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+          '<div style="font-weight:bold;">' + c.name + '</div>' +
+          '<span style="color:' + statusColor + ';font-size:12px;">' + c.status + '</span>' +
+        '</div>' +
+        '<div style="color:#666;font-size:12px;margin-top:4px;">' + c.village + '</div>' +
+      '</div>';
+    });
+  }
+  html += '</div>';
+  
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;overflow:auto;';
+  modal.innerHTML = '<div style="background:white;min-height:100%;">' + html + '<button onclick="this.parentElement.parentElement.remove()" style="position:fixed;top:10px;right:10px;width:40px;height:40px;border-radius:50%;border:none;background:#f5f5f5;font-size:20px;">×</button></div>';
+  modal.className = 'modal';
+  document.body.appendChild(modal);
+}
+
+function applyCamp() {
+  var name = prompt('露营地名称:');
+  if (!name) return;
+  
+  var currentUser = Storage.get('current_user');
+  var myReg = Storage.get('registrations', []).find(function(r) { return r.account === currentUser.account && r.role === '村民'; });
+  
+  var app = {
+    id: 'camp_' + Date.now(),
+    name: name,
+    sellerId: currentUser.account,
+    sellerName: currentUser.currentRoleName,
+    village: myReg ? myReg.village : '',
+    status: '待审核',
+    createTime: new Date().toISOString()
+  };
+  
+  var apps = Storage.get('camp_applications', []);
+  apps.push(app);
+  Storage.set('camp_applications', apps);
+  
+  alert('申请已提交，等待村主任审核');
+  location.reload();
+}
+
+// ===== 村主任美食/露营地审核 =====
+function auditFood() {
+  var currentUser = Storage.get('current_user');
+  var myVillage = Storage.get('villages', []).find(function(v) { return v.chief && v.chief.name === currentUser.currentRoleName; });
+  
+  var apps = Storage.get('food_applications', []).filter(function(f) { 
+    return f.village === myVillage.name && f.status === '待审核'; 
+  });
+  
+  var html = '<div style="padding:16px;">' +
+    '<h3 style="margin-bottom:16px;">🍜 美食审核 (' + apps.length + ')</h3>';
+  
+  if (apps.length === 0) {
+    html += '<div style="text-align:center;padding:40px;color:#999;">暂无待审核申请</div>';
+  } else {
+    apps.forEach(function(f) {
+      html += '<div style="background:white;padding:12px;border-radius:8px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">' +
+        '<div style="font-weight:bold;">' + f.name + '</div>' +
+        '<div style="color:#999;font-size:11px;margin-top:4px;">申请人: ' + f.sellerName + '</div>' +
+        '<div style="display:flex;gap:10px;margin-top:10px;">' +
+          '<button onclick="approveFood(' + f.id + ')" style="flex:1;padding:8px;background:#4CAF50;color:white;border:none;border-radius:4px;">通过</button>' +
+          '<button onclick="rejectFood(' + f.id + ')" style="flex:1;padding:8px;background:#F44336;color:white;border:none;border-radius:4px;">拒绝</button>' +
+        '</div>' +
+      '</div>';
+    });
+  }
+  html += '</div>';
+  
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;overflow:auto;';
+  modal.innerHTML = '<div style="background:white;min-height:100%;">' + html + '<button onclick="this.parentElement.parentElement.remove()" style="position:fixed;top:10px;right:10px;width:40px;height:40px;border-radius:50%;border:none;background:#f5f5f5;font-size:20px;">×</button></div>';
+  modal.className = 'modal';
+  document.body.appendChild(modal);
+}
+
+function approveFood(id) {
+  var apps = Storage.get('food_applications', []);
+  var app = apps.find(function(f) { return f.id === id; });
+  if (app) {
+    app.status = '已通过';
+    app.approveTime = new Date().toISOString();
+    Storage.set('food_applications', apps);
+    
+    var foods = Storage.get('foods', []);
+    foods.push({
+      id: app.id,
+      name: app.name,
+      sellerId: app.sellerId,
+      sellerName: app.sellerName,
+      village: app.village,
+      status: '展示中'
+    });
+    Storage.set('foods', foods);
+    
+    alert('已通过');
+    location.reload();
+  }
+}
+
+function rejectFood(id) {
+  var apps = Storage.get('food_applications', []);
+  var app = apps.find(function(f) { return f.id === id; });
+  if (app) {
+    app.status = '已拒绝';
+    app.rejectTime = new Date().toISOString();
+    Storage.set('food_applications', apps);
+    alert('已拒绝');
+    location.reload();
+  }
+}
+
+function auditCamps() {
+  var currentUser = Storage.get('current_user');
+  var myVillage = Storage.get('villages', []).find(function(v) { return v.chief && v.chief.name === currentUser.currentRoleName; });
+  
+  var apps = Storage.get('camp_applications', []).filter(function(c) { 
+    return c.village === myVillage.name && c.status === '待审核'; 
+  });
+  
+  var html = '<div style="padding:16px;">' +
+    '<h3 style="margin-bottom:16px;">🏕️ 露营地审核 (' + apps.length + ')</h3>';
+  
+  if (apps.length === 0) {
+    html += '<div style="text-align:center;padding:40px;color:#999;">暂无待审核申请</div>';
+  } else {
+    apps.forEach(function(c) {
+      html += '<div style="background:white;padding:12px;border-radius:8px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">' +
+        '<div style="font-weight:bold;">' + c.name + '</div>' +
+        '<div style="color:#999;font-size:11px;margin-top:4px;">申请人: ' + c.sellerName + '</div>' +
+        '<div style="display:flex;gap:10px;margin-top:10px;">' +
+          '<button onclick="approveCamp(' + c.id + ')" style="flex:1;padding:8px;background:#4CAF50;color:white;border:none;border-radius:4px;">通过</button>' +
+          '<button onclick="rejectCamp(' + c.id + ')" style="flex:1;padding:8px;background:#F44336;color:white;border:none;border-radius:4px;">拒绝</button>' +
+        '</div>' +
+      '</div>';
+    });
+  }
+  html += '</div>';
+  
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;overflow:auto;';
+  modal.innerHTML = '<div style="background:white;min-height:100%;">' + html + '<button onclick="this.parentElement.parentElement.remove()" style="position:fixed;top:10px;right:10px;width:40px;height:40px;border-radius:50%;border:none;background:#f5f5f5;font-size:20px;">×</button></div>';
+  modal.className = 'modal';
+  document.body.appendChild(modal);
+}
+
+function approveCamp(id) {
+  var apps = Storage.get('camp_applications', []);
+  var app = apps.find(function(c) { return c.id === id; });
+  if (app) {
+    app.status = '已通过';
+    app.approveTime = new Date().toISOString();
+    Storage.set('camp_applications', apps);
+    
+    var camps = Storage.get('camps', []);
+    camps.push({
+      id: app.id,
+      name: app.name,
+      sellerId: app.sellerId,
+      sellerName: app.sellerName,
+      village: app.village,
+      status: '开放中'
+    });
+    Storage.set('camps', camps);
+    
+    alert('已通过');
+    location.reload();
+  }
+}
+
+function rejectCamp(id) {
+  var apps = Storage.get('camp_applications', []);
+  var app = apps.find(function(c) { return c.id === id; });
+  if (app) {
+    app.status = '已拒绝';
+    app.rejectTime = new Date().toISOString();
+    Storage.set('camp_applications', apps);
+    alert('已拒绝');
+    location.reload();
+  }
+}
 </script>
 </body>
 </html>
