@@ -609,9 +609,9 @@ function logout() {
       const name = document.getElementById('name').value.trim(), phone = document.getElementById('phone').value.trim()
       const shop = document.getElementById('shop').value.trim()
       if (!name || !phone || !shop) { toast('请填写必填项'); return }
-      const users = Storage.get('registered_users', [])
+      const users = Storage.get('registrations', [])
       users.unshift({ role: '超市老板', name, phone, shop, address: document.getElementById('address').value, biz: document.getElementById('biz').value, time: Date.now() })
-      Storage.set('registered_users', users)
+      Storage.set('registrations', users)
       toast('注册成功！'); setTimeout(() => location.href = 'index.html', 1500)
     }
   </script>
