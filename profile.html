@@ -930,7 +930,7 @@ function applyProduct() {
     stock: parseInt(stock),
     sellerId: currentUser.account,
     sellerName: currentUser.currentRoleName,
-    village: myReg ? myReg.village : '',
+    village: (currentUser.currentRole && currentUser.currentRole.village) ? currentUser.currentRole.village : (myReg ? myReg.village : ''),
     status: '待审核',
     createTime: new Date().toISOString()
   };
