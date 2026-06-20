@@ -600,9 +600,9 @@ function logout() {
     function submit() {
       const name = document.getElementById('name').value.trim(), phone = document.getElementById('phone').value.trim(), firm = document.getElementById('firm').value.trim()
       if (!name || !phone || !firm) { toast('请填写必填项'); return }
-      const users = Storage.get('registered_users', [])
+      const users = Storage.get('registrations', [])
       users.unshift({ role: '律师事务所', name, phone, firm, license: document.getElementById('license').value, time: Date.now() })
-      Storage.set('registered_users', users)
+      Storage.set('registrations', users)
       toast('注册成功！'); setTimeout(() => location.href = 'index.html', 1500)
     }
   </script>
