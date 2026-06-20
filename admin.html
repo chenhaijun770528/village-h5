@@ -297,6 +297,7 @@ function showLogin() {
     '</div>' +
     '<button class="btn-admin" onclick="adminLogin()">登录</button>' +
     '<div style="text-align:center;font-size:12px;color:#999;margin-top:12px;">' + (ADMIN_ACCOUNT === 'admin' && ADMIN_PASSWORD === 'admin123' ? '默认账号：admin / admin123' : '账号密码已修改') + '</div>' +
+    '<button onclick="resetAdminAccount()" style="width:100%;margin-top:8px;padding:8px;background:#fff3e0;color:#e65100;border:1px solid #ffcc80;border-radius:8px;font-size:12px;cursor:pointer;">忘记密码？重置为默认账号</button>' +
     '</div>';
 }
 
@@ -342,6 +343,13 @@ function showChangeAdmin() {
 function closeChangeAdmin() {
   var modal = document.getElementById('changeAdminModal');
   if (modal) modal.remove();
+}
+
+function resetAdminAccount() {
+  if (!confirm('确定重置为默认账号？\n账号：admin\n密码：admin123')) return;
+  localStorage.removeItem('village_admin_account');
+  localStorage.removeItem('village_admin_password');
+  location.reload();
 }
 
 function saveAdminAccount() {
