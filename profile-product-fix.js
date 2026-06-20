@@ -19,7 +19,7 @@ window.applyProduct = function(editId) {
       for (var k = 0; k < editData.images.length; k++) _prodImages.push(editData.images[k]);
     }
   }
-  var currentUser = Storage.get('current_user', null);
+  var currentUser = Storage.get('user', null);
   if (!currentUser) { alert('请先登录'); return; }
   var myReg = null;
   var regs = Storage.get('registrations', []);
@@ -224,7 +224,7 @@ window.applyProduct = function(editId) {
 
 // ===== 覆盖 showProductApps（加编辑/删除按钮）=====
 window.showProductApps = function() {
-  var currentUser = Storage.get('current_user', null);
+  var currentUser = Storage.get('user', null);
   if (!currentUser) { alert('请先登录'); return; }
   var apps = [];
   var allApps = Storage.get('product_applications', []);
