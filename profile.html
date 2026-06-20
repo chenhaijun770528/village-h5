@@ -300,40 +300,6 @@
       'massage': { icon: '💆', name: '按摩技师', color: '#E91E63' }
     };
 
-
-    // 数据迁移：防止更新后数据丢失
-    function migrateData() {
-      try {
-        var old = localStorage.getItem('registered_users');
-        if (old) {
-          var arr = JSON.parse(old);
-          if (Array.isArray(arr) && arr.length > 0) {
-            var cur = Storage.get('registrations', []);
-            arr.forEach(function(item) {
-              if (!cur.find(function(c) { return c.id === item.id; })) {
-                cur.push(item);
-              }
-            });
-            Storage.set('registrations', cur);
-          }
-        }
-      } catch(e) {}
-      try {
-        var old2 = localStorage.getItem('village_registrations');
-        if (old2) {
-          var arr2 = JSON.parse(old2);
-          if (Array.isArray(arr2) && arr2.length > 0) {
-            var cur2 = Storage.get('registrations', []);
-            arr2.forEach(function(item) {
-              if (!cur2.find(function(c) { return c.id === item.id; })) {
-                cur2.push(item);
-              }
-            });
-            Storage.set('registrations', cur2);
-          }
-        }
-      } catch(e) {}
-    }
     function toast(msg) {
       var el = document.createElement('div');
       el.className = 'toast';
@@ -1344,5 +1310,6 @@ function rejectCamp(id) {
   }
 }
 </script>
+  <script src="profile-product-fix.js"></script>
 </body>
 </html>
