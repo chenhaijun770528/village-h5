@@ -417,7 +417,7 @@ function renderPage() {
             '</div>';
         } else {
           html += '<div class="village-panel">' +
-            '<div class="village-panel-title">🏘️ 我的村庄���' + myVillageName + '」</div>' +
+            '<div class="village-panel-title">🏘️ 我的村庄���' + myVillage.name + '」</div>' +
             '<div style="font-size:13px;color:#666;margin-bottom:12px;">' +
             '📍 ' + (myVillage.province || '') + ' ' + (myVillage.city || '') + '<br>' +
             '📞 村长：' + (myVillage.chief ? myVillage.chief.name : '未知') + ' ' + (myVillage.chief && myVillage.chief.phone ? myVillage.chief.phone : '') + '<br>' +
@@ -479,13 +479,13 @@ function renderPage() {
       // ===== 村主任：产品审核管理 =====
       if (currentUser.currentRole === 'township') {
         var pendingProducts = Storage.get('product_applications', []).filter(function(p) { 
-          return p.village === myVillageName && p.status === '待审核'; 
+          return p.village === myVillage.name && p.status === '待审核'; 
         });
         var pendingFood = Storage.get('food_applications', []).filter(function(f) { 
-          return f.village === myVillageName && f.status === '待审核'; 
+          return f.village === myVillage.name && f.status === '待审核'; 
         });
         var pendingCamps = Storage.get('camp_applications', []).filter(function(camp) { 
-          return camp.village === myVillageName && camp.status === '待审核'; 
+          return camp.village === myVillage.name && camp.status === '待审核'; 
         });
         
         var totalPending = pendingProducts.length + pendingFood.length + pendingCamps.length;
@@ -1004,17 +1004,17 @@ function showMyOrders() {
 function auditProducts() {
   var currentUser = Storage.get('user');
   // 优先从登录态读取村庄名称
-  var myVillageName = '';
+  var _myVillageName = '';
   if (currentUser.currentRole && currentUser.currentRole.village) {
-    myVillageName = currentUser.currentRole.village;
+    myVillage.name = currentUser.currentRole.village;
   } else {
     // 兼容旧逻辑
     var myVillage = Storage.get('villages', []).find(function(v) { return v.chief && v.chief.name === currentUser.currentRoleName; });
-    if (myVillage) myVillageName = myVillageName;
+    if (myVillage) myVillage.name = myVillage.name;
   }
   
   var apps = Storage.get('product_applications', []).filter(function(p) { 
-    return p.village === myVillageName && p.status === '待审核'; 
+    return p.village === myVillage.name && p.status === '待审核'; 
   });
   
   var html = '<div style="padding:16px;">' +
@@ -1208,7 +1208,7 @@ function auditFood() {
   var myVillage = Storage.get('villages', []).find(function(v) { return v.chief && v.chief.name === currentUser.currentRoleName; });
   
   var apps = Storage.get('food_applications', []).filter(function(f) { 
-    return f.village === myVillageName && f.status === '待审核'; 
+    return f.village === myVillage.name && f.status === '待审核'; 
   });
   
   var html = '<div style="padding:16px;">' +
@@ -1278,7 +1278,7 @@ function auditCamps() {
   var myVillage = Storage.get('villages', []).find(function(v) { return v.chief && v.chief.name === currentUser.currentRoleName; });
   
   var apps = Storage.get('camp_applications', []).filter(function(c) { 
-    return c.village === myVillageName && c.status === '待审核'; 
+    return c.village === myVillage.name && c.status === '待审核'; 
   });
   
   var html = '<div style="padding:16px;">' +
@@ -1980,7 +1980,7 @@ window.auditProducts = function() {
   var apps = [];
   var allApps = Storage.get('product_applications', []);
   for (var j = 0; j < allApps.length; j++) {
-    if (allApps[j].village === myVillageName && allApps[j].status === '待审核') apps.push(allApps[j]);
+    if (allApps[j].village === myVillage.name && allApps[j].status === '待审核') apps.push(allApps[j]);
   }
   // 渲染审核弹窗（复用原有逻辑，用DOM创建）
   var overlay = document.createElement('div');
@@ -2051,7 +2051,7 @@ window.auditFoods = function() {
   var apps = [];
   var allApps = Storage.get('food_applications', []);
   for (var j = 0; j < allApps.length; j++) {
-    if (allApps[j].village === myVillageName && allApps[j].status === '待审核') apps.push(allApps[j]);
+    if (allApps[j].village === myVillage.name && allApps[j].status === '待审核') apps.push(allApps[j]);
   }
   var overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;overflow:auto;';
@@ -2121,7 +2121,7 @@ window.auditCamps = function() {
   var apps = [];
   var allApps = Storage.get('camp_applications', []);
   for (var j = 0; j < allApps.length; j++) {
-    if (allApps[j].village === myVillageName && allApps[j].status === '待审核') apps.push(allApps[j]);
+    if (allApps[j].village === myVillage.name && allApps[j].status === '待审核') apps.push(allApps[j]);
   }
   var overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;overflow:auto;';
