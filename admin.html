@@ -225,28 +225,7 @@ body {
     <div id="panelAnnounce" class="hidden"></div>
 
     <!-- 公告编辑弹窗 -->
-    <div id="announceModal" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;">
-      <div style="background:white;border-radius:12px;padding:20px;width:92%;max-width:420px;max-height:90vh;overflow-y:auto;">
-        <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:16px;" id="annFormTitle">📢 发布公告</div>
-        <input type="hidden" id="annEditId">
-        <div class="form-group">
-          <label class="form-label">公告标题 <span style="color:#F44336;">*</span></label>
-          <input class="form-input" id="annTitle" placeholder="请输入公告标题" maxlength="50">
-        </div>
-        <div class="form-group">
-          <label class="form-label">公告内容 <span style="color:#F44336;">*</span></label>
-          <textarea class="form-input" id="annContent" rows="5" placeholder="请输入公告内容" style="resize:vertical;min-height:100px;"></textarea>
-        </div>
-        <div class="form-group" style="display:flex;align-items:center;gap:8px;">
-          <input type="checkbox" id="annPinned" style="width:16px;height:16px;">
-          <label for="annPinned" style="font-size:13px;color:#666;cursor:pointer;">置顶显示</label>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:16px;">
-          <button onclick="saveAnnouncement()" style="flex:1;padding:10px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-weight:bold;">保存</button>
-          <button onclick="closeAnnounceModal()" style="flex:1;padding:10px;background:#999;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;">取消</button>
-        </div>
-      </div>
-    </div>
+    
 
 <!-- 加载中 -->
   </div>
