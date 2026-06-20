@@ -392,7 +392,7 @@
             '</div>';
         } else {
           html += '<div class="village-panel">' +
-            '<div class="village-panel-title">🏘️ 我的村庄「' + myVillage.name + '」</div>' +
+            '<div class="village-panel-title">🏘️ 我的村庄���' + myVillage.name + '」</div>' +
             '<div style="font-size:13px;color:#666;margin-bottom:12px;">' +
             '📍 ' + (myVillage.province || '') + ' ' + (myVillage.city || '') + '<br>' +
             '📞 村长：' + (myVillage.chief ? myVillage.chief.name : '未知') + ' ' + (myVillage.chief && myVillage.chief.phone ? myVillage.chief.phone : '') + '<br>' +
@@ -882,6 +882,7 @@ function showProductApps() {
   var apps = Storage.get('product_applications', []).filter(function(p) { 
     return p.sellerId === currentUser.account; 
   });
+  
   var html = '<div style="padding:16px;">' +
     '<h3 style="margin-bottom:16px;">🥬 我的农产品</h3>' +
     '<button onclick="applyProduct()" style="width:100%;padding:12px;background:#2E7D32;color:white;border:none;border-radius:8px;margin-bottom:16px;">+ 申请上架农产品</button>';
