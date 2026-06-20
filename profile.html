@@ -1017,18 +1017,20 @@ function showMyOrders() {
 // ===== 村主任审核函数 =====
 function auditProducts() {
   var currentUser = Storage.get('user');
-  // 优先从登录态读取村庄名称
-  var _myVillageName = '';
-  if (currentUser.currentRole && currentUser.currentRole.village) {
-    myVillage.name = currentUser.currentRole.village;
+  // 获取村主任的村庄名称（多策略）
+  var vname = '';
+  if (currentUser.currentRole && typeof currentUser.currentRole === 'object' && currentUser.currentRole.village) {
+    vname = currentUser.currentRole.village;
   } else {
-    // 兼容旧逻辑
-    var myVillage = Storage.get('villages', []).find(function(v) { return v.chief && v.chief.name === currentUser.currentRoleName; });
-    if (myVillage) myVillage.name = myVillage.name;
+    var villages = Storage.get('villages', []);
+    for (var vi = 0; vi < villages.length; vi++) {
+      if (villages[vi].chief && (villages[vi].chief.name === currentUser.currentRoleName || villages[vi].chief.name === currentUser.account || villages[vi].chief.phone === (currentUser.phone || ''))) { vname = villages[vi].name; break; }
+    }
   }
   
-  var apps = Storage.get('product_applications', []).filter(function(p) { 
-    return p.village === myVillage.name && p.status === '待审核'; 
+  var allApps = Storage.get('product_applications', []);
+  var apps = allApps.filter(function(p) { 
+    return p.status === '待审核' && (vname === '' || p.village === vname || p.village === ''); 
   });
   
   var html = '<div style="padding:16px;">' +
