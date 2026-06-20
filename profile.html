@@ -336,7 +336,7 @@
       if (currentUser.currentRole === 'township') {
         // 查找注册身份为"村民"且状态为"待审核"的
         for (var j = 0; j < regs.length; j++) {
-          if (regs[j].role === '村民' && regs[j].status === '待审核') {
+          if (regs[j].role === '村民' && regs[j].status === '待审核' && regs[j].village === myVillage.name) {
             pendingForMe.push(regs[j]);
           }
         }
