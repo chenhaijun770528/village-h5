@@ -211,6 +211,14 @@ body {
 
 /* 隐藏 */
 .hidden { display: none; }
+
+.drag-handle{cursor:grab;padding:0 6px;color:#999;font-size:16px;user-select:none;flex-shrink:0;}
+.drag-handle:active{cursor:grabbing;}
+.dragging{opacity:0.4;}
+.drag-over{border:2px dashed #2E7D32 !important;background:#f0f8f0 !important;}
+.sort-mode-btn{background:#2E7D32;color:white;border:none;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;margin-bottom:10px;}
+.sort-mode-btn.active{background:#1B5E20;}
+.sort-tip{font-size:12px;color:#999;margin-bottom:8px;}
 </style>
 </head>
 <body>
@@ -465,7 +473,9 @@ function loadVillageStats() {
     '<div class="stat-card"><div class="stat-value">' + totalCamps + '</div><div class="stat-label">露营总数</div></div>' +
     '</div>' +
 
-    '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:12px;">🏘️ 村庄列表</div>';
+    '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:4px;">🏘️ 村庄列表</div>';
+    '<button class="sort-mode-btn" onclick="setSortMode('villages')" id="sortBtnVillages">📌 拖拽排序</button>';
+    '<div class="sort-tip" id="sortTipVillages" style="display:none">💡 拖住卡片可上下移动</div>';
 
   if (villages.length === 0) {
     panel.innerHTML += '<div class="empty-state"><span class="empty-icon">🏘️</span><div>暂无村庄数据</div></div>';
@@ -533,7 +543,9 @@ function loadChiefApplications() {
     '<div class="stat-card"><div class="stat-value" style="color:#F44336;">' + rejectedCount + '</div><div class="stat-label">已拒绝</div></div>' +
     '<div class="stat-card"><div class="stat-value">' + apps.length + '</div><div class="stat-label">申请总数</div></div>' +
     '</div>' +
-    '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:12px;">👤 村长注册申请</div>';
+    '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:4px;">👤 村长注册申请</div>';
+    '<button class="sort-mode-btn" onclick="setSortMode('chiefs')" id="sortBtnChiefs">📌 拖拽排序</button>';
+    '<div class="sort-tip" id="sortTipChiefs" style="display:none">💡 拖住卡片可上下移动</div>';
 
   if (pending.length === 0) {
     panel.innerHTML += '<div class="empty-state"><span class="empty-icon">👤</span><div>暂无待审核的村长注册申请</div></div>';
@@ -704,7 +716,9 @@ function loadRoleApplications() {
     '<div class="stat-card"><div class="stat-value" style="color:#F44336;">' + rejected + '</div><div class="stat-label">已拒绝</div></div>' +
     '<div class="stat-card"><div class="stat-value">' + regs.length + '</div><div class="stat-label">注册总数</div></div>' +
     '</div>' +
-    '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:12px;">📋 所有角色注册审核</div>';
+    '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:4px;">📋 所有角色注册审核</div>';
+    '<button class="sort-mode-btn" onclick="setSortMode('roles')" id="sortBtnRoles">📌 拖拽排序</button>';
+    '<div class="sort-tip" id="sortTipRoles" style="display:none">💡 拖住卡片可上下移动</div>';
   if (pending.length === 0) {
     panel.innerHTML += '<div class="empty-state"><span class="empty-icon">📋</span><div>暂无待审核的注册申请</div></div>';
     return;
@@ -903,6 +917,28 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
+
+var _sortMode={villages:false,roles:false,chiefs:false};
+var _dragSrc=-1,_dragType='';
+function setSortMode(type){
+  _sortMode[type]=!_sortMode[type];
+  var show=document.getElementById('sortTip'+type.charAt(0).toUpperCase()+type.slice(1));
+  if(show) show.style.display=_sortMode[type]?'block':'none';
+  document.getElementById('sortBtn'+type.charAt(0).toUpperCase()+type.slice(1)).classList.toggle('active',_sortMode[type]);
+  renderAllPanels();
+}
+function makeDraggable(el,idx,type){
+  el.setAttribute('draggable',true);
+  el.addEventListener('dragstart',function(e){_dragSrc=idx;_dragType=type;el.classList.add('dragging');e.dataTransfer.effectAllowed='move';});
+  el.addEventListener('dragend',function(){el.classList.remove('dragging');document.querySelectorAll('.drag-over').forEach(function(x){x.classList.remove('drag-over');});});
+  el.addEventListener('dragover',function(e){e.preventDefault();if(_dragSrc!==idx){el.classList.add('drag-over');}});
+  el.addEventListener('dragleave',function(){el.classList.remove('drag-over');});
+  el.addEventListener('drop',function(e){e.preventDefault();el.classList.remove('drag-over');if(_dragSrc===idx)return;
+    if(type==='villages'){var v=Storage.get('villages',[]);var t=v.splice(_dragSrc,1)[0];v.splice(idx,0,t);Storage.set('villages',v);}
+    else if(type==='chiefs'){var a=Storage.get('township_applications',[]);var ta=a.splice(_dragSrc,1)[0];a.splice(idx,0,ta);Storage.set('township_applications',a);}
+    _dragSrc=-1;renderAllPanels();});
+}
+function renderAllPanels(){loadVillageStats();loadChiefApplications();loadRoleApplications();}
 </script>
 </body>
 </html>
