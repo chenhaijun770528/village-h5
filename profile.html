@@ -378,7 +378,7 @@
         
         // 过滤pendingForMe，只保留申请加入本村的
         if (myVillage) {
-          pendingForMe = pendingForMe.filter(function(r) { return r.village === myVillageName; });
+          pendingForMe = pendingForMe.filter(function(r) { return r.village === myVillage.name; });
         }
         // 没有村庄 → 创建入口
         if (!myVillage) {
