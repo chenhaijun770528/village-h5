@@ -221,7 +221,34 @@ body {
   </div>
 
   <div class="container" id="mainContainer">
-    <!-- 加载中 -->
+    <!-- announcements_panel.html - 公告管理面板 + 弹窗 HTML -->
+    <div id="panelAnnounce" class="hidden"></div>
+
+    <!-- 公告编辑弹窗 -->
+    <div id="announceModal" class="hidden" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;">
+      <div style="background:white;border-radius:12px;padding:20px;width:92%;max-width:420px;max-height:90vh;overflow-y:auto;">
+        <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:16px;" id="annFormTitle">📢 发布公告</div>
+        <input type="hidden" id="annEditId">
+        <div class="form-group">
+          <label class="form-label">公告标题 <span style="color:#F44336;">*</span></label>
+          <input class="form-input" id="annTitle" placeholder="请输入公告标题" maxlength="50">
+        </div>
+        <div class="form-group">
+          <label class="form-label">公告内容 <span style="color:#F44336;">*</span></label>
+          <textarea class="form-input" id="annContent" rows="5" placeholder="请输入公告内容" style="resize:vertical;min-height:100px;"></textarea>
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="annPinned" style="width:16px;height:16px;">
+          <label for="annPinned" style="font-size:13px;color:#666;cursor:pointer;">置顶显示</label>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px;">
+          <button onclick="saveAnnouncement()" style="flex:1;padding:10px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-weight:bold;">保存</button>
+          <button onclick="closeAnnounceModal()" style="flex:1;padding:10px;background:#999;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;">取消</button>
+        </div>
+      </div>
+    </div>
+
+<!-- 加载中 -->
   </div>
 
   <script>// village-h5 数据存储
@@ -383,11 +410,13 @@ function showAdminPanel() {
     '<div class="tab-nav-item active" id="tabVillages" onclick="switchTab(\'villages\')">🏘️ 村庄列表</div>' +
     '<div class="tab-nav-item" id="tabChiefApps" onclick="switchTab(\'chiefApps\')">👤 村长注册</div>' +
     '<div class="tab-nav-item" id="tabRoleApps" onclick="switchTab(\'roleApps\')">📋 角色审核</div>' +
+    <div class="tab-nav-item" id="tabAnnounce" onclick="switchTab(\'announce\')">📢 公告管理</div>' +
     '</div>' +
 
     '<div id="panelVillages"></div>' +
     '<div id="panelChiefApps" class="hidden"></div>' +
     '<div id="panelRoleApps" class="hidden"></div>';
+    <div id="panelAnnounce" class="hidden"></div>
 
   loadVillageStats();
 }
@@ -419,6 +448,16 @@ function switchTab(tab) {
     document.getElementById('panelChiefApps').classList.add('hidden');
     document.getElementById('panelRoleApps').classList.remove('hidden');
     loadRoleApplications();
+    // 公告管理
+    if (tab === 'announce') {
+      document.getElementById('tabAnnounce').classList.add('active');
+      document.getElementById('panelVillages').classList.add('hidden');
+      document.getElementById('panelChiefApps').classList.add('hidden');
+      document.getElementById('panelRoleApps').classList.add('hidden');
+      document.getElementById('panelAnnounce').classList.remove('hidden');
+      loadAnnouncementsAdmin();
+    }
+
   }
 }
 
@@ -897,6 +936,144 @@ if (document.readyState === 'loading') {
           b.style.borderColor = '#37474F';
         }
       }
+    }
+
+
+// announcements_functions.js - 公告管理 JS 函数
+// 通过 Node.js 插入到 admin.html 的 <script> 末尾前
+
+    // ===== 公告管理 =====
+    function loadAnnouncementsAdmin() {
+      var panel = document.getElementById('panelAnnounce');
+      var announcements = Storage.get('announcements', []);
+      panel.innerHTML = '';
+      // 发布按钮
+      var btnHtml = '<button onclick="openAnnounceModal()" style="width:100%;padding:10px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin-bottom:16px;font-weight:bold;">＋ 发布公告</button>';
+      panel.innerHTML = btnHtml;
+      panel.innerHTML += '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:12px;">📢 公告列表（' + announcements.length + ' 条）</div>';
+      if (announcements.length === 0) {
+        panel.innerHTML += '<div class="empty-state"><span class="empty-icon">📢</span><div>暂无公告，点击上方按钮发布</div></div>';
+        return;
+      }
+      // 置顶排最前
+      announcements.sort(function(a, b) {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return (b.time || 0) - (a.time || 0);
+      });
+      for (var ai = 0; ai < announcements.length; ai++) {
+        var ann = announcements[ai];
+        var timeStr = ann.time ? new Date(ann.time).toLocaleString('zh-CN') : '未知';
+        var pinnedStr = ann.pinned ? ' 🔝置顶' : '';
+        var contentPrev = (ann.content || '').substring(0, 30);
+        if ((ann.content || '').length > 30) contentPrev += '...';
+        var card = document.createElement('div');
+        card.className = 'app-card';
+        card.style.borderLeftColor = '#FF9800';
+        card.innerHTML =
+          '<div class="app-card-name">' + escapeHtml(ann.title) + pinnedStr + '</div>' +
+          '<div class="app-card-info">发布时间：' + timeStr + ' | ' + contentPrev + '</div>' +
+          '<div class="app-card-actions">' +
+          '<button class="btn-approve" onclick="editAnnouncement(\'' + ann.id + '\')">✏️ 编辑</button>' +
+          '<button class="btn-reject" onclick="deleteAnnouncement(\'' + ann.id + '\')">🗑️ 删除</button>' +
+          '<button onclick="togglePinAnnouncement(\'' + ann.id + '\')" style="flex:1;padding:5px 14px;border-radius:4px;font-size:12px;cursor:pointer;border:1px solid #e0e0e0;background:white;font-weight:bold;">' + (ann.pinned ? '取消置顶' : '置顶') + '</button>' +
+          '</div>';
+        panel.appendChild(card);
+      }
+    }
+
+    function escapeHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function openAnnounceModal(annId) {
+      document.getElementById('annFormTitle').textContent = annId ? '✏️ 编辑公告' : '📢 发布公告';
+      document.getElementById('annEditId').value = annId || '';
+      document.getElementById('annTitle').value = '';
+      document.getElementById('annContent').value = '';
+      document.getElementById('annPinned').checked = false;
+      if (annId) {
+        var announcements = Storage.get('announcements', []);
+        for (var i = 0; i < announcements.length; i++) {
+          if (announcements[i].id === annId) {
+            document.getElementById('annTitle').value = announcements[i].title || '';
+            document.getElementById('annContent').value = announcements[i].content || '';
+            document.getElementById('annPinned').checked = !!announcements[i].pinned;
+            break;
+          }
+        }
+      }
+      document.getElementById('announceModal').classList.remove('hidden');
+      document.getElementById('announceModal').style.display = 'flex';
+    }
+
+    function closeAnnounceModal() {
+      document.getElementById('announceModal').classList.add('hidden');
+      document.getElementById('announceModal').style.display = 'none';
+    }
+
+    function saveAnnouncement() {
+      var annId = document.getElementById('annEditId').value;
+      var title = document.getElementById('annTitle').value.trim();
+      var content = document.getElementById('annContent').value.trim();
+      var pinned = document.getElementById('annPinned').checked;
+      if (!title) { toast('请输入公告标题'); return; }
+      if (!content) { toast('请输入公告内容'); return; }
+      var announcements = Storage.get('announcements', []);
+      if (annId) {
+        for (var i = 0; i < announcements.length; i++) {
+          if (announcements[i].id === annId) {
+            announcements[i].title = title;
+            announcements[i].content = content;
+            announcements[i].pinned = pinned;
+            announcements[i].updateTime = Date.now();
+            break;
+          }
+        }
+        toast('公告已更新');
+      } else {
+        announcements.unshift({
+          id: genId(),
+          title: title,
+          content: content,
+          pinned: pinned,
+          time: Date.now(),
+          updateTime: null
+        });
+        toast('公告已发布');
+      }
+      Storage.set('announcements', announcements);
+      closeAnnounceModal();
+      loadAnnouncementsAdmin();
+    }
+
+    function editAnnouncement(annId) { openAnnounceModal(annId); }
+
+    function deleteAnnouncement(annId) {
+      if (!confirm('确定删除此公告？')) return;
+      var announcements = Storage.get('announcements', []);
+      var newArr = [];
+      for (var i = 0; i < announcements.length; i++) {
+        if (announcements[i].id !== annId) newArr.push(announcements[i]);
+      }
+      Storage.set('announcements', newArr);
+      toast('公告已删除');
+      loadAnnouncementsAdmin();
+    }
+
+    function togglePinAnnouncement(annId) {
+      var announcements = Storage.get('announcements', []);
+      for (var i = 0; i < announcements.length; i++) {
+        if (announcements[i].id === annId) {
+          announcements[i].pinned = !announcements[i].pinned;
+          break;
+        }
+      }
+      Storage.set('announcements', announcements);
+      toast('置顶状态已更新');
+      loadAnnouncementsAdmin();
     }
 
 </script>
