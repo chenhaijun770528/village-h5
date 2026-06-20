@@ -286,6 +286,16 @@
       location.href = 'login.html';
     }
 
+    // 兼容处理：如果 currentRole 是对象，转为字符串
+    if (currentUser && currentUser.currentRole && typeof currentUser.currentRole === 'object') {
+      var roleMap = { 'head': 'township', 'villager': 'villager', 'tourist': 'tourist' };
+      var newRole = roleMap[currentUser.currentRole.role] || currentUser.currentRole.role || 'none';
+      currentUser.currentRoleName = currentUser.currentRole.roleName || currentUser.currentRoleName || '';
+      currentUser.currentRole = newRole;
+      Storage.set('user', currentUser);
+      console.log('[兼容] currentRole 已从对象转为字符串:', newRole);
+    }
+
     var ROLES_MAP = {
       'township': { icon: '👔', name: '村主任', color: '#2E7D32' },
       'villager': { icon: '🏠', name: '村民', color: '#4CAF50' },
