@@ -334,9 +334,9 @@
       // 查找待我审核的（村主任角色）
       var pendingForMe = [];
       if (currentUser.currentRole === 'township') {
-        // 查找注册身份为"村民"且状态为"待审核"的
+        // 查找注册身份为"村民"且状态为"待审核"的（先收集所有，后面再按村庄过滤）
         for (var j = 0; j < regs.length; j++) {
-          if (regs[j].role === '村民' && regs[j].status === '待审核' && regs[j].village === myVillage.name) {
+          if (regs[j].role === '村民' && regs[j].status === '待审核') {
             pendingForMe.push(regs[j]);
           }
         }
@@ -374,6 +374,11 @@
             myVillage = villages[vi];
             break;
           }
+        }
+        
+        // 过滤pendingForMe，只保留申请加入本村的
+        if (myVillage) {
+          pendingForMe = pendingForMe.filter(function(r) { return r.village === myVillage.name; });
         }
         // 没有村庄 → 创建入口
         if (!myVillage) {
