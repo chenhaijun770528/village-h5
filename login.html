@@ -134,6 +134,7 @@
       </div>
       <div class="error-msg" id="errorMsg"></div>
       <button class="btn-login" onclick="doLogin()">登 录</button>
+      <button style="margin-top:10px;background:#FF9800;color:#fff;border:none;padding:8px 20px;border-radius:20px;font-size:13px;" onclick="recoverAccounts()">账号丢失？点击恢复</button>
       <div class="divider">没有账号？</div>
       <button class="btn-register" onclick="goRegister()">立即注册</button>
     </div>
@@ -267,6 +268,40 @@
         location.href = 'index.html';
       }
     })();
-  </script>
+  
+    // 一键恢复：从 registrations 重建 accounts（解决 key 变更导致账号丢失）
+    function recoverAccounts() {
+      var regs = Storage.get('registrations', []);
+      var accounts = Storage.get('accounts', []);
+      var restored = 0;
+      for (var i = 0; i < regs.length; i++) {
+        var r = regs[i];
+        if (!r.account || !r.password) continue;
+        // 检查是否已存在
+        var exists = false;
+        for (var j = 0; j < accounts.length; j++) {
+          if (accounts[j].account === r.account) { exists = true; break; }
+        }
+        if (!exists) {
+          var acc = {
+            account: r.account,
+            password: r.password,
+            id: r.id || r.account,
+            name: r.name || r.account,
+            currentRole: r.role ? {role: r.role === '村主任'?'head':(r.role==='村民'?'villager':'tourist'), roleName: r.role, village: r.village||''} : null,
+            status: r.status || 'active',
+            phone: r.phone || '',
+            village: r.village || ''
+          };
+          accounts.push(acc);
+          restored++;
+        }
+      }
+      Storage.set('accounts', accounts);
+      alert('恢复完成！共恢复 ' + restored + ' 个账号。请重新输入账号密码登录。');
+      location.reload();
+    }
+
+</script>
 </body>
 </html>
