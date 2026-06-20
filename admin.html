@@ -851,8 +851,7 @@ function loadAnnouncementsAdmin() {
         for (var vj = 0; vj < villages.length; vj++) { if (villages[vj].id === ann.villageId) return villages[vj].name; }
         return '未知';
       })() : '🌐 全站';
-      var secHtml = (ann.content || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/
-/g, '<br>');
+      var secHtml = (ann.content || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
       html += '<div style="' + pinnedStyle + 'border-radius:8px;padding:12px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">' +
         '<div style="font-weight:bold;color:#333;margin-bottom:4px;">' + pinnedBadge + ' ' + (ann.title || '') + '</div>' +
         '<div style="color:#666;font-size:13px;margin-bottom:6px;line-height:1.4;">' + secHtml + '</div>' +
