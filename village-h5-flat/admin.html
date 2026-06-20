@@ -444,9 +444,38 @@ function loadVillageStats() {
     '<div class="stat-card"><div class="stat-value">' + totalCamps + '</div><div class="stat-label">露营总数</div></div>' +
     '</div>' +
 
-    '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:12px;">🏘️ 村庄列表</div>';
+    '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:12px;">🏘️ 村庄列表</div>
+    <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+      <span style="font-size:12px;color:#999;line-height:28px;">排序：</span>
+      <button onclick="sortVillages('name')" id="sortVName" style="padding:4px 10px;border:1px solid #e0e0e0;background:white;border-radius:4px;font-size:12px;cursor:pointer;">按名称</button>
+      <button onclick="sortVillages('population')" id="sortVPop" style="padding:4px 10px;border:1px solid #e0e0e0;background:white;border-radius:4px;font-size:12px;cursor:pointer;">按人口</button>
+      <button onclick="sortVillages('area')" id="sortVArea" style="padding:4px 10px;border:1px solid #e0e0e0;background:white;border-radius:4px;font-size:12px;cursor:pointer;">按面积</button>
+      <button onclick="sortVillages('time')" id="sortVTime" style="padding:4px 10px;border:1px solid #e0e0e0;background:white;border-radius:4px;font-size:12px;cursor:pointer;">按创建时间</button>
+      <button onclick="sortVillages('products')" id="sortVProducts" style="padding:4px 10px;border:1px solid #e0e0e0;background:white;border-radius:4px;font-size:12px;cursor:pointer;">按农产品数</button>
+    </div>
+';
 
-  if (villages.length === 0) {
+    // 排序逻辑
+  var vSortField = sessionStorage.getItem('village_sort_villages') || 'name';
+  var vSortDir = sessionStorage.getItem('village_sort_villages_dir') || 'asc';
+  villages.sort(function(a, b) {
+    var va, vb;
+    if (vSortField === 'name') { va = (a.name || ''); vb = (b.name || ''); return vSortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va); }
+    if (vSortField === 'population') { va = parseInt(a.population) || 0; vb = parseInt(b.population) || 0; return vSortDir === 'asc' ? va - vb : vb - va; }
+    if (vSortField === 'area') { va = parseInt(a.totalArea) || 0; vb = parseInt(b.totalArea) || 0; return vSortDir === 'asc' ? va - vb : vb - va; }
+    if (vSortField === 'time') { va = a.createTime || 0; vb = b.createTime || 0; return vSortDir === 'asc' ? va - vb : vb - va; }
+    if (vSortField === 'products') {
+      var pcA = 0, pcB = 0;
+      for (var pi = 0; pi < products.length; pi++) { if (products[pi].villageId === a.id) pcA++; }
+      for (var pj = 0; pj < products.length; pj++) { if (products[pj].villageId === b.id) pcB++; }
+      return vSortDir === 'asc' ? pcA - pcB : pcB - pcA;
+    }
+    return 0;
+  });
+  // 更新排序按钮样式
+  updateSortBtnStyle('sortV', vSortField, vSortDir);
+
+if (villages.length === 0) {
     panel.innerHTML += '<div class="empty-state"><span class="empty-icon">🏘️</span><div>暂无村庄数据</div></div>';
     return;
   }
@@ -681,8 +710,31 @@ function loadRoleApplications() {
     '<div class="stat-card"><div class="stat-value" style="color:#F44336;">' + rejected + '</div><div class="stat-label">已拒绝</div></div>' +
     '<div class="stat-card"><div class="stat-value">' + regs.length + '</div><div class="stat-label">注册总数</div></div>' +
     '</div>' +
-    '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:12px;">📋 所有角色注册审核</div>';
-  if (pending.length === 0) {
+    '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:12px;">📋 所有角色注册审核</div>
+    <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+      <span style="font-size:12px;color:#999;line-height:28px;">排序：</span>
+      <button onclick="sortRoles('time')" id="sortRTime" style="padding:4px 10px;border:1px solid #e0e0e0;background:white;border-radius:4px;font-size:12px;cursor:pointer;">按申请时间</button>
+      <button onclick="sortRoles('name')" id="sortRName" style="padding:4px 10px;border:1px solid #e0e0e0;background:white;border-radius:4px;font-size:12px;cursor:pointer;">按姓名</button>
+      <button onclick="sortRoles('role')" id="sortRRole" style="padding:4px 10px;border:1px solid #e0e0e0;background:white;border-radius:4px;font-size:12px;cursor:pointer;">按角色类型</button>
+      <button onclick="sortRoles('village')" id="sortRVillage" style="padding:4px 10px;border:1px solid #e0e0e0;background:white;border-radius:4px;font-size:12px;cursor:pointer;">按村庄</button>
+      <button onclick="sortRoles('status')" id="sortRStatus" style="padding:4px 10px;border:1px solid #e0e0e0;background:white;border-radius:4px;font-size:12px;cursor:pointer;">按状态</button>
+    </div>
+';
+    // 排序逻辑
+  var rSortField = sessionStorage.getItem('village_sort_roles') || 'time';
+  var rSortDir = sessionStorage.getItem('village_sort_roles_dir') || 'desc';
+  pending.sort(function(a, b) {
+    var va, vb;
+    if (rSortField === 'time') { va = a.applyTime || a.time || 0; vb = b.applyTime || b.time || 0; return rSortDir === 'asc' ? va - vb : vb - va; }
+    if (rSortField === 'name') { va = (a.name || ''); vb = (b.name || ''); return rSortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va); }
+    if (rSortField === 'role') { va = (a.role || ''); vb = (b.role || ''); return rSortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va); }
+    if (rSortField === 'village') { va = (a.village || ''); vb = (b.village || ''); return rSortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va); }
+    if (rSortField === 'status') { va = (a.status || ''); vb = (b.status || ''); return rSortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va); }
+    return 0;
+  });
+  updateSortBtnStyle('sortR', rSortField, rSortDir);
+
+if (pending.length === 0) {
     panel.innerHTML += '<div class="empty-state"><span class="empty-icon">📋</span><div>暂无待审核的注册申请</div></div>';
     return;
   }
@@ -801,6 +853,52 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
+
+    // ========= 排序功能 =========
+    function sortVillages(field) {
+      var currentDir = sessionStorage.getItem('village_sort_villages_dir') || 'asc';
+      var newDir = (sessionStorage.getItem('village_sort_villages') === field && currentDir === 'asc') ? 'desc' : 'asc';
+      sessionStorage.setItem('village_sort_villages', field);
+      sessionStorage.setItem('village_sort_villages_dir', newDir);
+      loadVillageStats();
+    }
+
+    function sortRoles(field) {
+      var currentDir = sessionStorage.getItem('village_sort_roles_dir') || 'desc';
+      var newDir = (sessionStorage.getItem('village_sort_roles') === field && currentDir === 'desc') ? 'asc' : 'desc';
+      sessionStorage.setItem('village_sort_roles', field);
+      sessionStorage.setItem('village_sort_roles_dir', newDir);
+      loadRoleApplications();
+    }
+
+    function updateSortBtnStyle(prefix, field, dir) {
+      var btnIds = [];
+      if (prefix === 'sortV') btnIds = ['sortVName','sortVPop','sortVArea','sortVTime','sortVProducts'];
+      if (prefix === 'sortR') btnIds = ['sortRTime','sortRName','sortRRole','sortRVillage','sortRStatus'];
+      for (var bi = 0; bi < btnIds.length; bi++) {
+        var btn = document.getElementById(btnIds[bi]);
+        if (btn) {
+          btn.style.background = 'white';
+          btn.style.color = '#333';
+          btn.style.borderColor = '#e0e0e0';
+        }
+      }
+      var fieldMap = {name:'Name',population:'Pop',area:'Area',time:'Time',products:'Products',role:'Role',village:'Village',status:'Status'};
+      // 简化：直接高亮当前排序按钮（通过 onclick 属性判断）
+      var arrows = dir === 'asc' ? ' ↑' : ' ↓';
+      // 高亮逻辑通过 CSS 内联实现
+      var allBtns = document.querySelectorAll('button[id^="' + prefix + '"]');
+      for (var bj = 0; bj < allBtns.length; bj++) {
+        var b = allBtns[bj];
+        var fn = b.getAttribute('onclick');
+        if (fn && fn.indexOf("'" + field + "'") !== -1) {
+          b.style.background = '#37474F';
+          b.style.color = 'white';
+          b.style.borderColor = '#37474F';
+        }
+      }
+    }
+
 </script>
 </body>
 </html>
