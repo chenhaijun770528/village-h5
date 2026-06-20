@@ -474,7 +474,7 @@ function loadVillageStats() {
     '</div>' +
 
     '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:4px;">🏘️ 村庄列表</div>';
-    '<button class="sort-mode-btn" onclick="setSortMode('villages')" id="sortBtnVillages">📌 拖拽排序</button>';
+    '<button class="sort-mode-btn" onclick="setSortMode(\'villages\')" id="sortBtnVillages">📌 拖拽排序</button>';
     '<div class="sort-tip" id="sortTipVillages" style="display:none">💡 拖住卡片可上下移动</div>';
 
   if (villages.length === 0) {
@@ -544,7 +544,7 @@ function loadChiefApplications() {
     '<div class="stat-card"><div class="stat-value">' + apps.length + '</div><div class="stat-label">申请总数</div></div>' +
     '</div>' +
     '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:4px;">👤 村长注册申请</div>';
-    '<button class="sort-mode-btn" onclick="setSortMode('chiefs')" id="sortBtnChiefs">📌 拖拽排序</button>';
+    '<button class="sort-mode-btn" onclick="setSortMode(\'chiefs\')" id="sortBtnChiefs">📌 拖拽排序</button>';
     '<div class="sort-tip" id="sortTipChiefs" style="display:none">💡 拖住卡片可上下移动</div>';
 
   if (pending.length === 0) {
@@ -717,7 +717,7 @@ function loadRoleApplications() {
     '<div class="stat-card"><div class="stat-value">' + regs.length + '</div><div class="stat-label">注册总数</div></div>' +
     '</div>' +
     '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:4px;">📋 所有角色注册审核</div>';
-    '<button class="sort-mode-btn" onclick="setSortMode('roles')" id="sortBtnRoles">📌 拖拽排序</button>';
+    '<button class="sort-mode-btn" onclick="setSortMode(\'roles\')" id="sortBtnRoles">📌 拖拽排序</button>';
     '<div class="sort-tip" id="sortTipRoles" style="display:none">💡 拖住卡片可上下移动</div>';
   if (pending.length === 0) {
     panel.innerHTML += '<div class="empty-state"><span class="empty-icon">📋</span><div>暂无待审核的注册申请</div></div>';
