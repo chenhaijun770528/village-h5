@@ -687,6 +687,31 @@ function rejectChief(appId) {
   toast('已拒绝该申请');
   loadChiefApplications();
 }
+// 删除村长注册申请
+function deleteChief(appId) {
+  if (!confirm("确定删除此村长注册申请？该操作不可恢复。")) return;
+  var apps = Storage.get("township_applications", []);
+  var app = null;
+  for (var i = 0; i < apps.length; i++) {
+    if (apps[i].id === appId) {
+      app = apps[i];
+      apps.splice(i, 1);
+      break;
+    }
+  }
+  Storage.set("township_applications", apps);
+  // 如果已通过且村庄已创建，也删除对应村庄
+  if (app && app.status === "已通过") {
+    var villages = Storage.get("villages", []);
+    var newVillages = [];
+    for (var vi = 0; vi < villages.length; vi++) {
+      if (villages[vi].id !== appId) newVillages.push(villages[vi]);
+    }
+    Storage.set("villages", newVillages);
+  }
+  toast("已删除村长注册申请" + (app && app.status === "已通过" ? "及关联村庄" : ""));
+  loadChiefApplications();
+}
 
 // ========== 删除村庄 ==========
 function deleteVillage(villageId) {
@@ -757,6 +782,7 @@ function loadRoleApplications() {
       <button onclick="sortRoles('role')" id="sortRRole" style="padding:4px 10px;border:1px solid #e0e0e0;background:white;border-radius:4px;font-size:12px;cursor:pointer;">按角色类型</button>
       <button onclick="sortRoles('village')" id="sortRVillage" style="padding:4px 10px;border:1px solid #e0e0e0;background:white;border-radius:4px;font-size:12px;cursor:pointer;">按村庄</button>
       <button onclick="sortRoles('status')" id="sortRStatus" style="padding:4px 10px;border:1px solid #e0e0e0;background:white;border-radius:4px;font-size:12px;cursor:pointer;">按状态</button>
+      <button class="btn-delete" onclick="deleteChief(\''\' + app.id + \''\')">🗑️ 删除</button>
     </div>
 ';
     // 排序逻辑
@@ -944,84 +970,80 @@ if (document.readyState === 'loading') {
 
     // ===== 公告管理 =====
     function loadAnnouncementsAdmin() {
-      var panel = document.getElementById('panelAnnounce');
-      var announcements = Storage.get('announcements', []);
-      panel.innerHTML = '';
-      // 发布按钮
-      var btnHtml = '<button onclick="openAnnounceModal()" style="width:100%;padding:10px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin-bottom:16px;font-weight:bold;">＋ 发布公告</button>';
-      panel.innerHTML = btnHtml;
-      panel.innerHTML += '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:12px;">📢 公告列表（' + announcements.length + ' 条）</div>';
+      var panel = document.getElementById("panelAnnounce");
+      var announcements = Storage.get("announcements", []);
+      var pinnedCount = 0;
+      for (var si = 0; si < announcements.length; si++) { if (announcements[si].pinned) pinnedCount++; }
+
+      var html =
+        '<div class="stats-grid" style="margin-bottom:16px;">' +
+        '<div class="stat-card"><div class="stat-value">' + announcements.length + '</div><div class="stat-label">公告总数</div></div>' +
+        '<div class="stat-card"><div class="stat-value" style="color:#FF9800;">' + pinnedCount + '</div><div class="stat-label">置顶数</div></div>' +
+        '</div>' +
+
+        // ===== 发布/编辑表单（面板内嵌）=====
+        '<div style="background:white;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">' +
+        '<div style="font-size:15px;font-weight:bold;color:#333;margin-bottom:12px;" id="annFormTitleInline">📢 发布新公告</div>' +
+        '<input type="hidden" id="annEditIdInline" value="">' +
+        '<div style="margin-bottom:10px;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;font-weight:bold;">公告标题 <span style="color:#F44336;">*</span></label>' +
+        '<input class="form-input" id="annTitleInline" placeholder="请输入公告标题（必填）" maxlength="50" style="width:100%;"></div>' +
+        '<div style="margin-bottom:10px;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;font-weight:bold;">公告内容 <span style="color:#F44336;">*</span></label>' +
+        '<textarea class="form-input" id="annContentInline" rows="4" placeholder="请输入公告内容（必填）" style="width:100%;resize:vertical;"></textarea></div>' +
+        '<div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;">' +
+        '<input type="checkbox" id="annPinnedInline" style="width:16px;height:16px;">' +
+        '<label for="annPinnedInline" style="font-size:13px;color:#666;cursor:pointer;">📌 置顶显示</label></div>' +
+        '<button onclick="saveAnnouncementInline()" style="padding:10px 24px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-weight:bold;width:100%;">💾 保存公告</button>' +
+        '</div>' +
+
+        // ===== 公告列表 =====
+        '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:12px;">📋 已发布公告</div>';
+
       if (announcements.length === 0) {
-        panel.innerHTML += '<div class="empty-state"><span class="empty-icon">📢</span><div>暂无公告，点击上方按钮发布</div></div>';
+        html += '<div class="empty-state"><span class="empty-icon">📢</span><div>暂无公告，请在上方填写发布</div></div>';
+        panel.innerHTML = html;
         return;
       }
-      // 置顶排最前
+
+      // 排序：置顶优先，然后按时间倒序
       announcements.sort(function(a, b) {
         if (a.pinned && !b.pinned) return -1;
         if (!a.pinned && b.pinned) return 1;
         return (b.time || 0) - (a.time || 0);
       });
+
       for (var ai = 0; ai < announcements.length; ai++) {
         var ann = announcements[ai];
-        var timeStr = ann.time ? new Date(ann.time).toLocaleString('zh-CN') : '未知';
-        var pinnedStr = ann.pinned ? ' 🔝置顶' : '';
-        var contentPrev = (ann.content || '').substring(0, 30);
-        if ((ann.content || '').length > 30) contentPrev += '...';
-        var card = document.createElement('div');
-        card.className = 'app-card';
-        card.style.borderLeftColor = '#FF9800';
-        card.innerHTML =
-          '<div class="app-card-name">' + escapeHtml(ann.title) + pinnedStr + '</div>' +
-          '<div class="app-card-info">发布时间：' + timeStr + ' | ' + contentPrev + '</div>' +
-          '<div class="app-card-actions">' +
-          '<button class="btn-approve" onclick="editAnnouncement(\'' + ann.id + '\')">✏️ 编辑</button>' +
-          '<button class="btn-reject" onclick="deleteAnnouncement(\'' + ann.id + '\')">🗑️ 删除</button>' +
-          '<button onclick="togglePinAnnouncement(\'' + ann.id + '\')" style="flex:1;padding:5px 14px;border-radius:4px;font-size:12px;cursor:pointer;border:1px solid #e0e0e0;background:white;font-weight:bold;">' + (ann.pinned ? '取消置顶' : '置顶') + '</button>' +
-          '</div>';
-        panel.appendChild(card);
+        var timeStr = ann.time ? new Date(ann.time).toLocaleString("zh-CN") : "未知";
+        var pinTag = ann.pinned ? ' <span style="font-size:11px;background:#FFF3E0;color:#FF9800;padding:1px 6px;border-radius:4px;">📌置顶</span>' : '';
+        var isNew = (Date.now() - (ann.time || 0)) < 86400000 ? ' <span style="font-size:11px;background:#FFEBEE;color:#F44336;padding:1px 6px;border-radius:4px;">NEW</span>' : '';
+        var contentPreview = (ann.content || "").replace(/<[^>]+>/g, "").substring(0, 40);
+        if ((ann.content || "").length > 40) contentPreview += "...";
+        html += '<div style="background:white;border-radius:10px;padding:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border-left:4px solid ' + (ann.pinned ? "#FF9800" : "#2E7D32") + ';">' +
+          '<div style="display:flex;justify-content:space-between;align-items:start;">' +
+          '<div style="flex:1;min-width:0;">' +
+          '<div style="font-size:15px;font-weight:bold;color:#333;">' + (ann.title || "无标题") + pinTag + isNew + '</div>' +
+          '<div style="font-size:13px;color:#666;margin-top:6px;line-height:1.5;">' + contentPreview + '</div>' +
+          '<div style="font-size:11px;color:#999;margin-top:8px;">' + timeStr + '</div>' +
+          '</div>' +
+          '<div style="display:flex;flex-direction:column;gap:4px;margin-left:8px;flex-shrink:0;">' +
+          '<button onclick="editAnnouncementInline(\'' + ann.id + \'\')" style="padding:4px 10px;border:1px solid #e0e0e0;background:white;border-radius:4px;font-size:12px;cursor:pointer;">✏️ 编辑</button>' +
+          '<button onclick="togglePinAnnounce(\'' + ann.id + \'\')" style="padding:4px 10px;border:1px solid #e0e0e0;background:white;border-radius:4px;font-size:12px;cursor:pointer;">' + (ann.pinned ? "取消置顶" : "置顶") + '</button>' +
+          '<button onclick="deleteAnnouncement(\'' + ann.id + \'\')" style="padding:4px 10px;border:1px solid #F44336;background:#FFEBEE;color:#F44336;border-radius:4px;font-size:12px;cursor:pointer;">🗑️ 删除</button>' +
+          '</div></div></div>';
       }
+
+      panel.innerHTML = html;
     }
 
-    function escapeHtml(str) {
-      var div = document.createElement('div');
-      div.textContent = str;
-      return div.innerHTML;
-    }
-
-    function openAnnounceModal(annId) {
-      document.getElementById('annFormTitle').textContent = annId ? '✏️ 编辑公告' : '📢 发布公告';
-      document.getElementById('annEditId').value = annId || '';
-      document.getElementById('annTitle').value = '';
-      document.getElementById('annContent').value = '';
-      document.getElementById('annPinned').checked = false;
-      if (annId) {
-        var announcements = Storage.get('announcements', []);
-        for (var i = 0; i < announcements.length; i++) {
-          if (announcements[i].id === annId) {
-            document.getElementById('annTitle').value = announcements[i].title || '';
-            document.getElementById('annContent').value = announcements[i].content || '';
-            document.getElementById('annPinned').checked = !!announcements[i].pinned;
-            break;
-          }
-        }
-      }
-      document.getElementById('announceModal').classList.remove('hidden');
-      document.getElementById('announceModal').style.display = 'flex';
-    }
-
-    function closeAnnounceModal() {
-      document.getElementById('announceModal').classList.add('hidden');
-      document.getElementById('announceModal').style.display = 'none';
-    }
-
-    function saveAnnouncement() {
-      var annId = document.getElementById('annEditId').value;
-      var title = document.getElementById('annTitle').value.trim();
-      var content = document.getElementById('annContent').value.trim();
-      var pinned = document.getElementById('annPinned').checked;
-      if (!title) { toast('请输入公告标题'); return; }
-      if (!content) { toast('请输入公告内容'); return; }
-      var announcements = Storage.get('announcements', []);
+    // 内联保存公告
+    function saveAnnouncementInline() {
+      var annId = document.getElementById("annEditIdInline").value;
+      var title = document.getElementById("annTitleInline").value.trim();
+      var content = document.getElementById("annContentInline").value.trim();
+      var pinned = document.getElementById("annPinnedInline").checked;
+      if (!title) { toast("请输入公告标题"); return; }
+      if (!content) { toast("请输入公告内容"); return; }
+      var announcements = Storage.get("announcements", []);
       if (annId) {
         for (var i = 0; i < announcements.length; i++) {
           if (announcements[i].id === annId) {
@@ -1032,34 +1054,48 @@ if (document.readyState === 'loading') {
             break;
           }
         }
-        toast('公告已更新');
+        toast("公告已更新");
       } else {
-        announcements.unshift({
-          id: genId(),
-          title: title,
-          content: content,
-          pinned: pinned,
-          time: Date.now(),
-          updateTime: null
-        });
-        toast('公告已发布');
+        announcements.unshift({id: genId(), title: title, content: content, pinned: pinned, time: Date.now(), updateTime: null});
+        toast("公告已发布！");
       }
-      Storage.set('announcements', announcements);
-      closeAnnounceModal();
+      Storage.set("announcements", announcements);
+      document.getElementById("annEditIdInline").value = "";
+      document.getElementById("annTitleInline").value = "";
+      document.getElementById("annContentInline").value = "";
+      document.getElementById("annPinnedInline").checked = false;
+      document.getElementById("annFormTitleInline").textContent = "📢 发布新公告";
       loadAnnouncementsAdmin();
     }
 
-    function editAnnouncement(annId) { openAnnounceModal(annId); }
-
-    function deleteAnnouncement(annId) {
-      if (!confirm('确定删除此公告？')) return;
-      var announcements = Storage.get('announcements', []);
-      var newArr = [];
+    // 内联编辑（填充表单并滚动到表单位置）
+    function editAnnouncementInline(annId) {
+      var announcements = Storage.get("announcements", []);
       for (var i = 0; i < announcements.length; i++) {
-        if (announcements[i].id !== annId) newArr.push(announcements[i]);
+        if (announcements[i].id === annId) {
+          var ann = announcements[i];
+          document.getElementById("annEditIdInline").value = ann.id;
+          document.getElementById("annTitleInline").value = ann.title || "";
+          document.getElementById("annContentInline").value = ann.content || "";
+          document.getElementById("annPinnedInline").checked = !!ann.pinned;
+          document.getElementById("annFormTitleInline").textContent = "✏️ 编辑公告";
+          document.getElementById("annTitleInline").scrollIntoView({behavior: "smooth", block: "center"});
+          break;
+        }
       }
-      Storage.set('announcements', newArr);
-      toast('公告已删除');
+    }
+
+    // 切换置顶
+    function togglePinAnnounce(annId) {
+      var announcements = Storage.get("announcements", []);
+      for (var i = 0; i < announcements.length; i++) {
+        if (announcements[i].id === annId) {
+          announcements[i].pinned = !announcements[i].pinned;
+          toast(announcements[i].pinned ? "已置顶" : "已取消置顶");
+          break;
+        }
+      }
+      Storage.set("announcements", announcements);
       loadAnnouncementsAdmin();
     }
 
