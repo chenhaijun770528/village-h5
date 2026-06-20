@@ -391,18 +391,20 @@ function showAdminPanel() {
     '<div class="tab-nav-item active" id="tabVillages" onclick="switchTab(\'villages\')">🏘️ 村庄列表</div>' +
     '<div class="tab-nav-item" id="tabChiefApps" onclick="switchTab(\'chiefApps\')">👤 村长注册</div>' +
     '<div class="tab-nav-item" id="tabRoleApps" onclick="switchTab(\'roleApps\')">📋 角色审核</div>' +
+    '<div class="tab-nav-item" id="tabAnnouncement" onclick="switchTab(\'announcement\')">📢 公告管理</div>' +
     '</div>' +
 
     '<div id="panelVillages"></div>' +
     '<div id="panelChiefApps" class="hidden"></div>' +
-    '<div id="panelRoleApps" class="hidden"></div>';
+    '<div id="panelRoleApps" class="hidden"></div>' +
+    '<div id="panelAnnouncement" class="hidden"></div>';
 
   loadVillageStats();
 }
 
 // Tab切换
 function switchTab(tab) {
-  var tabs = ['Villages', 'ChiefApps'];
+  var tabs = ['Villages', 'ChiefApps', 'Announcement'];
   for (var ti = 0; ti < tabs.length; ti++) {
     var tabEl = document.getElementById('tab' + tabs[ti]);
     if (tabEl) tabEl.classList.remove('active');
@@ -427,6 +429,16 @@ function switchTab(tab) {
     document.getElementById('panelChiefApps').classList.add('hidden');
     document.getElementById('panelRoleApps').classList.remove('hidden');
     loadRoleApplications();
+  } else if (tab === 'announcement') {
+    document.getElementById('tabAnnouncement').classList.add('active');
+    document.getElementById('tabVillages').classList.remove('active');
+    document.getElementById('tabChiefApps').classList.remove('active');
+    document.getElementById('tabRoleApps').classList.remove('active');
+    document.getElementById('panelVillages').classList.add('hidden');
+    document.getElementById('panelChiefApps').classList.add('hidden');
+    document.getElementById('panelRoleApps').classList.add('hidden');
+    document.getElementById('panelAnnouncement').classList.remove('hidden');
+    loadAnnouncementsAdmin();
   }
 }
 
@@ -801,6 +813,86 @@ function deleteRole(regId) {
   Storage.set('registrations', regs);
   toast('已拒绝');
   loadRoleApplications();
+}
+
+// ========== 公告管理 ==========
+function loadAnnouncementsAdmin() {
+  var panel = document.getElementById('panelAnnouncement');
+  var anns = Storage.get('announcements', []);
+  anns.sort(function(a, b) {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return (b.createTime || 0) - (a.createTime || 0);
+  });
+  var villages = Storage.get('villages', []);
+
+  var html = '<div style="margin-bottom:16px;">' +
+    '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:8px;">📢 发布新公告</div>' +
+    '<div class="form-group"><label class="form-label">公告标题</label><input class="form-input" id="annTitle" placeholder="请输入公告标题"></div>' +
+    '<div class="form-group"><label class="form-label">公告内容</label><textarea class="form-input" id="annContent" rows="3" placeholder="请输入公告内容"></textarea></div>' +
+    '<div class="form-group"><label class="form-label">发布村庄（留空则全站公告）</label><select class="form-input" id="annVillage"><option value="">🌐 全站公告</option>';
+  for (var vi = 0; vi < villages.length; vi++) {
+    html += '<option value="' + villages[vi].id + '">' + villages[vi].name + '</option>';
+  }
+  html += '</select></div>' +
+    '<button onclick="saveAnnouncementAdmin()" style="width:100%;padding:10px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;">💾 发布公告</button>' +
+    '</div>' +
+    '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:8px;margin-top:16px;">📋 公告列表（' + anns.length + '条）</div>';
+
+  if (anns.length === 0) {
+    html += '<div class="empty-state"><span class="empty-icon">📢</span><div>暂无公告</div></div>';
+  } else {
+    for (var i = 0; i < anns.length; i++) {
+      var ann = anns[i];
+      var pinnedStyle = ann.pinned ? 'background:#FFF8E1;border:1px solid #FFD54F;' : 'background:white;';
+      var pinnedBadge = ann.pinned ? ' <span style="background:#FFD54F;color:#333;padding:1px 6px;border-radius:4px;font-size:11px;">置顶</span>' : '';
+      var date = ann.createTime ? new Date(ann.createTime).toLocaleString('zh-CN') : '';
+      var villageName = ann.villageId ? (function() {
+        for (var vj = 0; vj < villages.length; vj++) { if (villages[vj].id === ann.villageId) return villages[vj].name; }
+        return '未知';
+      })() : '🌐 全站';
+      var secHtml = (ann.content || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/
+/g, '<br>');
+      html += '<div style="' + pinnedStyle + 'border-radius:8px;padding:12px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">' +
+        '<div style="font-weight:bold;color:#333;margin-bottom:4px;">' + pinnedBadge + ' ' + (ann.title || '') + '</div>' +
+        '<div style="color:#666;font-size:13px;margin-bottom:6px;line-height:1.4;">' + secHtml + '</div>' +
+        '<div style="font-size:11px;color:#999;margin-bottom:8px;">' + date + ' | ' + villageName + '</div>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+        '<button onclick="togglePinAnn(\'' + ann.id + '\')" style="padding:4px 8px;background:#FFF8E1;color:#F57F17;border:1px solid #FFD54F;border-radius:4px;font-size:11px;cursor:pointer;">' + (ann.pinned ? '📌 取消置顶' : '📌 置顶') + '</button>' +
+        '<button onclick="deleteAnnouncement(\'' + ann.id + '\')" style="padding:4px 8px;background:#FFEBEE;color:#F44336;border:1px solid #EF9A9A;border-radius:4px;font-size:11px;cursor:pointer;">🗑️ 删除</button>' +
+        '</div></div>';
+    }
+  }
+  panel.innerHTML = html;
+}
+
+function saveAnnouncementAdmin() {
+  var title = document.getElementById('annTitle').value.trim();
+  var content = document.getElementById('annContent').value.trim();
+  var villageId = document.getElementById('annVillage').value;
+  if (!title) { toast('请输入公告标题'); return; }
+  if (!content) { toast('请输入公告内容'); return; }
+  var anns = Storage.get('announcements', []);
+  anns.unshift({ id: genId(), title: title, content: content, villageId: villageId, createTime: Date.now(), pinned: false });
+  Storage.set('announcements', anns);
+  toast('公告发布成功');
+  loadAnnouncementsAdmin();
+}
+
+function togglePinAnn(annId) {
+  var anns = Storage.get('announcements', []);
+  for (var i = 0; i < anns.length; i++) { if (anns[i].id === annId) { anns[i].pinned = !anns[i].pinned; break; } }
+  Storage.set('announcements', anns);
+  loadAnnouncementsAdmin();
+}
+
+function deleteAnnouncement(annId) {
+  if (!confirm('确定删除此公告？')) return;
+  var anns = Storage.get('announcements', []);
+  for (var i = 0; i < anns.length; i++) { if (anns[i].id === annId) { anns.splice(i, 1); break; } }
+  Storage.set('announcements', anns);
+  toast('已删除');
+  loadAnnouncementsAdmin();
 }
 
 // 页面加载完成后初始化
