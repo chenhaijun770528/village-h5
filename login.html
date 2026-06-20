@@ -209,6 +209,40 @@
       // 登录成功！保存当前会话
       Storage.set('user', found);
 
+      // 自动补全 currentRole.village（如果缺失）
+      if (found.currentRole && !found.currentRole.village) {
+        // 从 registrations 里查找村庄
+        var regs = Storage.get('registrations', []);
+        for (var ri = 0; ri < regs.length; ri++) {
+          if (regs[ri].account === found.account && regs[ri].village) {
+            found.currentRole.village = regs[ri].village;
+            break;
+          }
+        }
+        // 从 villages 数组里找（村主任）
+        if (!found.currentRole.village) {
+          var villages = Storage.get('villages', []);
+          for (var vi = 0; vi < villages.length; vi++) {
+            if (villages[vi].chief && villages[vi].chief.name === found.currentRoleName) {
+              found.currentRole.village = villages[vi].name;
+              break;
+            }
+          }
+        }
+        // 同步更新 accounts 和 user
+        if (found.currentRole.village) {
+          var accounts2 = Storage.get('accounts', []);
+          for (var ai = 0; ai < accounts2.length; ai++) {
+            if (accounts2[i] && accounts2[ai].id === found.id) {
+              accounts2[ai].currentRole = found.currentRole;
+              break;
+            }
+          }
+          Storage.set('accounts', accounts2);
+          Storage.set('user', found);
+        }
+      }
+
       toast('登录成功！');
       setTimeout(function() {
         // 根据当前角色状态跳转
