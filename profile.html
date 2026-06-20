@@ -394,6 +394,20 @@ function renderPage() {
         // 查找当前用户对应的村庄
         var myVillage = null;
         var villages = Storage.get('villages', []);
+        // 用多种方式查找当前用户的村庄（兼容 chief.name 不一致的问题）
+        function findMyVillage(vills, user) {
+          if (!user || !vills || !vills.length) return null;
+          // 方式1: chief.name 匹配 currentRoleName
+          for (var i=0;i<vills.length;i++){if(vills[i].chief&&vills[i].chief.name===user.currentRoleName)return vills[i];}
+          // 方式2: chief.name 匹配 account
+          for (var i=0;i<vills.length;i++){if(vills[i]&&vills[i].chief&&vills[i].chief.name===user.account)return vills[i];}
+          // 方式3: chief.phone 匹配 user.phone
+          for (var i=0;i<vills.length;i++){if(vills[i]&&vills[i].chief&&vills[i].chief.phone===user.phone)return vills[i];}
+          // 方式4: 只有一个村庄时直接返回
+          if (vills.length === 1 && user.currentRole === 'township') return vills[0];
+          return null;
+        }
+        myVillage = findMyVillage(villages, currentUser);
         for (var vi = 0; vi < villages.length; vi++) {
           if (villages[vi].chief && villages[vi].chief.name === currentUser.currentRoleName) {
             myVillage = villages[vi];
