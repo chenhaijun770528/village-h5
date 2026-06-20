@@ -447,6 +447,7 @@ function switchTab(tab) {
 function loadVillageStats() {
   var panel = document.getElementById('panelVillages');
   var villages = Storage.get('villages', []);
+  villages.sort(function(a,b){ return (b.createTime||0) - (a.createTime||0); });
   var products = Storage.get('products', []);
   var foods = Storage.get('foods', []);
   var camps = Storage.get('camps', []);
@@ -515,6 +516,7 @@ function loadChiefApplications() {
     if (apps[i].status === '待审核') {
       pending.push(apps[i]);
     }
+  pending.sort(function(a,b){ return (b.applyTime||b.createTime||0) - (a.applyTime||a.createTime||0); });
   }
 
   var approvedCount = 0;
@@ -689,6 +691,7 @@ function loadRoleApplications() {
   var regs = Storage.get('registrations', []);
   var pending = [];
   for (var i = 0; i < regs.length; i++) { if (regs[i].status === '待审核') pending.push(regs[i]); }
+  pending.sort(function(a,b){ return (b.applyTime||b.createTime||0) - (a.applyTime||a.createTime||0); });
   var approved = 0, rejected = 0;
   for (var j = 0; j < regs.length; j++) {
     if (regs[j].status === '已通过') approved++;
