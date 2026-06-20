@@ -398,6 +398,27 @@ body {
   .func-item { padding: 12px 4px; }
   .func-text { font-size: 11px; }
 }
+
+/* 公告版面 */
+.announcement-section {
+  background: white;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border-left: 4px solid #FF9800;
+}
+.announcement-header { display: flex; align-items: center; margin-bottom: 10px; }
+.announcement-item {
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+}
+.announcement-item:last-child { border-bottom: none; }
+.announcement-title { font-size: 14px; color: #333; font-weight: bold; margin-bottom: 2px; }
+.announcement-meta { font-size: 11px; color: #999; }
+.announcement-content { font-size: 13px; color: #666; margin-top: 4px; line-height: 1.6; display: none; }
+.announcement-item.expanded .announcement-content { display: block; }
 </style>
 </head>
 <body>
@@ -416,6 +437,16 @@ body {
       <span>🔍</span>
       <input type="text" placeholder="搜索村庄名称..." id="searchInput" readonly>
     </div>
+
+    <!-- 公告版面 -->
+    <div id="announcementSection" class="announcement-section" style="display:none;">
+      <div class="announcement-header">
+        <span style="font-size:16px;font-weight:bold;color:#333;">📢 公告通知</span>
+        <span id="announcementBadge" style="background:#F44336;color:white;font-size:11px;padding:1px 6px;border-radius:8px;margin-left:6px;display:none;">NEW</span>
+      </div>
+      <div id="announcementList"></div>
+    </div>
+
 
     <!-- 轮播图 -->
     <div class="banner-swiper" id="bannerSwiper"></div>
@@ -700,7 +731,8 @@ function logout() {
     function init() {
       initSampleData()
       renderBanner()
-      renderVillages()
+
+      loadAnnouncements();      renderVillages()
     }
 
     function renderBanner() {
@@ -850,6 +882,61 @@ function logout() {
     }
 
     init()
-  </script>
+  
+    // 加载公告
+    function loadAnnouncements() {
+      var announcements = Storage.get('announcements', []);
+      var section = document.getElementById('announcementSection');
+      var list = document.getElementById('announcementList');
+      var badge = document.getElementById('announcementBadge');
+      if (!announcements || announcements.length === 0) {
+        section.style.display = 'none';
+        return;
+      }
+      section.style.display = 'block';
+      // 检查是否有未读公告（24小时内）
+      var now = Date.now();
+      var hasNew = false;
+      for (var ai = 0; ai < announcements.length; ai++) {
+        if (now - announcements[ai].time < 86400000) { hasNew = true; break; }
+      }
+      badge.style.display = hasNew ? 'inline-block' : 'none';
+      list.innerHTML = announcements.map(function(a, idx) {
+        var isNew = now - a.time < 86400000;
+        return '<div class="announcement-item" onclick="toggleAnnouncement(\' + idx + \')">' +
+          '<div class="announcement-title">' + (isNew ? '🆕 ' : '') + escapeHtml(a.title) + '</div>' +
+          '<div class="announcement-meta">' + formatAnnTime(a.time) + '</div>' +
+          '<div class="announcement-content" id="annContent' + idx + '">' + escapeHtml(a.content || '') + '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    function toggleAnnouncement(idx) {
+      var el = document.getElementById('annContent' + idx);
+      if (!el) return;
+      var parent = el.parentElement;
+      if (parent.classList.contains('expanded')) {
+        parent.classList.remove('expanded');
+      } else {
+        parent.classList.add('expanded');
+      }
+    }
+
+    function formatAnnTime(ts) {
+      var d = new Date(ts);
+      var now = Date.now();
+      var diff = now - ts;
+      if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+      if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+      return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+    }
+
+    function escapeHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+</script>
 </body>
 </html>
