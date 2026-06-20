@@ -417,7 +417,7 @@ body {
 .announcement-item:last-child { border-bottom: none; }
 .announcement-title { font-size: 14px; color: #333; font-weight: bold; margin-bottom: 2px; }
 .announcement-meta { font-size: 11px; color: #999; }
-.announcement-content { font-size: 13px; color: #666; margin-top: 4px; line-height: 1.6; display: none; }
+.announcement-content { font-size: 13px; color: #666; margin-top: 4px; line-height: 1.6; display: block; }
 .announcement-item.expanded .announcement-content { display: block; }
 </style>
 </head>
@@ -898,14 +898,14 @@ function logout() {
       var now = Date.now();
       var hasNew = false;
       for (var ai = 0; ai < announcements.length; ai++) {
-        if (now - announcements[ai].time < 86400000) { hasNew = true; break; }
+        if (now - (announcements[ai].createTime || announcements[ai].time) < 86400000) { hasNew = true; break; }
       }
       badge.style.display = hasNew ? 'inline-block' : 'none';
       list.innerHTML = announcements.map(function(a, idx) {
-        var isNew = now - a.time < 86400000;
+        var isNew = now - (a.createTime || a.time) < 86400000;
         return '<div class="announcement-item" onclick="toggleAnnouncement(\' + idx + \')">' +
           '<div class="announcement-title">' + (isNew ? '🆕 ' : '') + escapeHtml(a.title) + '</div>' +
-          '<div class="announcement-meta">' + formatAnnTime(a.time) + '</div>' +
+          '<div class="announcement-meta">' + formatAnnTime(a.createTime || a.time) + '</div>' +
           '<div class="announcement-content" id="annContent' + idx + '">' + escapeHtml(a.content || '') + '</div>' +
           '</div>';
       }).join('');
