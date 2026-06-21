@@ -494,7 +494,7 @@ function loadFoods() {
         '<div class="goods-info">' +
         '<div class="goods-name">' + item.data.name + '</div>' +
         '<div class="goods-price">¥' + item.data.price + '<span style="font-size:12px;color:#999;font-weight:normal;">/' + item.data.unit + '</span></div>' +
-        '<button class="goods-btn">预订</button>' +
+        '<button class="goods-btn" onclick="location.href=\'food-order.html?id=' + item.data.id + '\'">预订</button>' +
         '</div>';
     }
 
