@@ -39,6 +39,7 @@ function init() {
   // 优先从 Storage 实际数据，兜底用 DB 示例
   var storageFoods = [];
   try { storageFoods = JSON.parse(localStorage.getItem('village_foods') || '[]'); } catch(e) {}
+  if (storageFoods.length === 0) { try { storageFoods = JSON.parse(localStorage.getItem('foods') || '[]'); } catch(e) {} }
   var f = storageFoods.find(function(x){ return x.id === id; }) || { name:'未知美食', price:'0', unit:'份', desc:'', img:'' };
 
   document.getElementById('orderForm').innerHTML = '\
