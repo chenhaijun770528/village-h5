@@ -541,9 +541,9 @@ function loadCamps() {
         '<div class="camp-img">' + campImg + '</div>' +
         '<div class="camp-info">' +
         '<div class="camp-name">' + c.name + '</div>' +
-        '<div class="camp-desc">' + c.desc + '</div>' +
+        '<div class="camp-desc">' + (c.desc || '暂无描述') + '</div>' +
         tagsHtml2 +
-        '<div class="camp-price">¥' + c.price + '<span style="font-size:12px;color:#999;font-weight:normal;">/' + c.unit + '</span></div>' +
+        '<div class="camp-price">¥' + (c.price || '0') + '<span style="font-size:12px;color:#999;font-weight:normal;">/' + (c.unit || '次') + '</span></div>' +
         '<button class="goods-btn" style="margin-top:8px;" onclick="location.href=\'camp-order.html?id=' + c.id + '\'">📅 立即预订</button>' +
         '</div>';
     }
