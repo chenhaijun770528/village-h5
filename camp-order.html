@@ -42,6 +42,7 @@ function init() {
   // 优先从 Storage 读实际数据，没有则用 DB 示例
   var storageCamps = [];
   try { storageCamps = JSON.parse(localStorage.getItem('village_camps') || '[]'); } catch(e) {}
+  if (storageCamps.length === 0) { try { storageCamps = JSON.parse(localStorage.getItem('camps') || '[]'); } catch(e) {} }
   var c = storageCamps.find(function(x){ return x.id === id; }) || { name:'未知营地', price:'0', unit:'顶/晚', desc:'', tags:[], img:'' };
 
   document.getElementById('orderForm').innerHTML = '\
