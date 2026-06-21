@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>卖家订单管理</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif;background:#f5f5f5;color:#333;font-size:14px}
+.header{position:fixed;top:0;left:0;right:0;background:linear-gradient(135deg,#2E7D32,#4CAF50);color:#fff;padding:12px 16px;z-index:100;display:flex;align-items:center}
+.header-back{font-size:20px;cursor:pointer;padding-right:12px}
+.header-title{font-size:18px;font-weight:bold}
+.container{padding:60px 16px 80px;max-width:750px;margin:0 auto}
+.tab-box{display:flex;background:#fff;position:sticky;top:48px;z-index:50;border-bottom:1px solid #e0e0e0}
+.tab-item{flex:1;text-align:center;padding:10px 0;font-size:14px;color:#666;cursor:pointer;position:relative}
+.tab-item.active{color:#2E7D32;font-weight:600}
+.tab-item.active::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:40px;height:3px;background:#2E7D32;border-radius:2px}
+.order-card{background:#fff;border-radius:10px;padding:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.order-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.order-id{font-size:12px;color:#999}
+.order-status{padding:2px 8px;border-radius:4px;font-size:12px;font-weight:500}
+.status-待发货{background:#fff3e0;color:#FF9800}
+.status-已发货{background:#e8f5e9;color:#2E7D32}
+.status-已完成{background:#e3f2fd;color:#1976D2}
+.status-已取消{background:#f5f5f5;color:#999}
+.order-goods{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.order-goods-img{width:60px;height:60px;border-radius:6px;object-fit:cover;background:#f0f0f0}
+.order-goods-name{font-size:14px;font-weight:500}
+.order-goods-price{font-size:13px;color:#FF9800;margin-top:2px}
+.order-info{font-size:13px;color:#666;line-height:1.6;margin-bottom:8px}
+.order-actions{display:flex;gap:8px;margin-top:8px}
+.btn-action{padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;border:1px solid #e0e0e0;background:#fff;color:#333}
+.btn-action.primary{background:#2E7D32;color:#fff;border-color:#2E7D32}
+.empty{text-align:center;padding:60px 0;color:#999}
+.empty-icon{font-size:48px;margin-bottom:12px}
+</style>
+</head>
+<body>
+<div class="header">
+  <span class="header-back" onclick="history.back()">←</span>
+  <span class="header-title">卖家订单</span>
+</div>
+<div class="tab-box">
+  <div class="tab-item active" onclick="switchTab('待发货',this)">待发货</div>
+  <div class="tab-item" onclick="switchTab('已发货',this)">已发货</div>
+  <div class="tab-item" onclick="switchTab('已完成',this)">已完成</div>
+  <div class="tab-item" onclick="switchTab('已取消',this)">已取消</div>
+</div>
+<div class="container" id="list"></div>
+<script src="app.js"></script>
+<script>
+var currentTab='待发货';
+
+function init(){
+  var user=Storage.get('user',null);
+  if(!user){alert('请先登录');location.href='login.html';return;}
+  loadOrders();
+}
+
+function switchTab(status,el){
+  currentTab=status;
+  var tabs=document.querySelectorAll('.tab-item');
+  for(var i=0;i<tabs.length;i++){tabs[i].classList.remove('active');}
+  el.classList.add('active');
+  loadOrders();
+}
+
+function loadOrders(){
+  var user=Storage.get('user',null);
+  var orders=Storage.get('orders',[]);
+  var list=document.getElementById('list');
+  list.innerHTML='';
+
+  // 只显示卖家自己的订单（sellerId 匹配当前用户 id）
+  var myOrders=[];
+  for(var i=0;i<orders.length;i++){
+    if(orders[i].sellerId===user.id){
+      myOrders.push(orders[i]);
+    }
+  }
+
+  var filtered=[];
+  for(var j=0;j<myOrders.length;j++){
+    if(currentTab==='已取消'){
+      if(myOrders[j].status==='已取消')filtered.push(myOrders[j]);
+    } else {
+      if(myOrders[j].status===currentTab)filtered.push(myOrders[j]);
+    }
+  }
+
+  if(filtered.length===0){
+    list.innerHTML='<div class="empty"><div class="empty-icon">📦</div><div>暂无'+currentTab+'订单</div></div>';
+    return;
+  }
+
+  for(var k=0;k<filtered.length;k++){
+    var o=filtered[k];
+    var statusClass='status-'+o.status;
+    var actions='';
+    if(o.status==='待发货'){
+      actions='<button class="btn-action primary" onclick="shipOrder(\''+o.id+'\')">发货</button>'+
+              '<button class="btn-action" onclick="cancelOrder(\''+o.id+'\')">取消订单</button>';
+    } else if(o.status==='已发货'){
+      actions='<span style="font-size:12px;color:#2E7D32">已发货，等待买家确认</span>';
+    }
+
+    var imgTag=o.productImg?'<img class="order-goods-img" src="'+o.productImg+'" onerror="this.style.display=\'none\'">':
+                      '<div class="order-goods-img" style="display:flex;align-items:center;justify-content:center;font-size:24px;">📦</div>';
+
+    var card=document.createElement('div');
+    card.className='order-card';
+    card.innerHTML=
+      '<div class="order-header">'+
+        '<span class="order-id">订单号：'+o.id+'</span>'+
+        '<span class="order-status '+statusClass+'">'+o.status+'</span>'+
+      '</div>'+
+      '<div class="order-goods">'+imgTag+
+        '<div>'+
+          '<div class="order-goods-name">'+(o.productName||o.foodName||o.campName||'商品')+'</div>'+
+          '<div class="order-goods-price">¥'+(o.price||o.total/o.qty)+' × '+o.qty+' = ¥'+o.total+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="order-info">'+
+        '收货人：'+o.buyerName+'<br>'+
+        '电话：'+o.buyerPhone+'<br>'+
+        '地址：'+o.buyerAddr+'<br>'+
+        (o.remark?'备注：'+o.remark+'<br>':'')+
+        '下单时间：'+new Date(o.createTime).toLocaleString()+
+      '</div>'+
+      '<div class="order-actions">'+actions+'</div>';
+    list.appendChild(card);
+  }
+}
+
+function shipOrder(orderId){
+  if(!confirm('确认已发货？'))return;
+  var orders=Storage.get('orders',[]);
+  for(var i=0;i<orders.length;i++){
+    if(orders[i].id===orderId){orders[i].status='已发货';break;}
+  }
+  Storage.set('orders',orders);
+  toast('已标记为已发货');
+  loadOrders();
+}
+
+function cancelOrder(orderId){
+  if(!confirm('确认取消此订单？'))return;
+  var orders=Storage.get('orders',[]);
+  for(var i=0;i<orders.length;i++){
+    if(orders[i].id===orderId){orders[i].status='已取消';break;}
+  }
+  Storage.set('orders',orders);
+  toast('订单已取消');
+  loadOrders();
+}
+
+init();
+</script>
+</body>
+</html>
