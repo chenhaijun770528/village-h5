@@ -303,6 +303,10 @@ body {
         <textarea class="form-input" id="applyDesc" rows="3" placeholder="请输入描述"></textarea>
       </div>
       <div class="form-group">
+        <label class="form-label">库存数量</label>
+        <input class="form-input" id="applyStock" type="number" min="1" value="100" placeholder="请输入库存数量">
+      </div>
+      <div class="form-group">
         <label class="form-label">图片</label>
         <input type="file" id="applyImgInput" accept="image/*" onchange="previewApplyImg(event)" style="font-size:13px">
         <img class="img-preview" id="applyImgPreview">
@@ -674,6 +678,7 @@ function openApplyModal(appId) {
       document.getElementById('applyPrice').value = app.price;
       document.getElementById('applyUnit').value = app.unit;
       document.getElementById('applyDesc').value = app.desc || '';
+      document.getElementById('applyStock').value = app.stock || '100';
       document.getElementById('applyVillage').value = app.villageId || app.village;
 
       if (app.img) {
@@ -714,6 +719,7 @@ function submitApplication() {
   var price = document.getElementById('applyPrice').value.trim();
   var unit = document.getElementById('applyUnit').value.trim();
   var desc = document.getElementById('applyDesc').value.trim();
+  var stock = document.getElementById('applyStock').value.trim() || '100';
   var villageId = document.getElementById('applyVillage').value;
   var editId = document.getElementById('applyEditId').value;
 
@@ -743,6 +749,7 @@ function submitApplication() {
         apps[ei].price = price;
         apps[ei].unit = unit;
         apps[ei].desc = desc;
+        apps[ei].stock = stock;
         apps[ei].villageId = villageId;
         apps[ei].village = villageName;
         apps[ei].img = currentApplyImgBase64 || apps[ei].img || '';
@@ -763,6 +770,7 @@ function submitApplication() {
       price: price,
       unit: unit,
       desc: desc,
+      stock: stock,
       villageId: villageId,
       village: villageName,
       img: currentApplyImgBase64 || '',
