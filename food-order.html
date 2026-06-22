@@ -75,6 +75,13 @@ function init() {
     <button class="btn-primary" onclick="submitOrder()">提交订单</button>\
     <div style="text-align:center;margin-top:12px;font-size:12px;color:#999">到店请出示订单，商家将与您联系确认</div>';
 
+  // 自动带出用户资料里的电话
+  var user=Storage.get('user',null);
+  if(user){
+    if(user.nickName)document.getElementById('name').value=user.nickName;
+    if(user.phone)document.getElementById('phone').value=user.phone;
+  };
+
   window._foodPrice = parseFloat(f.price) || 0;
 }
 
@@ -102,8 +109,8 @@ function submitOrder() {
     foodName: f.name,
     sellerId: f.sellerId||'',
     sellerName: f.sellerName||'',
-    name: name,
-    phone: phone,
+    buyerName: name,
+    buyerPhone: phone,
     qty: qty,
     pickupTime: pickupTime,
     total: window._foodPrice * qty,
@@ -137,3 +144,4 @@ init();
 </script>
 </body>
 </html>
+
