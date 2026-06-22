@@ -274,6 +274,9 @@
   </div>
 
   <script>
+// SAFETY NET: prevent ReferenceError
+var container = document.getElementById("mainContent");
+
 
     var Storage = {
       get: function(key, defaultVal) {
