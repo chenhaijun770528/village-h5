@@ -81,6 +81,13 @@ function init(){
     '</div>'+
     '<button class="btn-submit" onclick="submitOrder()">提交订单</button>'+
     '<div class="tip">提交后商家将尽快与您联系确认发货</div>';
+
+  // 自动带出用户资料里的电话和地址
+  var user=Storage.get('user',null);
+  if(user){
+    if(user.phone)document.getElementById('buyerPhone').value=user.phone;
+    if(user.address)document.getElementById('buyerAddr').value=user.address;
+  }
 }
 
 function changeQty(d){
