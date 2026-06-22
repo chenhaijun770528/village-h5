@@ -564,8 +564,8 @@ function approveItem(appId) {
     village: app.village,
     villageId: app.villageId,
     img: app.img || '',
-    sellerId: app.sellerId || '',
-    sellerName: app.sellerName || '',
+    sellerId: app.userId || '',
+    sellerName: app.userName || '',
     createTime: Date.now()
   });
   Storage.set('products', products);
