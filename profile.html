@@ -385,7 +385,10 @@ function renderPage() {
         '<div class="user-info">' +
         '<div class="user-name">' + currentUser.account + '</div>' +
         '<div class="user-account">账号：' + currentUser.account + '</div>' +
+        (currentUser.phone ? '<div style="font-size:12px;color:#666;margin-top:4px;">📞 ' + currentUser.phone + '</div>' : '') +
+        (currentUser.address ? '<div style="font-size:12px;color:#666;margin-top:2px;">📍 ' + (currentUser.address.length > 15 ? currentUser.address.substring(0, 15) + '...' : currentUser.address) + '</div>' : '') +
         roleTag +
+        '<button onclick="openEditContactModal()" style="margin-top:8px;padding:6px 12px;background:#4CAF50;color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer;width:100%;">✏️ 编辑联系方式</button>' +
         '</div>' +
         '</div>';
 
@@ -574,7 +577,7 @@ function renderPage() {
     // 初始化村民产品显示
     initMyProducts();
 
-    container.innerHTML = html;
+    ontainer.innerHTML = html;
     }
 
     // 村主任审核村民
@@ -2292,6 +2295,40 @@ window.auditCamps = function() {
 
     
 
+
+    // 编辑联系方式弹窗
+    function openEditContactModal() {
+      var user = Storage.get('user', null);
+      if (!user) return;
+      document.getElementById('editPhone').value = user.phone || '';
+      document.getElementById('editAddress').value = user.address || '';
+      document.getElementById('editContactModal').style.display = 'flex';
+    }
+
+    function saveContactInfo() {
+      var phone = document.getElementById('editPhone').value.trim();
+      var address = document.getElementById('editAddress').value.trim();
+      if (!phone) { toast('请输入联系电话'); return; }
+      if (!/^1[3-9]\d{9}$/.test(phone)) { toast('手机号码格式不正确'); return; }
+      var user = Storage.get('user', null);
+      if (!user) return;
+      user.phone = phone;
+      user.address = address;
+      Storage.set('user', user);
+      // 同时更新 accounts 数组中的信息
+      var accounts = Storage.get('accounts', []);
+      for (var i = 0; i < accounts.length; i++) {
+        if (accounts[i].id === user.id) {
+          accounts[i].phone = phone;
+          accounts[i].address = address;
+          break;
+        }
+      }
+      Storage.set('accounts', accounts);
+      document.getElementById('editContactModal').style.display = 'none';
+      toast('保存成功！');
+      renderPage(); // 重新渲染页面显示新信息
+    }
     // 页面初始化
     function init() {
       renderPage();
@@ -2299,5 +2336,24 @@ window.auditCamps = function() {
     
     init();
 </script>
+
+  <!-- 编辑联系方式弹窗 -->
+  <div id="editContactModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+      <div class="modal-title">编辑联系方式</div>
+      <div class="modal-form-group">
+        <label class="modal-label"><span class="req">*</span> 联系电话</label>
+        <input type="tel" id="editPhone" class="modal-input" placeholder="请输入手机号码" maxlength="11">
+      </div>
+      <div class="modal-form-group">
+        <label class="modal-label">收货地址</label>
+        <textarea id="editAddress" class="modal-textarea" placeholder="请输入收货地址（下单时自动带出）"></textarea>
+      </div>
+      <button class="modal-btn modal-btn-save" onclick="saveContactInfo()">保存</button>
+      <button class="modal-btn modal-btn-cancel" onclick="document.getElementById('editContactModal').style.display='none'">取消</button>
+    </div>
+  </div>
   </body>
 </html>
+
+
