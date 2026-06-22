@@ -343,6 +343,7 @@ window.onerror = function(msg, url, line, col, error) {
 };
 
 function renderPage() {
+  var container = document.getElementById("mainContent");
       var mainEl = document.getElementById('mainContent');
       var role = ROLES_MAP[currentUser.currentRole] || null;
       var roleText = '未选择角色';
