@@ -1,3 +1,4 @@
+<!-- FINAL FIX: container - 2026-06-22T15:56:27.501Z -->
 ﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -273,6 +274,9 @@
   </div>
 
   <script>
+// SAFETY NET: prevent ReferenceError
+var container = document.getElementById("mainContent");
+
 
     var Storage = {
       get: function(key, defaultVal) {
@@ -339,6 +343,7 @@ window.onerror = function(msg, url, line, col, error) {
 };
 
 function renderPage() {
+  var container = document.getElementById("mainContent");
       var mainEl = document.getElementById('mainContent');
       var role = ROLES_MAP[currentUser.currentRole] || null;
       var roleText = '未选择角色';
