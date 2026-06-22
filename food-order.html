@@ -116,6 +116,19 @@ function submitOrder() {
   var orders = Storage.get('orders', []);
   orders.push(order);
   Storage.set('orders', orders);
+
+  // 扣库存
+  var foods = Storage.get('foods', []);
+  for (var fi = 0; fi < foods.length; fi++) {
+    if (foods[fi].id === f.id) {
+      var fstock = parseInt(foods[fi].stock) || 999;
+      foods[fi].stock = Math.max(0, fstock - qty);
+      foods[fi].sales = (parseInt(foods[fi].sales) || 0) + qty;
+      break;
+    }
+  }
+  Storage.set('foods', foods);
+
   alert('订单提交成功！到店请出示。');
   history.back();
 }
