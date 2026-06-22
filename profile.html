@@ -1435,12 +1435,10 @@ function rejectCamp(id) {
   }
 }
 </script>
-  <script src="profile-product-fix.js"></script>
-  
+    
     <script>
 // profile-food-camp-fix.js
 // 覆盖美食/露营地申请函数 + 修复村主任审核函数
-// 依赖 profile-product-fix.js 先加载
 
 // ===== 美食申请（完整表单+图片）=====
 var _foodImages = [];
@@ -2281,6 +2279,16 @@ window.auditCamps = function() {
   document.body.appendChild(overlay);
 };
 
-    </script>
+    
+
+    // 页面初始化
+    function init() {
+      renderMenu();
+      renderUserInfo();
+      checkRoleAndRender();
+    }
+    
+    init();
+</script>
   </body>
 </html>
