@@ -269,6 +269,7 @@
   </div>
 
   <script>
+
     var Storage = {
       get: function(key, defaultVal) {
         try {
@@ -334,7 +335,7 @@ window.onerror = function(msg, url, line, col, error) {
 };
 
 function renderPage() {
-      var container = document.getElementById('mainContent');
+      var mainEl = document.getElementById('mainContent');
       var role = ROLES_MAP[currentUser.currentRole] || null;
       var roleText = '未选择角色';
       var roleCls = 'role-none';
@@ -559,7 +560,7 @@ function renderPage() {
         '<button class="btn-logout" onclick="doLogout()">🚪 退出登录</button>' +
         '</div>';
 
-      container.innerHTML = html;
+      mainEl.innerHTML = html;
 
     // 初始化村民产品显示
     initMyProducts();
@@ -1434,6 +1435,7 @@ function rejectCamp(id) {
     location.reload();
   }
 }
+
 </script>
     
     <script>
