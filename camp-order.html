@@ -130,6 +130,17 @@ function submitOrder() {
   var orders = Storage.get('orders', []);
   orders.push(order);
   Storage.set('orders', orders);
+
+  // 扣库存（露营通常按营位/晚计数）
+  var camps = Storage.get('camps', []);
+  for (var ci = 0; ci < camps.length; ci++) {
+    if (camps[ci].id === new URLSearchParams(location.search).get('id')) {
+      camps[ci].sales = (parseInt(camps[ci].sales) || 0) + qty;
+      break;
+    }
+  }
+  Storage.set('camps', camps);
+
   alert('预订提交成功！商家将尽快与您联系确认。');
   history.back();
 }
