@@ -323,7 +323,7 @@
 window.onerror = function(msg, url, line, col, error) {
   var container = document.getElementById('mainContent');
   if (container) {
-    container.innerHTML = '<div style="padding:20px;color:red;word-break:break-all;background:#fff;">' +
+    cccccccccontainer.innerHTML = '<div style="padding:20px;color:red;word-break:break-all;background:#fff;">' +
       '<h3>页面运行错误，请截图给开发者</h3>' +
       '<p><b>错误：</b>' + msg + '</p>' +
       '<p><b>位置：</b>行 ' + line + (col ? ', 列 ' + col : '') + '</p>' +
@@ -559,12 +559,12 @@ function renderPage() {
         '<button class="btn-logout" onclick="doLogout()">🚪 退出登录</button>' +
         '</div>';
 
-      container.innerHTML = html;
+      cccccccccontainer.innerHTML = html;
 
     // 初始化村民产品显示
     initMyProducts();
 
-    ontainer.innerHTML = html;
+    ccccccccontainer.innerHTML = html;
     }
 
     // 村主任审核村民
@@ -812,7 +812,7 @@ function renderPage() {
         }
         html += '</div>';
       }
-      container.innerHTML = html;
+      cccccccccontainer.innerHTML = html;
     }
     
     function addSceneryToCat(catKey) { openSceneryForm(-1, catKey); }
