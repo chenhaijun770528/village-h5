@@ -387,37 +387,21 @@ function compressImage(file, maxWidth, maxHeight, quality, callback) {
   reader.readAsDataURL(file);
 }
 
-// 初始化示例数据
+// 初始化数据（不再添加示例数据）
 function initSampleData() {
+  // 只初始化空数组，不添加示例数据
   if (!Storage.get('villages', null)) {
-    var defaultVillages = [
-      {
-        id: 'v1', name: '幸福村', province: '江苏省', city: '苏州市',
-        population: '3280', totalArea: '4500', farmlandArea: '2800',
-        description: '幸福村位于苏州市郊区，环境优美，著名的生态农业示范村。',
-        chief: { name: '张建国', phone: '13800138001' }, images: []
-      },
-      {
-        id: 'v2', name: '阳光村', province: '广东省', city: '广州市',
-        population: '4560', totalArea: '6200', farmlandArea: '3500',
-        description: '阳光村是广州市郊的现代化农村，积极发展乡村旅游。',
-        chief: { name: '李明华', phone: '13800138002' }, images: []
-      }
-    ];
-    Storage.set('villages', defaultVillages);
+    Storage.set('villages', []);
   }
-  // 美食正式列表
+  // 美食正式列表 - 空数组
   if (!Storage.get('foods', null)) {
-    Storage.set('foods', [
-      { id: 'f1', name: '农家土鸡', price: '98', unit: '只', desc: '散养土鸡，肉质鲜嫩', sales: 189, village: '幸福村', villageId: 'v1', img: '' },
-      { id: 'f2', name: '新鲜虾仁', price: '58', unit: '斤', desc: '本地河虾，当日捕捞', sales: 256, village: '阳光村', villageId: 'v2', img: '' },
-      { id: 'f3', name: '手工年糕', price: '25', unit: '斤', desc: '传统工艺，口感软糯', sales: 312, village: '幸福村', villageId: 'v1', img: '' }
-    ]);
+    Storage.set('foods', []);
   }
   // 美食申请列表
   if (!Storage.get('food_applications', null)) {
     Storage.set('food_applications', []);
   }
+}
 }
 
 // 页面初始化
