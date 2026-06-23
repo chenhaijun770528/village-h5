@@ -958,6 +958,23 @@ initSampleData();
       return div.innerHTML;
     }
 
+    function goPage(url) {
+      location.href = url
+    }
+
+    function goProfile() {
+      var user = localStorage.getItem('village_user')
+      if (!user) {
+        location.href = 'login.html'
+      } else {
+        location.href = 'profile.html'
+      }
+    }
+
+    function callChief(phone) {
+      window.location.href = 'tel:' + phone
+    }
+
 </script>
 </body>
 </html>
