@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>完整测试</title>
+<style>
+body{font-family:sans-serif;padding:20px;background:#f5f5f5}
+h1{color:#2E7D32}
+.item{margin:8px 0;padding:10px;background:#fff;border-radius:8px}
+.label{color:#888;font-size:12px}
+.value{font-size:16px;color:#333;margin-top:4px;word-break:break-all}
+.ok{color:#4CAF50}.err{color:#F44336}.warn{color:#FF9800}
+button{padding:10px 20px;background:#2E7D32;color:#fff;border:none;border-radius:8px;margin:4px;cursor:pointer;font-size:16px}
+.village-card{margin:10px 0;padding:12px;background:#fff;border-radius:8px;border-left:4px solid #2E7D32}
+.vname{font-weight:bold;font-size:16px}.vinfo{font-size:13px;color:#666;margin-top:4px}
+</style>
+</head>
+<body>
+<h1>🔧 完整测试（模拟首页逻辑）</h1>
+<div id="info"></div>
+<div id="villageList"></div>
+<button onclick="location.reload()">刷新页面</button>
+<button onclick="location.href='index.html'">返回首页</button>
+<script>
+var el = document.getElementById('info');
+function add(title, val, cls) {
+  el.innerHTML += '<div class="item"><div class="label">'+title+'</div><div class="value '+(cls||'')+'">'+val+'</div></div>';
+}
+
+// 1. 模拟 Storage（和 index.html 完全一样）
+var Storage = {
+  get: function(key, defaultVal) {
+    try {
+      var v = localStorage.getItem('village_' + key);
+      return v ? JSON.parse(v) : defaultVal;
+    } catch(e) { return defaultVal; }
+  }
+};
+
+// 2. 模拟 DB（和 index.html 完全一样）
+var DB = { villages: [] };
+
+// 3. 模拟 index.html 的全局变量
+var pageSize = 10, pageIndex = 0, currentFilter = null;
+
+// 4. 模拟 filterVillages（和 index.html 一样）
+function filterVillages(list, type) {
+  return list;
+}
+
+// 5. 测试 renderVillages 完整逻辑
+add('开始测试 renderVillages 逻辑', '', '');
+try {
+  var all = Storage.get('villages', DB.villages) || [];
+  add('Storage.get(villages, DB.villages)', '返回 ' + all.length + ' 个村庄', all.length > 0 ? 'ok' : 'err');
+  
+  var filtered = currentFilter ? filterVillages(all, currentFilter) : all;
+  add('currentFilter', currentFilter === null ? 'null（无筛选）' : currentFilter, 'ok');
+  add('filtered.length', filtered.length + ' 个', filtered.length > 0 ? 'ok' : 'err');
+  
+  var pageCount = (pageIndex + 1) * pageSize;
+  var list = filtered.slice(0, pageCount);
+  add('分页后 list.length', list.length, list.length > 0 ? 'ok' : 'err');
+  
+  // 显示村庄卡片
+  var listEl = document.getElementById('villageList');
+  if (list.length === 0) {
+    listEl.innerHTML = '<div class="item"><span class="err">暂无村庄数据</span></div>';
+  } else {
+    var html = '<div class="item"><b>村庄列表：</b></div>';
+    for (var i = 0; i < list.length; i++) {
+      var v = list[i];
+      html += '<div class="village-card">';
+      html += '<div class="vname">' + (v.name || '') + '</div>';
+      html += '<div class="vinfo">📍 ' + (v.province || '') + ' ' + (v.city || '') + '</div>';
+      html += '<div class="vinfo'>村长: ' + (v.chief && v.chief.name || '?') + '</div>';
+      html += '</div>';
+    }
+    listEl.innerHTML = html;
+  }
+} catch(e) {
+  add('渲染出错', e.message + ' (line ' + e.lineNumber + ')', 'err');
+}
+</script>
+</body>
+</html>
