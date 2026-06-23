@@ -510,10 +510,10 @@ function renderPage() {
           return p.status === '待审核' && (!myVillage || p.village === myVillage.name || p.village === ''); 
         });
         var pendingFood = Storage.get('food_applications', []).filter(function(f) { 
-          return f.village === myVillage.name && f.status === '待审核'; 
+          return (!myVillage || f.village === myVillage.name) && f.status === '待审核'; 
         });
         var pendingCamps = Storage.get('camp_applications', []).filter(function(camp) { 
-          return camp.village === myVillage.name && camp.status === '待审核'; 
+          return (!myVillage || camp.village === myVillage.name) && camp.status === '待审核'; 
         });
         
         var totalPending = pendingProducts.length + pendingFood.length + pendingCamps.length;
@@ -1313,7 +1313,7 @@ function auditFood() {
   var myVillage = Storage.get('villages', []).find(function(v) { return v.chief && v.chief.name === currentUser.currentRoleName; });
   
   var apps = Storage.get('food_applications', []).filter(function(f) { 
-    return f.village === myVillage.name && f.status === '待审核'; 
+    return (!myVillage || f.village === myVillage.name) && f.status === '待审核'; 
   });
   
   var html = '<div style="padding:16px;">' +
