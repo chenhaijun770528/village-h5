@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>诊断页面</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#f5f5f5;padding:20px}
+h1{background:#2E7D32;color:#fff;padding:15px;border-radius:8px;text-align:center;margin-bottom:20px}
+.info{background:#fff;padding:15px;border-radius:8px;margin-bottom:10px;font-size:14px;line-height:1.8}
+.label{color:#888;font-size:12px;margin-top:8px}
+.value{color:#2E7D32;font-weight:bold;font-size:16px;margin-top:4px}
+.ok{color:#4CAF50}.err{color:#F44336}.warn{color:#FF9800}
+button{padding:12px 24px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-size:16px;margin:5px;cursor:pointer}
+button:active{background:#1B5E20}
+.villages{background:#fff;padding:12px;margin:8px 0;border-radius:8px;border-left:4px solid #2E7D32}
+.vname{font-weight:bold;font-size:16px}.vinfo{font-size:12px;color:#666;margin-top:4px}
+</style>
+</head>
+<body>
+<h1>🔧 数据诊断</h1>
+<div id="results"></div>
+<script>
+var r = document.getElementById('results');
+function add(title, val, cls) {
+  var d = document.createElement('div');
+  d.className = 'info';
+  d.innerHTML = '<div class="label">'+title+'</div><div class="value '+(cls||'')+'">'+val+'</div>';
+  r.appendChild(d);
+}
+function addVillage(v) {
+  var d = document.createElement('div');
+  d.className = 'villages';
+  d.innerHTML = '<div class="vname">'+v.name+'</div><div class="vinfo">'+v.province+' '+v.city+' | 村长:'+(v.chief&&v.chief.name||'?')+'</div>';
+  r.appendChild(d);
+}
+try {
+  var raw = localStorage.getItem('village_villages');
+  add('village_villages (localStorage)', raw ? '存在，'+JSON.parse(raw).length+'个村庄' : '不存在', raw ? 'ok' : 'err');
+  if (raw) {
+    var arr = JSON.parse(raw);
+    add('村庄列表', arr.length+'个');
+    arr.forEach(function(v){ addVillage(v); });
+  }
+} catch(e) {
+  add('错误', e.message, 'err');
+}
+try {
+  var raw2 = localStorage.getItem('village_user');
+  add('village_user (登录状态)', raw2 ? '已登录: '+JSON.parse(raw2).account : '未登录', raw2 ? 'ok' : 'warn');
+} catch(e) {
+  add('登录状态错误', e.message, 'err');
+}
+add('Storage.get测试', '请看上面 village_villages 的结果');
+</script>
+<h2 style="margin:20px 0 10px;font-size:16px">操作</h2>
+<button onclick="location.href='index.html'">返回首页</button>
+</body>
+</html>
