@@ -962,66 +962,64 @@ function showProductApps() {
 }
 
 function applyProduct() {
-  var name = prompt('农产品名称:');
-  if (!name) return;
-  var price = prompt('价格 (元):');
-  if (!price) return;
-  var unit = prompt('单位 (斤/个/箱等):', '斤');
-  var stock = prompt('库存数量:', '100');
-  
-  var currentUser = Storage.get('user');
-  var myReg = Storage.get('registrations', []).find(function(r) { return r.account === currentUser.account && r.role === '村民'; });
-  
-  var app = {
-    id: 'prod_' + Date.now(),
-    name: name,
-    price: parseFloat(price),
-    unit: unit,
-    stock: parseInt(stock),
-    sellerId: currentUser.account,
-    sellerName: currentUser.currentRoleName,
-    village: (function() {
-      // 多策略获取村庄名称
-      if (currentUser.currentRole && typeof currentUser.currentRole === 'object' && currentUser.currentRole.village) return currentUser.currentRole.village;
-      var regs = Storage.get('registrations', []);
-      for (var ri = 0; ri < regs.length; ri++) { if (regs[ri].account === currentUser.account && regs[ri].village) return regs[ri].village; }
-      var vs = Storage.get('villages', []);
-      for (var vi = 0; vi < vs.length; vi++) { if (vs[vi].chief && (vs[vi].chief.name === currentUser.currentRoleName || vs[vi].chief.name === currentUser.account)) return vs[vi].name; }
-      return '';
-    })(),
-    status: '待审核',
-    createTime: new Date().toISOString()
-  };
-  
-  var apps = Storage.get('product_applications', []);
-  apps.push(app);
-  Storage.set('product_applications', apps);
-  
-  alert('申请已提交，等待村主任审核');
-  location.reload();
-}
+    openProductModal();
+  }
 
-// ========== 村民：我的产品列表（含库存+待处理订单数）==========
-function initMyProducts() {
-  var user = Storage.get('user');
-  if (!user) return;
-  var panel = document.getElementById('myProductsPanel');
-  if (!panel) return;
-  var list = document.getElementById('myProductsList');
-  if (!list) return;
+  function openProductModal() {
+    var modal = document.getElementById('productModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'productModal';
+      modal.className = 'modal';
+      modal.innerHTML = '<div class="modal-content"><div class="modal-header"><h3>申请上架农产品</h3><span class="close" onclick="closeProductModal()">&times;</span></div><div class="modal-body"><div class="form-group"><label>农产品名称 *</label><input type="text" id="_pfName" placeholder="如：土鸡蛋"></div><div class="form-group"><label>价格 *</label><input type="text" id="_pfPrice" placeholder="如：50元/箱"></div><div class="form-group"><label>单位</label><input type="text" id="_pfUnit" placeholder="如：箱、斤、个"></div><div class="form-group"><label>库存数量 *</label><input type="number" id="_pfStock" placeholder="如：100"></div><div class="form-group"><label>所属村庄 *</label><select id="_pfVillage"><option value="">请选择村庄</option></select></div><div class="form-group"><label>产品描述</label><textarea id="_pfDesc" rows="3" placeholder="产品特色、产地等"></textarea></div><div class="form-group"><label>产品图片</label><input type="file" id="_pfImg" accept="image/*" multiple></div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeProductModal()">取消</button><button class="btn btn-primary" onclick="submitProduct()">提交申请</button></div></div>';
+      document.body.appendChild(modal);
+    }
+    // Load villages
+    var villages = Storage.get('villages', []);
+    var select = document.getElementById('_pfVillage');
+    select.innerHTML = '<option value="">请选择村庄</option>';
+    villages.forEach(function(v) {
+      select.innerHTML += '<option value="' + v.id + '">' + v.name + '</option>';
+    });
+    modal.style.display = 'flex';
+  }
 
-  var products = (Storage.get('products') || []).filter(function(p) { return p && p.sellerId === user.account; });
-  var foods = (Storage.get('foods') || []).filter(function(f) { return f && f.sellerId === user.account; });
-  var camps = (Storage.get('camps') || []).filter(function(c) { return c && c.sellerId === user.account; });
-  var orders = (Storage.get('orders') || []).filter(function(o) {
-    return o.sellerId === user.account && o.status !== '已取消' && o.status !== '已完成' && o.status !== '已拒绝';
-  });
+  function closeProductModal() {
+    var modal = document.getElementById('productModal');
+    if (modal) modal.style.display = 'none';
+  }
 
-  var total = products.length + foods.length + camps.length;
-  if (total === 0) {
-    list.innerHTML = '<div style="text-align:center;padding:12px;color:#999;font-size:12px;">暂无上架产品</div>';
-    panel.style.display = 'block';
-    return;
+  function submitProduct() {
+    var name = document.getElementById('_pfName').value.trim();
+    var price = document.getElementById('_pfPrice').value.trim();
+    var unit = document.getElementById('_pfUnit').value.trim();
+    var stock = document.getElementById('_pfStock').value.trim();
+    var villageId = document.getElementById('_pfVillage').value;
+    var desc = document.getElementById('_pfDesc').value.trim();
+    
+    if (!name || !price) { toast('请填写名称和价格'); return; }
+    if (!villageId) { toast('请选择所属村庄'); return; }
+    
+    var villages = Storage.get('villages', []);
+    var vname = '';
+    for (var i = 0; i < villages.length; i++) {
+      if (villages[i].id === villageId) { vname = villages[i].name; break; }
+    }
+    
+    var apps = Storage.get('product_applications', []);
+    apps.push({
+      id: 'pa_' + Date.now(),
+      name: name, price: price, unit: unit,
+      stockQuantity: parseInt(stock) || 0,
+      villageId: villageId, village: vname,
+      description: desc, status: '待审核',
+      sellerId: app.userId, sellerName: app.userName,
+      createTime: new Date().toISOString()
+    });
+    Storage.set('product_applications', apps);
+    toast('申请已提交，等待村主任审核');
+    closeProductModal();
+    loadMyProducts();
   }
 
   var html = '';
