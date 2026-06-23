@@ -28,7 +28,7 @@
     }
     .header-title { font-size: 18px; font-weight: bold; }
     .header-back { font-size: 20px; cursor: pointer; padding: 4px 8px; }
-    .ccontainer { padding: 60px 16px 80px; max-width: 750px; margin: 0 auto; }
+    .container { padding: 60px 16px 80px; max-width: 750px; margin: 0 auto; }
 
     /* 用户信息卡 */
     .user-card {
@@ -264,7 +264,7 @@
     <span style="width:40px"></span>
   </div>
 
-  <div class="ccontainer" id="mainContent">
+  <div class="container" id="mainContent">
     加载中...
   </div>
 
@@ -326,9 +326,9 @@ window.onerror = function(msg, url, line, col, err) {
     
 // 全局错误捕获：卡住时显示错误信息
 window.onerror = function(msg, url, line, col, error) {
-  var ccontainer = document.getElementById('mainContent');
-  if (ccontainer) {
-    ccontainer.innerHTML = '<div style="padding:20px;color:red;word-break:break-all;background:#fff;">' +
+  var container = document.getElementById('mainContent');
+  if (container) {
+    container.innerHTML = '<div style="padding:20px;color:red;word-break:break-all;background:#fff;">' +
       '<h3>页面运行错误，请截图给开发者</h3>' +
       '<p><b>错误：</b>' + msg + '</p>' +
       '<p><b>位置：</b>行 ' + line + (col ? ', 列 ' + col : '') + '</p>' +
@@ -339,7 +339,7 @@ window.onerror = function(msg, url, line, col, error) {
 };
 
 function renderPage() {
-      var ccontainer = document.getElementById('mainContent');
+      var container = document.getElementById('mainContent');
       var role = ROLES_MAP[currentUser.currentRole] || null;
       var roleText = '未选择角色';
       var roleCls = 'role-none';
@@ -564,12 +564,12 @@ function renderPage() {
         '<button class="btn-logout" onclick="doLogout()">🚪 退出登录</button>' +
         '</div>';
 
-      ccontainer.innerHTML = html;
+      container.innerHTML = html;
 
     // 初始化村民产品显示
     initMyProducts();
 
-    ccontainer.innerHTML = html;
+    container.innerHTML = html;
     }
 
     // 村主任审核村民
@@ -784,8 +784,8 @@ function renderPage() {
     }
     
     function renderScenerySections() {
-      var ccontainer = document.getElementById("vf_scenerySections");
-      if (!ccontainer) return;
+      var container = document.getElementById("vf_scenerySections");
+      if (!container) return;
       var html = "";
       for (var ci = 0; ci < SCENERY_CATS.length; ci++) {
         var cat = SCENERY_CATS[ci];
@@ -817,7 +817,7 @@ function renderPage() {
         }
         html += '</div>';
       }
-      ccontainer.innerHTML = html;
+      container.innerHTML = html;
     }
     
     function addSceneryToCat(catKey) { openSceneryForm(-1, catKey); }
