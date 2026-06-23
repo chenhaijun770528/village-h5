@@ -957,45 +957,81 @@ function showProductApps() {
   document.body.appendChild(modal);
 }
 
-function applyProduct() {
-  var name = prompt('农产品名称:');
-  if (!name) return;
-  var price = prompt('价格 (元):');
-  if (!price) return;
-  var unit = prompt('单位 (斤/个/箱等):', '斤');
-  var stock = prompt('库存数量:', '100');
-  
-  var currentUser = Storage.get('user');
-  var myReg = Storage.get('registrations', []).find(function(r) { return r.account === currentUser.account && r.role === '村民'; });
-  
-  var app = {
-    id: 'prod_' + Date.now(),
-    name: name,
-    price: parseFloat(price),
-    unit: unit,
-    stock: parseInt(stock),
-    sellerId: currentUser.account,
-    sellerName: currentUser.currentRoleName,
-    village: (function() {
-      // 多策略获取村庄名称
-      if (currentUser.currentRole && typeof currentUser.currentRole === 'object' && currentUser.currentRole.village) return currentUser.currentRole.village;
-      var regs = Storage.get('registrations', []);
-      for (var ri = 0; ri < regs.length; ri++) { if (regs[ri].account === currentUser.account && regs[ri].village) return regs[ri].village; }
-      var vs = Storage.get('villages', []);
-      for (var vi = 0; vi < vs.length; vi++) { if (vs[vi].chief && (vs[vi].chief.name === currentUser.currentRoleName || vs[vi].chief.name === currentUser.account)) return vs[vi].name; }
-      return '';
-    })(),
-    status: '待审核',
-    createTime: new Date().toISOString()
-  };
-  
-  var apps = Storage.get('product_applications', []);
-  apps.push(app);
-  Storage.set('product_applications', apps);
-  
-  alert('申请已提交，等待村主任审核');
-  location.reload();
+// ===== 村民申请农产品表单 =====
+function openProductForm() {
+  var user = Storage.get('user');
+  var villages = Storage.get('villages', []);
+  var vOptions = '';
+  var selectedV = '';
+  for (var vi = 0; vi < villages.length; vi++) {
+    var v = villages[vi];
+    var sel = (v.chief && (v.chief.name === user.currentRoleName || v.chief.name === user.account)) ? 'selected' : '';
+    if (sel) selectedV = v.id;
+    vOptions += '<option value="' + v.id + '" ' + sel + '>' + v.name + '</option>';
+  }
+  var html = '<div id="_pfMask" onclick="closeProductForm(event)" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:5000;display:flex;align-items:flex-end;">' +
+    '<div onclick="event.stopPropagation()" style="background:white;width:100%;border-radius:16px 16px 0 0;padding:20px 16px 30px;max-height:90vh;overflow-y:auto;">' +
+    '<div style="text-align:center;font-size:16px;font-weight:bold;margin-bottom:16px;">申请上架农产品</div>' +
+    '<div style="margin-bottom:12px;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">农产品名称 *</label><input id="_pfName" style="width:100%;padding:9px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;box-sizing:border-box;"></div>' +
+    '<div style="display:flex;gap:10px;margin-bottom:12px;"><div style="flex:1;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">价格(元) *</label><input id="_pfPrice" type="number" style="width:100%;padding:9px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;box-sizing:border-box;"></div><div style="flex:1;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">单位</label><input id="_pfUnit" value="斤" style="width:100%;padding:9px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;box-sizing:border-box;"></div></div>' +
+    '<div style="margin-bottom:12px;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">库存数量</label><input id="_pfStock" type="number" value="100" style="width:100%;padding:9px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;box-sizing:border-box;"></div>' +
+    '<div style="margin-bottom:12px;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">描述</label><textarea id="_pfDesc" rows="2" placeholder="简单描述一下" style="width:100%;padding:9px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;box-sizing:border-box;resize:none;"></textarea></div>' +
+    '<div style="margin-bottom:12px;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">图片</label><input type="file" id="_pfImg" accept="image/*" onchange="previewPFormImg(event)" style="font-size:13px;"><img id="_pfImgPreview" style="display:none;width:80px;height:80px;object-fit:cover;border-radius:8px;margin-top:6px;"></div>' +
+    '<div style="margin-bottom:16px;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">所属村庄 *</label><select id="_pfVillage" style="width:100%;padding:9px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;box-sizing:border-box;">' + vOptions + '</select></div>' +
+    '<button onclick="submitProductForm()" style="width:100%;padding:12px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;">提交审核</button>' +
+    '<div onclick="closeProductForm()" style="text-align:center;padding:10px;color:#999;font-size:14px;margin-top:6px;cursor:pointer;">取消</div></div></div>';
+  var div = document.createElement('div');
+  div.id = '_productFormWrapper';
+  div.innerHTML = html;
+  document.body.appendChild(div);
+  window._pFormImg = '';
+  if (selectedV) document.getElementById('_pfVillage').value = selectedV;
 }
+function closeProductForm(e) {
+  if (e && e.target.id !== '_pfMask') return;
+  var w = document.getElementById('_productFormWrapper');
+  if (w) w.remove();
+}
+function previewPFormImg(e) {
+  var file = e.target.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var img = new Image(); img.onload = function() {
+      var c = document.createElement('canvas'); var ctx = c.getContext('2d');
+      var mw = 800, mh = 600, q = 0.7; var w = img.width, h = img.height;
+      if (w > mw) { h = h * mw / w; w = mw; } if (h > mh) { w = w * mh / h; h = mh; }
+      c.width = w; c.height = h; ctx.drawImage(img, 0, 0, w, h);
+      window._pFormImg = c.toDataURL('image/jpeg', q);
+      var pv = document.getElementById('_pfImgPreview');
+      if (pv) { pv.src = window._pFormImg; pv.style.display = 'block'; }
+    }; img.src = ev.target.result;
+  }; reader.readAsDataURL(file);
+}
+function submitProductForm() {
+  var name = document.getElementById('_pfName').value.trim();
+  var price = document.getElementById('_pfPrice').value.trim();
+  var unit = document.getElementById('_pfUnit').value.trim() || '斤';
+  var stock = parseInt(document.getElementById('_pfStock').value) || 100;
+  var desc = document.getElementById('_pfDesc').value.trim();
+  var villageId = document.getElementById('_pfVillage').value;
+  if (!name || !price) { toast('请填写名称和价格'); return; }
+  var user = Storage.get('user');
+  var villages = Storage.get('villages', []);
+  var vname = '';
+  for (var vi = 0; vi < villages.length; vi++) { if (villages[vi].id === villageId) { vname = villages[vi].name; break; } }
+  var app = {
+    id: 'prod_' + Date.now(), name: name, price: parseFloat(price), unit: unit,
+    stock: stock, desc: desc, img: window._pFormImg || '',
+    sellerId: user.account, sellerName: user.currentRoleName || user.account,
+    village: vname, villageId: villageId, status: '待审核', createTime: new Date().toISOString()
+  };
+  var apps = Storage.get('product_applications', []);
+  apps.push(app); Storage.set('product_applications', apps);
+  closeProductForm();
+  toast('申请已提交，等待村主任审核');
+  showProductApps();
+}
+function applyProduct() { openProductForm(); }
 
 // ========== 村民：我的产品列表（含库存+待处理订单数）==========
 function initMyProducts() {
@@ -1211,30 +1247,81 @@ function showFoodApps() {
   document.body.appendChild(modal);
 }
 
-function applyFood() {
-  var name = prompt('美食名称:');
-  if (!name) return;
-  
-  var currentUser = Storage.get('user');
-  var myReg = Storage.get('registrations', []).find(function(r) { return r.account === currentUser.account && r.role === '村民'; });
-  
-  var app = {
-    id: 'food_' + Date.now(),
-    name: name,
-    sellerId: currentUser.account,
-    sellerName: currentUser.currentRoleName,
-    village: myReg ? myReg.village : '',
-    status: '待审核',
-    createTime: new Date().toISOString()
-  };
-  
-  var apps = Storage.get('food_applications', []);
-  apps.push(app);
-  Storage.set('food_applications', apps);
-  
-  alert('申请已提交，等待村主任审核');
-  location.reload();
+// ===== 村民申请美食表单 =====
+function openFoodForm() {
+  var user = Storage.get('user');
+  var villages = Storage.get('villages', []);
+  var vOptions = '';
+  var selectedV = '';
+  for (var vi = 0; vi < villages.length; vi++) {
+    var v = villages[vi];
+    var sel = (v.chief && (v.chief.name === user.currentRoleName || v.chief.name === user.account)) ? 'selected' : '';
+    if (sel) selectedV = v.id;
+    vOptions += '<option value="' + v.id + '" ' + sel + '>' + v.name + '</option>';
+  }
+  var html = '<div id="_ffMask" onclick="closeFoodForm(event)" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:5000;display:flex;align-items:flex-end;">' +
+    '<div onclick="event.stopPropagation()" style="background:white;width:100%;border-radius:16px 16px 0 0;padding:20px 16px 30px;max-height:90vh;overflow-y:auto;">' +
+    '<div style="text-align:center;font-size:16px;font-weight:bold;margin-bottom:16px;">申请上架美食</div>' +
+    '<div style="margin-bottom:12px;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">美食名称 *</label><input id="_ffName" style="width:100%;padding:9px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;box-sizing:border-box;"></div>' +
+    '<div style="display:flex;gap:10px;margin-bottom:12px;"><div style="flex:1;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">价格(元) *</label><input id="_ffPrice" type="number" style="width:100%;padding:9px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;box-sizing:border-box;"></div><div style="flex:1;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">单位</label><input id="_ffUnit" value="份" style="width:100%;padding:9px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;box-sizing:border-box;"></div></div>' +
+    '<div style="margin-bottom:12px;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">每日供应量</label><input id="_ffStock" type="number" value="10" style="width:100%;padding:9px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;box-sizing:border-box;"></div>' +
+    '<div style="margin-bottom:12px;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">描述</label><textarea id="_ffDesc" rows="2" placeholder="特色介绍" style="width:100%;padding:9px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;box-sizing:border-box;resize:none;"></textarea></div>' +
+    '<div style="margin-bottom:12px;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">图片</label><input type="file" id="_ffImg" accept="image/*" onchange="previewFFormImg(event)" style="font-size:13px;"><img id="_ffImgPreview" style="display:none;width:80px;height:80px;object-fit:cover;border-radius:8px;margin-top:6px;"></div>' +
+    '<div style="margin-bottom:16px;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">所属村庄 *</label><select id="_ffVillage" style="width:100%;padding:9px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;box-sizing:border-box;">' + vOptions + '</select></div>' +
+    '<button onclick="submitFoodForm()" style="width:100%;padding:12px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;">提交审核</button>' +
+    '<div onclick="closeFoodForm()" style="text-align:center;padding:10px;color:#999;font-size:14px;margin-top:6px;cursor:pointer;">取消</div></div></div>';
+  var div = document.createElement('div');
+  div.id = '_foodFormWrapper';
+  div.innerHTML = html;
+  document.body.appendChild(div);
+  window._fFormImg = '';
+  if (selectedV) document.getElementById('_ffVillage').value = selectedV;
 }
+function closeFoodForm(e) {
+  if (e && e.target.id !== '_ffMask') return;
+  var w = document.getElementById('_foodFormWrapper');
+  if (w) w.remove();
+}
+function previewFFormImg(e) {
+  var file = e.target.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var img = new Image(); img.onload = function() {
+      var c = document.createElement('canvas'); var ctx = c.getContext('2d');
+      var mw = 800, mh = 600, q = 0.7; var w = img.width, h = img.height;
+      if (w > mw) { h = h * mw / w; w = mw; } if (h > mh) { w = w * mh / h; h = mh; }
+      c.width = w; c.height = h; ctx.drawImage(img, 0, 0, w, h);
+      window._fFormImg = c.toDataURL('image/jpeg', q);
+      var pv = document.getElementById('_ffImgPreview');
+      if (pv) { pv.src = window._fFormImg; pv.style.display = 'block'; }
+    }; img.src = ev.target.result;
+  }; reader.readAsDataURL(file);
+}
+function submitFoodForm() {
+  var name = document.getElementById('_ffName').value.trim();
+  var price = document.getElementById('_ffPrice').value.trim();
+  var unit = document.getElementById('_ffUnit').value.trim() || '份';
+  var stock = parseInt(document.getElementById('_ffStock').value) || 10;
+  var desc = document.getElementById('_ffDesc').value.trim();
+  var villageId = document.getElementById('_ffVillage').value;
+  if (!name || !price) { toast('请填写名称和价格'); return; }
+  var user = Storage.get('user');
+  var villages = Storage.get('villages', []);
+  var vname = '';
+  for (var vi = 0; vi < villages.length; vi++) { if (villages[vi].id === villageId) { vname = villages[vi].name; break; } }
+  var app = {
+    id: 'food_' + Date.now(), name: name, price: parseFloat(price), unit: unit,
+    stock: stock, desc: desc, img: window._fFormImg || '',
+    sellerId: user.account, sellerName: user.currentRoleName || user.account,
+    village: vname, villageId: villageId, status: '待审核', createTime: new Date().toISOString()
+  };
+  var apps = Storage.get('food_applications', []);
+  apps.push(app); Storage.set('food_applications', apps);
+  closeFoodForm();
+  toast('申请已提交，等待村主任审核');
+  showFoodApps();
+}
+function applyFood() { openFoodForm(); }
 
 // ===== 露营地管理函数 =====
 function showCampApps() {
@@ -1270,30 +1357,82 @@ function showCampApps() {
   document.body.appendChild(modal);
 }
 
-function applyCamp() {
-  var name = prompt('露营地名称:');
-  if (!name) return;
-  
-  var currentUser = Storage.get('user');
-  var myReg = Storage.get('registrations', []).find(function(r) { return r.account === currentUser.account && r.role === '村民'; });
-  
-  var app = {
-    id: 'camp_' + Date.now(),
-    name: name,
-    sellerId: currentUser.account,
-    sellerName: currentUser.currentRoleName,
-    village: myReg ? myReg.village : '',
-    status: '待审核',
-    createTime: new Date().toISOString()
-  };
-  
-  var apps = Storage.get('camp_applications', []);
-  apps.push(app);
-  Storage.set('camp_applications', apps);
-  
-  alert('申请已提交，等待村主任审核');
-  location.reload();
+// ===== 村民申请露营地表单 =====
+function openCampForm() {
+  var user = Storage.get('user');
+  var villages = Storage.get('villages', []);
+  var vOptions = '';
+  var selectedV = '';
+  for (var vi = 0; vi < villages.length; vi++) {
+    var v = villages[vi];
+    var sel = (v.chief && (v.chief.name === user.currentRoleName || v.chief.name === user.account)) ? 'selected' : '';
+    if (sel) selectedV = v.id;
+    vOptions += '<option value="' + v.id + '" ' + sel + '>' + v.name + '</option>';
+  }
+  var html = '<div id="_cfMask" onclick="closeCampForm(event)" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:5000;display:flex;align-items:flex-end;">' +
+    '<div onclick="event.stopPropagation()" style="background:white;width:100%;border-radius:16px 16px 0 0;padding:20px 16px 30px;max-height:90vh;overflow-y:auto;">' +
+    '<div style="text-align:center;font-size:16px;font-weight:bold;margin-bottom:16px;">申请上架露营地</div>' +
+    '<div style="margin-bottom:12px;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">营地名称 *</label><input id="_cfName" style="width:100%;padding:9px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;box-sizing:border-box;"></div>' +
+    '<div style="display:flex;gap:10px;margin-bottom:12px;"><div style="flex:1;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">价格(元) *</label><input id="_cfPrice" type="number" placeholder="每晚价格" style="width:100%;padding:9px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;box-sizing:border-box;"></div><div style="flex:1;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">单位</label><input id="_cfUnit" value="顶/晚" style="width:100%;padding:9px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;box-sizing:border-box;"></div></div>' +
+    '<div style="margin-bottom:12px;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">特色标签</label><input id="_cfTags" placeholder="如：亲子,观星,烧烤" style="width:100%;padding:9px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;box-sizing:border-box;"></div>' +
+    '<div style="margin-bottom:12px;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">描述</label><textarea id="_cfDesc" rows="2" placeholder="营地特色介绍" style="width:100%;padding:9px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;box-sizing:border-box;resize:none;"></textarea></div>' +
+    '<div style="margin-bottom:12px;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">图片</label><input type="file" id="_cfImg" accept="image/*" onchange="previewCFormImg(event)" style="font-size:13px;"><img id="_cfImgPreview" style="display:none;width:80px;height:80px;object-fit:cover;border-radius:8px;margin-top:6px;"></div>' +
+    '<div style="margin-bottom:16px;"><label style="font-size:13px;color:#666;display:block;margin-bottom:4px;">所属村庄 *</label><select id="_cfVillage" style="width:100%;padding:9px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;box-sizing:border-box;">' + vOptions + '</select></div>' +
+    '<button onclick="submitCampForm()" style="width:100%;padding:12px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;">提交审核</button>' +
+    '<div onclick="closeCampForm()" style="text-align:center;padding:10px;color:#999;font-size:14px;margin-top:6px;cursor:pointer;">取消</div></div></div>';
+  var div = document.createElement('div');
+  div.id = '_campFormWrapper';
+  div.innerHTML = html;
+  document.body.appendChild(div);
+  window._cFormImg = '';
+  if (selectedV) document.getElementById('_cfVillage').value = selectedV;
 }
+function closeCampForm(e) {
+  if (e && e.target.id !== '_cfMask') return;
+  var w = document.getElementById('_campFormWrapper');
+  if (w) w.remove();
+}
+function previewCFormImg(e) {
+  var file = e.target.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var img = new Image(); img.onload = function() {
+      var c = document.createElement('canvas'); var ctx = c.getContext('2d');
+      var mw = 800, mh = 600, q = 0.7; var w = img.width, h = img.height;
+      if (w > mw) { h = h * mw / w; w = mw; } if (h > mh) { w = w * mh / h; h = mh; }
+      c.width = w; c.height = h; ctx.drawImage(img, 0, 0, w, h);
+      window._cFormImg = c.toDataURL('image/jpeg', q);
+      var pv = document.getElementById('_cfImgPreview');
+      if (pv) { pv.src = window._cFormImg; pv.style.display = 'block'; }
+    }; img.src = ev.target.result;
+  }; reader.readAsDataURL(file);
+}
+function submitCampForm() {
+  var name = document.getElementById('_cfName').value.trim();
+  var price = document.getElementById('_cfPrice').value.trim();
+  var unit = document.getElementById('_cfUnit').value.trim() || '顶/晚';
+  var tags = document.getElementById('_cfTags').value.trim();
+  var desc = document.getElementById('_cfDesc').value.trim();
+  var villageId = document.getElementById('_cfVillage').value;
+  if (!name || !price) { toast('请填写名称和价格'); return; }
+  var user = Storage.get('user');
+  var villages = Storage.get('villages', []);
+  var vname = '';
+  for (var vi = 0; vi < villages.length; vi++) { if (villages[vi].id === villageId) { vname = villages[vi].name; break; } }
+  var app = {
+    id: 'camp_' + Date.now(), name: name, price: parseFloat(price), unit: unit,
+    tags: tags ? tags.split(',').map(function(t){return t.trim()}).filter(function(t){return t}) : [],
+    desc: desc, img: window._cFormImg || '',
+    sellerId: user.account, sellerName: user.currentRoleName || user.account,
+    village: vname, villageId: villageId, status: '待审核', createTime: new Date().toISOString()
+  };
+  var apps = Storage.get('camp_applications', []);
+  apps.push(app); Storage.set('camp_applications', apps);
+  closeCampForm();
+  toast('申请已提交，等待村主任审核');
+  showCampApps();
+}
+function applyCamp() { openCampForm(); }
 
 // ===== 村主任美食/露营地审核 =====
 function auditFood() {
