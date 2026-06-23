@@ -813,7 +813,7 @@ initSampleData();
       const list = filtered.slice(0, (pageIndex + 1) * pageSize)
       const hasMore = filtered.length > list.length
 
-      document.getElementById('villageCount').textContent = '共 ' + filtered.length + ' 个村庄'; console.log('[renderVillages] all.length=' + all.length + ', filtered.length=' + filtered.length + ', rawStorage=' + (raw ? JSON.parse(raw).length : 'null'))
+      var rawLS = localStorage.getItem('village_villages'); var dbLen = (typeof DB !== 'undefined' && Array.isArray(DB.villages)) ? DB.villages.length : 'N/A'; document.getElementById('villageCount').textContent = 'localStorage:' + (rawLS ? JSON.parse(rawLS).length : 0) + ' DB:' + dbLen + ' 显示:' + filtered.length + '个 | 共 ' + filtered.length + ' 个村庄'; console.log('[renderVillages] all.length=' + all.length + ', filtered.length=' + filtered.length + ', rawStorage=' + (raw ? JSON.parse(raw).length : 'null'))
       // Debug: show data source in villageCount
       var raw = localStorage.getItem('village_villages');
       var dbRaw = typeof DB !== 'undefined' && Array.isArray(DB.villages) ? DB.villages.length : '?';
