@@ -694,17 +694,17 @@ const Storage = {
 
 // 初始化示例数据到localStorage
 function initSampleData() {
-  // 强制清空并初始化空数据（清除旧的示例数据）
-  Storage.set('villages', []);
-  Storage.set('messages', []);
-  Storage.set('favorites', []);
-  Storage.set('history', []);
-  Storage.set('products', []);
-  Storage.set('foods', []);
-  Storage.set('camps', []);
-  Storage.set('product_applications', []);
-  Storage.set('food_applications', []);
-  Storage.set('camp_applications', []);
+  // 只在完全没有任何数据时才初始化，不要清空已有数据
+  if (!localStorage.getItem('village_villages')) Storage.set('villages', []);
+  if (!localStorage.getItem('village_messages')) Storage.set('messages', []);
+  if (!localStorage.getItem('village_favorites')) Storage.set('favorites', []);
+  if (!localStorage.getItem('village_history')) Storage.set('history', []);
+  if (!localStorage.getItem('village_products')) Storage.set('products', []);
+  if (!localStorage.getItem('village_foods')) Storage.set('foods', []);
+  if (!localStorage.getItem('village_camps')) Storage.set('camps', []);
+  if (!localStorage.getItem('village_product_applications')) Storage.set('product_applications', []);
+  if (!localStorage.getItem('village_food_applications')) Storage.set('food_applications', []);
+  if (!localStorage.getItem('village_camp_applications')) Storage.set('camp_applications', []);
 }
   if (!localStorage.getItem('village_messages')) {
     Storage.set('messages', DB.messages)
@@ -778,7 +778,7 @@ function logout() {
     let currentBanner = 0
 
     function init() {
-if (!localStorage.getItem('village_initialized')) { initSampleData(); localStorage.setItem('village_initialized', '1'); }
+initSampleData();
       renderBanner()
 
       loadAnnouncements();      renderVillages()
