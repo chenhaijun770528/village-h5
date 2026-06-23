@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>测试</title>
+<style>
+body{font-family:sans-serif;padding:20px;background:#f5f5f5}
+h1{color:#2E7D32}
+.item{margin:8px 0;padding:10px;background:#fff;border-radius:8px}
+.label{color:#888;font-size:12px}
+.value{font-size:16px;color:#333;margin-top:4px;word-break:break-all}
+.ok{color:#4CAF50}
+.err{color:#F44336}
+</style>
+</head>
+<body>
+<h1>🔧 数据测试</h1>
+<div id="info"></div>
+<script>
+var el = document.getElementById('info');
+function add(title, val, cls) {
+  el.innerHTML += '<div class="item"><div class="label">'+title+'</div><div class="value '+(cls||'')+'">'+val+'</div></div>';
+}
+
+// 模拟 Storage 对象（和 index.html 一模一样）
+var Storage = {
+  get: function(key, defaultVal) {
+    try {
+      var v = localStorage.getItem('village_' + key);
+      return v ? JSON.parse(v) : defaultVal;
+    } catch(e) { return defaultVal; }
+  }
+};
+
+// 模拟 DB（只定义 villages）
+var DB = { villages: [] };
+
+// 测试1: 直接读 localStorage
+try {
+  var raw = localStorage.getItem('village_villages');
+  if (raw) {
+    var arr = JSON.parse(raw);
+    add('直接读 localStorage village_villages', arr.length + '个村庄: ' + arr.map(function(v){return v.name;}).join(', '), 'ok');
+  } else {
+    add('直接读 localStorage village_villages', '不存在', 'err');
+  }
+} catch(e) {
+  add('直接读 localStorage 出错', e.message, 'err');
+}
+
+// 测试2: 用 Storage.get
+try {
+  var result = Storage.get('villages', DB.villages);
+  add('Storage.get(villages, fallback)', Array.isArray(result) ? result.length + '个' : '非数组: ' + typeof result, result && result.length > 0 ? 'ok' : 'err');
+} catch(e) {
+  add('Storage.get 出错', e.message, 'err');
+}
+
+// 测试3: 用 Storage.get 但 key 不存在
+try {
+  var result2 = Storage.get('xxx_not_exist', ['fallback_data']);
+  add('Storage.get 不存在的key，fallback', Array.isArray(result2) ? result2.length + '个' : result2);
+} catch(e) {
+  add('测试3 出错', e.message, 'err');
+}
+</script>
+</body>
+</html>
