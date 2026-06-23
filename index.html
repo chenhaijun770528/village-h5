@@ -493,7 +493,53 @@ body {
         🏘️ 村庄列表
         <span class="village-count" id="villageCount">共 0 个村庄</span>
       </div>
-      <div id="villageList"></div>
+      <div 
+<div id="debugPanel" style="background:#1a1a2e;color:#0f0;color:green;font-size:12px;padding:8px;margin:8px;border-radius:8px;display:none">
+  <b>【调试信息】</b><br>
+  localStorage key= <b id="dbKey">-</b><br>
+  村庄数量: <b id="dbCount">-</b><br>
+  村庄列表: <b id="dbNames">-</b><br>
+  DB.villages fallback: <b id="dbFallback">-</b><br>
+  renderVillages读取: <b id="dbRead">-</b>
+</div>
+<button onclick="toggleDebug()" style="font-size:11px;padding:4px 8px;margin:4px 8px;background:#333;color:#0f0;border:1px solid #0f0">🔧 调试</button>
+<script>
+function toggleDebug() {
+  var p = document.getElementById('debugPanel');
+  if (!p) return;
+  if (p.style.display === 'none') {
+    p.style.display = 'block';
+    // Read actual data
+    try {
+      var raw = localStorage.getItem('village_villages');
+      document.getElementById('dbKey').textContent = 'village_villages: ' + (raw ? '存在(' + raw.length + '字节)' : '不存在');
+      var arr = raw ? JSON.parse(raw) : null;
+      document.getElementById('dbCount').textContent = arr ? arr.length : 'null';
+      document.getElementById('dbNames').textContent = arr ? arr.map(function(v){return v.name;}).join(', ') : '-';
+    } catch(e) { document.getElementById('dbKey').textContent = '错误: ' + e.message; }
+    try {
+      var d = Storage.get('villages', 'NOT_FOUND');
+      document.getElementById('dbRead').textContent = (d === 'NOT_FOUND' ? 'null/fallback' : (Array.isArray(d) ? d.length + '个' : typeof d));
+      if (Array.isArray(d)) {
+        document.getElementById('dbNames').textContent = d.map(function(v){return v.name;}).join(', ');
+      }
+    } catch(e) { document.getElementById('dbRead').textContent = '错误: ' + e.message; }
+    try {
+      document.getElementById('dbFallback').textContent = Array.isArray(DB.villages) ? DB.villages.length + '个' : '非数组';
+    } catch(e) {}
+  } else {
+    p.style.display = 'none';
+  }
+}
+// Auto-show debug panel
+window.onerror = function(msg, url, line) {
+  if (confirm('页面出错: ' + msg + '
+行号:' + line + '
+点确定查看调试信息')) toggleDebug();
+  return false;
+};
+</script>
+id="villageList"></div>
       <div class="load-more" id="loadMore" onclick="loadMore()" style="display:none">加载更多 ↓</div>
     </div>
   </div>
