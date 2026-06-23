@@ -498,7 +498,7 @@ body {
     </div>
   </div>
 
-  <!-- 底部导航 -->
+  <!-- 底部导�� -->
   <div class="tab-bar">
     <div class="tab-item active" onclick="goPage('index.html')">
       <span class="tab-icon">🏠</span>
@@ -542,91 +542,13 @@ body {
 
 const DB = {
   // 村庄数据
-  villages: [
-    {
-      id: 'v1',
-      name: '幸福村',
-      province: '江苏省',
-      city: '苏州市',
-      population: '3280',
-      totalArea: '4500',
-      farmlandArea: '2800',
-      commercialArea: '200',
-      description: '幸福村位于苏州市郊区，环境优美，基础设施完善，是著名的生态农业示范村。村内有千年古银杏树、多彩田园，是周末休闲的好去处。',
-      chief: { name: '张建国', phone: '13800138001' },
-      scenery: [
-        { id: 's1', title: '千年古银杏', desc: '树龄超过800年，树高25米，胸围6米', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=' },
-        { id: 's2', title: '多彩田园', desc: '四季变换的稻田画，色彩斑斓', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=' },
-        { id: 's3', title: '荷塘月色', desc: '夏季荷花盛开，清香四溢', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=' }
-      ],
-      food: [
-        { id: 'f1', name: '农家土鸡', price: '98', unit: '只', desc: '散养土鸡，肉质鲜嫩', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=' },
-        { id: 'f2', name: '新鲜虾仁', price: '58', unit: '斤', desc: '本地河虾，当日捕捞', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=' },
-        { id: 'f3', name: '手工年糕', price: '25', unit: '斤', desc: '传统工艺，口感软糯', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=' }
-      ],
-      images: ['data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=', 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=', 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=']
-    },
-    {
-      id: 'v2',
-      name: '阳光村',
-      province: '广东省',
-      city: '广州市',
-      population: '4560',
-      totalArea: '6200',
-      farmlandArea: '3500',
-      commercialArea: '350',
-      description: '阳光村是广州市郊的现代化农村，积极发展乡村旅游和生态农业。村内有大型草莓采摘园、农家乐设施，是城市居民周末体验田园生活的好选择。',
-      chief: { name: '李明华', phone: '13800138002' },
-      scenery: [
-        { id: 's4', title: '草莓采摘园', desc: '50亩有机草莓，个大味甜', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=' },
-        { id: 's5', title: '阳光花海', desc: '百亩花田，四季花开', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=' }
-      ],
-      food: [
-        { id: 'f4', name: '有机草莓', price: '35', unit: '斤', desc: '有机种植，个大香甜', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=' },
-        { id: 'f5', name: '客家酿豆腐', price: '38', unit: '份', desc: '传统客家美食', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=' }
-      ],
-      images: ['data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=', 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=']
-    },
-    {
-      id: 'v3',
-      name: '青山村',
-      province: '湖南省',
-      city: '长沙市',
-      population: '2150',
-      totalArea: '3800',
-      farmlandArea: '1800',
-      commercialArea: '150',
-      description: '青山村坐落于长株潭后花园，森林覆盖率超过70%，空气清新，是天然的氧吧。村内有古民居、古井等历史遗迹，适合徒步探险和研学旅行。',
-      chief: { name: '王志强', phone: '13800138003' },
-      scenery: [
-        { id: 's6', title: '古民居群', desc: '保存完好的明清古建筑', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=' },
-        { id: 's7', title: '千年古井', desc: '井水清澈，冬暖夏凉', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=' },
-        { id: 's8', title: '竹林氧吧', desc: '百亩竹林，呼吸自然', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=' }
-      ],
-      food: [
-        { id: 'f6', name: '竹林土鸡', price: '108', unit: '只', desc: '竹林散养，营养丰富', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=' },
-        { id: 'f7', name: '手工竹笋干', price: '45', unit: '斤', desc: '春季竹笋，自然晾晒', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=' }
-      ],
-      images: ['data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=', 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=', 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=']
-    }
-  ],
+  villages: [],
 
   // 农产品
-  products: [
-    { id: 'p1', name: '有机大米', price: '68', unit: '袋/10斤', desc: '绿色有机种植，口感香糯', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=', sales: 328 },
-    { id: 'p2', name: '土鸡蛋', price: '45', unit: '盒/30枚', desc: '散养土鸡，蛋黄饱满', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=', sales: 256 },
-    { id: 'p3', name: '新鲜蜂蜜', price: '88', unit: '瓶/500g', desc: '深山百花蜜，纯天然', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=', sales: 189 },
-    { id: 'p4', name: '农家菜籽油', price: '58', unit: '瓶/2L', desc: '传统压榨，香浓健康', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=', sales: 412 },
-    { id: 'p5', name: '干香菇', price: '78', unit: '袋/500g', desc: '深山椴木种植，香味浓郁', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=', sales: 167 },
-    { id: 'p6', name: '红薯粉条', price: '35', unit: '袋/500g', desc: '纯手工制作，口感劲道', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=', sales: 523 }
-  ],
+  products: [],
 
   // 露营基地
-  camps: [
-    { id: 'c1', name: '星空露营基地', desc: '海拔800米，远离光污染，是观星圣地', price: '188', unit: '顶/晚', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=', tags: ['观星', '烧烤', '篝火'], features: ['专业露营帐篷', '天文望远镜租借', '烧烤设备', '24小时热水'] },
-    { id: 'c2', name: '湖畔露营区', desc: '紧邻水库，湖光山色，宁静惬意', price: '158', unit: '顶/晚', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=', tags: ['钓鱼', '划船', '亲子'], features: ['湖景帐篷', '免费停车', '钓鱼工具租借', '儿童游乐区'] },
-    { id: 'c3', name: '森林木屋营地', desc: '独栋木屋掩映在松林间，呼吸森林负氧离子', price: '288', unit: '间/晚', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIyB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWbvueJh+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=', tags: ['森林', '静修', '养生'], features: ['独栋木屋', '独立卫浴', '厨房设施', '森林SPA'] }
-  ],
+  camps: [],
 
   // 角色类型（注册）
   roles: [
@@ -644,10 +566,7 @@ const DB = {
   ],
 
   // 留言数据
-  messages: [
-    { id: 'm1', author: '张三', avatar: '👨', text: '幸福村风景真美，周末带孩子去玩得很开心！', time: '2小时前', likes: 12 },
-    { id: 'm2', author: '李四', avatar: '👩', text: '农家乐的饭菜很好吃，老板人也很热情。', time: '5小时前', likes: 8 }
-  ],
+  messages: [],
 
   // 我的收藏
   favorites: [],
@@ -694,9 +613,31 @@ const Storage = {
 
 // 初始化示例数据到localStorage
 function initSampleData() {
+  // 不再初始化示例数据，所有数据需通过注册/审核流程创建
+  // 只初始化空数组
   if (!localStorage.getItem('village_villages')) {
-    Storage.set('villages', DB.villages)
+    Storage.set('villages', []);
   }
+  if (!localStorage.getItem('village_messages')) {
+    Storage.set('messages', []);
+  }
+  if (!localStorage.getItem('village_favorites')) {
+    Storage.set('favorites', []);
+  }
+  if (!localStorage.getItem('village_history')) {
+    Storage.set('history', []);
+  }
+  // 清空未审核的产品/美食/露营申请
+  if (!localStorage.getItem('village_products')) {
+    Storage.set('products', []);
+  }
+  if (!localStorage.getItem('village_foods')) {
+    Storage.set('foods', []);
+  }
+  if (!localStorage.getItem('village_camps')) {
+    Storage.set('camps', []);
+  }
+}
   if (!localStorage.getItem('village_messages')) {
     Storage.set('messages', DB.messages)
   }
@@ -822,7 +763,7 @@ function logout() {
           <div class="village-stats">
             <div class="stat-item"><span class="stat-icon">🗺️</span><div><div class="stat-value">${v.totalArea}</div><div class="stat-label">总面积(亩)</div></div></div>
             <div class="stat-item"><span class="stat-icon">🌾</span><div><div class="stat-value">${v.farmlandArea}</div><div class="stat-label">耕地(亩)</div></div></div>
-            <div class="stat-item"><span class="stat-icon">🏪</span><div><div class="stat-value">${v.commercialArea}</div><div class="stat-label">商业(亩)</div></div></div>
+            <div class="stat-item"><span class="stat-icon">����</span><div><div class="stat-value">${v.commercialArea}</div><div class="stat-label">商业(亩)</div></div></div>
           </div>
           <div class="village-desc">${v.description}</div>
           <div class="village-actions">
