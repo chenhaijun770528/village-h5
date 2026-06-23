@@ -1216,16 +1216,19 @@ function showFoodApps() {
 function applyFood() {
   var name = prompt('美食名称:');
   if (!name) return;
+  var price = prompt('价格(如: 38元/份):');
+  if (!price) return;
+  var village = prompt('所属村庄:');
   
   var currentUser = Storage.get('user');
-  var myReg = Storage.get('registrations', []).find(function(r) { return r.account === currentUser.account && r.role === '村民'; });
   
   var app = {
     id: 'food_' + Date.now(),
     name: name,
+    price: price,
+    village: village || '',
     sellerId: currentUser.account,
     sellerName: currentUser.currentRoleName,
-    village: myReg ? myReg.village : '',
     status: '待审核',
     createTime: new Date().toISOString()
   };
@@ -1275,16 +1278,19 @@ function showCampApps() {
 function applyCamp() {
   var name = prompt('露营地名称:');
   if (!name) return;
+  var price = prompt('价格(如: 200元/晚):');
+  if (!price) return;
+  var village = prompt('所属村庄:');
   
   var currentUser = Storage.get('user');
-  var myReg = Storage.get('registrations', []).find(function(r) { return r.account === currentUser.account && r.role === '村民'; });
   
   var app = {
     id: 'camp_' + Date.now(),
     name: name,
+    price: price,
+    village: village || '',
     sellerId: currentUser.account,
     sellerName: currentUser.currentRoleName,
-    village: myReg ? myReg.village : '',
     status: '待审核',
     createTime: new Date().toISOString()
   };
