@@ -812,16 +812,36 @@ initSampleData();
       const filtered = currentFilter ? filterVillages(all, currentFilter) : all
       const list = filtered.slice(0, (pageIndex + 1) * pageSize)
       const hasMore = filtered.length > list.length
-
-      var rawLS = localStorage.getItem('village_villages'); var dbLen = (typeof DB !== 'undefined' && Array.isArray(DB.villages)) ? DB.villages.length : 'N/A'; document.getElementById('villageCount').textContent = 'localStorage:' + (rawLS ? JSON.parse(rawLS).length : 0) + ' DB:' + dbLen + ' 显示:' + filtered.length + '个 | 共 ' + filtered.length + ' 个村庄'; console.log('[renderVillages] all.length=' + all.length + ', filtered.length=' + filtered.length + ', rawStorage=' + (raw ? JSON.parse(raw).length : 'null'))
-      // Debug: show data source in villageCount
-      var raw = localStorage.getItem('village_villages');
-      var dbRaw = typeof DB !== 'undefined' && Array.isArray(DB.villages) ? DB.villages.length : '?';
-      document.getElementById('villageCount').textContent = 'localStorage:[' + (raw ? JSON.parse(raw).length : 0) + '] DB:[' + dbRaw + '] 显示:' + filtered.length + '个村庄';
+      document.getElementById('villageCount').textContent = '共 ' + filtered.length + ' 个村庄'
       document.getElementById('loadMore').style.display = hasMore ? 'block' : 'none'
-      document.getElementById('villageList').innerHTML = list.length === 0
-        ? '<div class="empty-state"><span class="empty-icon">🏘️</span><span>暂无村庄数据</span></div>'
-        : list.map(v => '<div class="village-card" onclick="goVillageDetail(\'' + v.id + '\')"><div class="village-header"><div><div class="village-name">' + (v.name||'') + '</div><div class="village-location">📍 ' + (v.province||'') + ' ' + (v.city||'') + '</div></div><div class="village-population"><div class="population-number">' + (v.population||'') + '</div><div class="population-label">人口</div></div></div><div class="village-stats"><div class="stat-item"><span class="stat-icon">🗺️</span><div><div class="stat-value">' + (v.totalArea||'') + '</div><div class="stat-label">总面积(亩)</div></div></div><div class="stat-item"><span class="stat-icon">🌾</span><div><div class="stat-value">' + (v.farmlandArea||'') + '</div><div class="stat-label">耕地(亩)</div></div></div></div><div class="village-desc">' + (v.description||'') + '</div><div class="village-actions"><div class="action-btn" onclick="event.stopPropagation();goPage(\'scenery.html?id=' + v.id + '\')">🌄 风景</div><div class="action-btn" onclick="event.stopPropagation();goPage(\'food.html?id=' + v.id + '\')">🍜 美食</div><div class="action-btn" onclick="event.stopPropagation();goPage(\'planning.html?id=' + v.id + '\')">📈 规划</div><div class="action-btn" onclick="event.stopPropagation();callChief(\'' + (v.chief&&v.chief.phone||'') + '\')">📞 联系</div></div></div>').join('')
+      if (list.length === 0) {
+        document.getElementById('villageList').innerHTML = '<div class="empty-state"><span class="empty-icon">🏘️</span><span>暂无村庄数据</span></div>'
+        return
+      }
+      var html = ''
+      for (var i = 0; i < list.length; i++) {
+        var v = list[i]
+        html += '<div class="village-card" onclick="goVillageDetail(\'' + v.id + '\')">'
+        html += '<div class="village-header"><div><div class="village-name">' + (v.name||'') + '</div>'
+        html += '<div class="village-location">📍 ' + (v.province||'') + ' ' + (v.city||'') + '</div></div>'
+        html += '<div class="village-population"><div class="population-number">' + (v.population||'') + '</div>'
+        html += '<div class="population-label">人口</div></div></div>'
+        html += '<div class="village-stats">'
+        html += '<div class="stat-item"><span class="stat-icon">🗺️</span><div><div class="stat-value">' + (v.totalArea||'') + '</div><div class="stat-label">总面积(亩)</div></div></div>'
+        html += '<div class="stat-item"><span class="stat-icon">🌾</span><div><div class="stat-value">' + (v.farmlandArea||'') + '</div><div class="stat-label">耕地(亩)</div></div></div>'
+        html += '</div>'
+        html += '<div class="village-desc">' + (v.description||'') + '</div>'
+        html += '<div class="village-actions">'
+        html += '<div class="action-btn" onclick="event.stopPropagation();goPage(\'scenery.html?id=' + v.id + '\')">🌄 风景</div>'
+        html += '<div class="action-btn" onclick="event.stopPropagation();goPage(\'food.html?id=' + v.id + '\')">🍜 美食</div>'
+        html += '<div class="action-btn" onclick="event.stopPropagation();goPage(\'planning.html?id=' + v.id + '\')">📈 规划</div>'
+        html += '<div class="action-btn" onclick="event.stopPropagation();callChief(\'' + (v.chief&&v.chief.phone||'') + '\')">📞 联系</div>'
+        html += '</div></div>'
+      }
+      document.getElementById('villageList').innerHTML = html
+    }
+
+
     }
 
     function filterVillages(list, type) {
