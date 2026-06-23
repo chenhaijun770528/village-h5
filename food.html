@@ -389,10 +389,11 @@ function compressImage(file, maxWidth, maxHeight, quality, callback) {
 
 // 初始化数据（不再添加示例数据）
 function initSampleData() {
-  // 只初始化空数组，不添加示例数据
-  if (!Storage.get('villages', null)) {
-    Storage.set('villages', []);
-  }
+  // 强制清空并初始化空数据
+  Storage.set('villages', []);
+  Storage.set('foods', []);
+  Storage.set('food_applications', []);
+}
   // 美食正式列表 - 空数组
   if (!Storage.get('foods', null)) {
     Storage.set('foods', []);
