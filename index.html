@@ -706,16 +706,6 @@ function initSampleData() {
   if (!localStorage.getItem('village_food_applications')) Storage.set('food_applications', []);
   if (!localStorage.getItem('village_camp_applications')) Storage.set('camp_applications', []);
 }
-  if (!localStorage.getItem('village_messages')) {
-    Storage.set('messages', DB.messages)
-  }
-  if (!localStorage.getItem('village_favorites')) {
-    Storage.set('favorites', [])
-  }
-  if (!localStorage.getItem('village_history')) {
-    Storage.set('history', [])
-  }
-}
 // 数据迁移：将旧key的数据合并到新key（防止更新后数据丢失）
 function migrateData() {
   // 从 registered_users 迁移
@@ -866,9 +856,6 @@ initSampleData();
     function loadMore() {
       pageIndex++;
       renderVillages();
-    }
-
-
     }
 
     function showSearch() {
