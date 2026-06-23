@@ -1015,6 +1015,7 @@ function submitProductForm() {
   var desc = document.getElementById('_pfDesc').value.trim();
   var villageId = document.getElementById('_pfVillage').value;
   if (!name || !price) { toast('请填写名称和价格'); return; }
+  if (!villageId) { toast('请选择所属村庄'); return; }
   var user = Storage.get('user');
   var villages = Storage.get('villages', []);
   var vname = '';
@@ -1305,6 +1306,7 @@ function submitFoodForm() {
   var desc = document.getElementById('_ffDesc').value.trim();
   var villageId = document.getElementById('_ffVillage').value;
   if (!name || !price) { toast('请填写名称和价格'); return; }
+  if (!villageId) { toast('请选择所属村庄'); return; }
   var user = Storage.get('user');
   var villages = Storage.get('villages', []);
   var vname = '';
@@ -1415,6 +1417,7 @@ function submitCampForm() {
   var desc = document.getElementById('_cfDesc').value.trim();
   var villageId = document.getElementById('_cfVillage').value;
   if (!name || !price) { toast('请填写名称和价格'); return; }
+  if (!villageId) { toast('请选择所属村庄'); return; }
   var user = Storage.get('user');
   var villages = Storage.get('villages', []);
   var vname = '';
