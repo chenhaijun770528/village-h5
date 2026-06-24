@@ -1410,7 +1410,8 @@ function approveProduct(id) {
       sellerId: app.userId || '',
       sellerName: app.userName || '',
       village: app.village,
-      status: '在售'
+      status: '在售',
+      img: app.img || ''
     });
     Storage.set('products', products);
     
@@ -1670,7 +1671,8 @@ function approveCamp(id) {
       sellerId: app.userId || '',
       sellerName: app.userName || '',
       village: app.village,
-      status: '开放中'
+      status: '开放中',
+      img: app.img || ''
     });
     Storage.set('camps', camps);
     
