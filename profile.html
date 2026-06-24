@@ -1010,7 +1010,7 @@ function applyProduct() {
       stockQuantity: parseInt(stock) || 0,
       villageId: villageId, village: vname,
       description: desc, status: '待审核',
-      sellerId: app.userId, sellerName: app.userName,
+      sellerId: Storage.get('user').account, sellerName: Storage.get('user').name,
       createTime: new Date().toISOString()
     });
     Storage.set('product_applications', apps);
