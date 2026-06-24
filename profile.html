@@ -1441,9 +1441,7 @@ function rejectCamp(id) {
     location.reload();
   }
 }
-</script>
-    
-    <script>
+
 // profile-food-camp-fix.js
 // 覆盖美食/露营地申请函数 + 修复村主任审核函数
 
@@ -2298,6 +2296,8 @@ window.auditCamps = function() {
         if(mainEl) { mainEl.innerHTML = '<div style="padding:20px;color:red;font-size:16px;"><h3>⚠️ 页面错误</h3><pre style="background:#f5f5f5;padding:10px;overflow:auto;">' + e.message + '\n\n' + (e.stack||'').replace(/</g,'&lt;') + '</pre><p>请截图发给开发者</p></div>'; }
         else { document.body.innerHTML = '<div style="padding:20px;color:red;"><h3>⚠️ 错误</h3><pre>' + e.message + '</pre></div>'; }
       }
+
+
 </script>
 </body>
 </html>
