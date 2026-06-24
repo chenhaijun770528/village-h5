@@ -411,22 +411,37 @@ function compressImage(file, maxWidth, maxHeight, quality, callback) {
   reader.readAsDataURL(file);
 }
 
-// 初始化数据（不再添加示例数据）
+// 初始化示例数据
 function initSampleData() {
-  // 强制清空并初始化空数据
-  Storage.set('villages', []);
-  Storage.set('camps', []);
-  Storage.set('camp_applications', []);
-}
-  // 露营正式列表 - 空数组
+  if (!Storage.get('villages', null)) {
+    var defaultVillages = [
+      {
+        id: 'v1', name: '幸福村', province: '江苏省', city: '苏州市',
+        population: '3280', totalArea: '4500', farmlandArea: '2800',
+        description: '幸福村位于苏州市郊区，环境优美，著名的生态农业示范村。',
+        chief: { name: '张建国', phone: '13800138001' }, images: []
+      },
+      {
+        id: 'v2', name: '阳光村', province: '广东省', city: '广州市',
+        population: '4560', totalArea: '6200', farmlandArea: '3500',
+        description: '阳光村是广州市郊的现代化农村，积极发展乡村旅游。',
+        chief: { name: '李明华', phone: '13800138002' }, images: []
+      }
+    ];
+    Storage.set('villages', defaultVillages);
+  }
+  // 露营正式列表
   if (!Storage.get('camps', null)) {
-    Storage.set('camps', []);
+    Storage.set('camps', [
+      { id: 'c1', name: '星空露营基地', desc: '海拔800米，远离光污染，是观星圣地', price: '188', unit: '顶/晚', tags: ['观星', '烧烤', '篝火'], village: '幸福村', villageId: 'v1', img: '' },
+      { id: 'c2', name: '湖畔露营区', desc: '紧邻水库，湖光山色，宁静惬意', price: '158', unit: '顶/晚', tags: ['钓鱼', '划船', '亲子'], village: '阳光村', villageId: 'v2', img: '' },
+      { id: 'c3', name: '森林木屋营地', desc: '独栋木屋掩映在松林间，呼吸森林负氧离子', price: '288', unit: '间/晚', tags: ['森林', '静修', '养生'], village: '幸福村', villageId: 'v1', img: '' }
+    ]);
   }
   // 露营申请列表
   if (!Storage.get('camp_applications', null)) {
     Storage.set('camp_applications', []);
   }
-}
 }
 
 // 页面初始化
