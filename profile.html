@@ -339,8 +339,8 @@ window.onerror = function(msg, url, line, col, error) {
 };
 
 function renderPage() {
-  var container = document.getElementById('mainContent');
-  var role = ROLES_MAP[currentUser.currentRole] || null;
+      var container = document.getElementById('mainContent');
+      var role = ROLES_MAP[currentUser.currentRole] || null;
       var roleText = '未选择角色';
       var roleCls = 'role-none';
       var roleTag = '<span class="role-badge role-none">❓ 未选择角色</span>';
@@ -566,6 +566,8 @@ function renderPage() {
 
       container.innerHTML = html;
 
+    container.innerHTML = html;
+    }
 
     // 村主任审核村民
     function approveVillager(regId) {
@@ -1054,7 +1056,8 @@ function applyProduct() {
         (cc > 0 ? '<span style="background:#FF9800;color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;">' + cc + ' 订单</span>' : '<span style="font-size:10px;color:#4CAF50;">✓ 正常</span>') +
       '</div>';
     });
-  var _c = document.getElementById('mainContent'); if (_c) _c.innerHTML = html;
+  list.innerHTML = html;
+  panel.style.display = 'block';
 }
 
 function showMyOrders() {
