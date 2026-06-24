@@ -340,6 +340,7 @@ window.onerror = function(msg, url, line, col, error) {
 
 function renderPage() {
   var container = document.getElementById('mainContent');
+  window._container = container;
   var role = ROLES_MAP[currentUser.currentRole] || null;
       var roleText = '未选择角色';
       var roleCls = 'role-none';
@@ -1053,8 +1054,8 @@ function applyProduct() {
         (cc > 0 ? '<span style="background:#FF9800;color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;">' + cc + ' 订单</span>' : '<span style="font-size:10px;color:#4CAF50;">✓ 正常</span>') +
       '</div>';
     });
-  container.innerHTML = html;
-  panel.style.display = 'block';
+  var _el = document.getElementById('mainContent');
+  if (_el) _el.innerHTML = html;
 }
 
 function showMyOrders() {
