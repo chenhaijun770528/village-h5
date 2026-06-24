@@ -531,10 +531,10 @@ function renderPage() {
       html += '<div class="menu-list">';
 
       if (currentUser.currentRole === 'none') {
-        html += '<div class="menu-item" onclick="location.href=\'select-role.html\'">' +
+        html += '<div class="menu-item" onclick="location.href=\'javascript:void(0)\'">' +
           '<span class="menu-icon\">🎯</span><span class="menu-text">选择/注册角色</span><span class="menu-arrow">›</span></div>';
       } else {
-        html += '<div class="menu-item" onclick="location.href=\'select-role.html\'">' +
+        html += '<div class="menu-item" onclick="location.href=\'javascript:void(0)\'">' +
           '<span class="menu-icon">🔄</span><span class="menu-text">切换角色</span><span class="menu-arrow">›</span></div>';
       }
 
@@ -1019,6 +1019,10 @@ function applyProduct() {
     loadMyProducts();
   }
 
+  var products = Storage.get('products', []);
+  var foods = Storage.get('foods', []);
+  var camps = Storage.get('camps', []);
+  var orders = Storage.get('product_orders', []);
   var products = Storage.get('products', []);
   var foods = Storage.get('foods', []);
   var camps = Storage.get('camps', []);
@@ -2300,26 +2304,36 @@ window.auditCamps = function() {
 
 
 function quickSetRole() {
-  var roles = ['村主任,村民,游客,超市老板,建筑公司,老师,大学生,律师,货运司机,顺风车,按摩技师'];
-  var html = '<div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;" onclick="if(event.target===this)this.remove()">';
-  html += '<div style="background:#fff;border-radius:12px;padding:24px;width:280px;max-height:80vh;overflow-y:auto;">';
-  html += '<h3 style="margin:0 0 16px;text-align:center;">选择角色</h3>';
+  var roles = ['村主任','村民','游客','超市老板','建筑公司','老师','大学生','律师','货运司机','顺风车','按摩技师'];
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  overlay.onclick = function(e) { if(e.target===overlay) overlay.remove(); };
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#fff;border-radius:12px;padding:24px;width:280px;max-height:80vh;overflow-y:auto;';
+  box.innerHTML = '<h3 style="margin:0 0 16px;text-align:center">选择角色</h3>';
   roles.forEach(function(r) {
-    html += '<div onclick="setRoleTo(\"'+r+'\")" style="padding:12px 16px;border-bottom:1px solid #eee;cursor:pointer;">'+r+'</div>';
+    var btn = document.createElement('div');
+    btn.style.cssText = 'padding:12px 16px;border-bottom:1px solid #eee;cursor:pointer;';
+    btn.textContent = r;
+    btn.onclick = function() { setRoleTo(r); };
+    box.appendChild(btn);
   });
-  html += '<div onclick="this.closest(\'div[style]').remove()" style="padding:12px;text-align:center;color:#999;cursor:pointer;">取消</div>';
-  html += '</div></div>';
-  document.body.insertAdjacentHTML('beforeend', html);
+  var cancel = document.createElement('div');
+  cancel.style.cssText = 'padding:12px;text-align:center;color:#999;cursor:pointer;';
+  cancel.textContent = '取消';
+  cancel.onclick = function() { overlay.remove(); };
+  box.appendChild(cancel);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
 }
 function setRoleTo(roleName) {
-  var roleMap = {'村主任':'township','村民':'villager','游客':'tourist','超市老板':'market','建筑公司':'construction','老师':'teacher','大学生':'student','律师':'lawyer','货运司机':'truck','顺风车':'carpool','按摩技师':'massage'};
-  var roleVal = roleMap[roleName] || 'villager';
+  var map = {'村主任':'township','村民':'villager','游客':'tourist','超市老板':'market','建筑公司':'construction','老师':'teacher','大学生':'student','律师':'lawyer','货运司机':'truck','顺风车':'carpool','按摩技师':'massage'};
+  var roleVal = map[roleName] || 'villager';
   var user = Storage.get('user');
   if (!user) { alert('请先登录'); return; }
   user.currentRole = roleVal;
   user.currentRoleName = roleName;
   Storage.set('user', user);
-  // Also update in accounts
   var accounts = Storage.get('accounts', []);
   for (var i = 0; i < accounts.length; i++) {
     if (accounts[i].id === user.id || accounts[i].account === user.account) {
@@ -2329,10 +2343,8 @@ function setRoleTo(roleName) {
     }
   }
   Storage.set('accounts', accounts);
-  // Close overlay
-  var overlay = document.querySelector('div[style*="z-index:9999"]');
-  if (overlay) overlay.remove();
-  // Refresh page
+  var ov = document.querySelector('div[style*="z-index:9999"]');
+  if (ov) ov.remove();
   renderPage();
 }
 </script>
