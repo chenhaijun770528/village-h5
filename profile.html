@@ -1252,28 +1252,6 @@ window.deleteProductApp = function(id) {
   alert('已删除');
   location.reload();
 };
-    sellerName: currentUser.currentRoleName,
-    village: (function() {
-      // 多策略获取村庄名称
-      if (currentUser.currentRole && typeof currentUser.currentRole === 'object' && currentUser.currentRole.village) return currentUser.currentRole.village;
-      var regs = Storage.get('registrations', []);
-      for (var ri = 0; ri < regs.length; ri++) { if (regs[ri].account === currentUser.account && regs[ri].village) return regs[ri].village; }
-      var vs = Storage.get('villages', []);
-      for (var vi = 0; vi < vs.length; vi++) { if (vs[vi].chief && (vs[vi].chief.name === currentUser.currentRoleName || vs[vi].chief.name === currentUser.account)) return vs[vi].name; }
-      return '';
-    })(),
-    status: '待审核',
-    createTime: new Date().toISOString()
-  };
-  
-  var apps = Storage.get('product_applications', []);
-  apps.push(app);
-  Storage.set('product_applications', apps);
-  
-  alert('申请已提交，等待村主任审核');
-  location.reload();
-}
-
 // ========== 村民：我的产品列表（含库存+待处理订单数）==========
 function initMyProducts() {
   var user = Storage.get('user');
