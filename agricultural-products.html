@@ -498,8 +498,8 @@ function loadProducts() {
 
     if (item.type === 'pending') {
       // 待审核申请卡片（村长视角）
-      var imgHtml = item.data.img
-        ? '<div class="goods-img" style="background:#f0f0f0;display:flex;align-items:center;justify-content:center;"><img src="' + item.data.img + '" style="width:100%;height:120px;object-fit:cover;" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'🥬\'"></div>'
+      var imgHtml = item.data.img && item.data.img.length > 100
+        ? '<div class="goods-img" style="background:#f0f0f0;display:flex;align-items:center;justify-content:center;"><img src="' + item.data.img + '" style="width:100%;height:120px;object-fit:cover;" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div style=\\'font-size:48px;\\'>🥬</div>\'"></div>'
         : '<div class="goods-img" style="background:#fff3e0;display:flex;align-items:center;justify-content:center;font-size:48px;">⏳</div>';
       card.innerHTML = imgHtml +
         '<div class="goods-info">' +
@@ -513,9 +513,9 @@ function loadProducts() {
         '</div>';
     } else {
       // 正式产品卡片
-      var pimg = item.data.img
-        ? '<img src="' + item.data.img + '" style="width:100%;height:120px;object-fit:cover;" onerror="this.parentElement.innerHTML=\'🥬\'">'
-        : '🥬';
+      var pimg = item.data.img && item.data.img.length > 100
+        ? '<img src="' + item.data.img + '" style="width:100%;height:120px;object-fit:cover;" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div style=\\'font-size:48px;\\'>🥬</div>\'">'
+        : '<div style="font-size:48px;">🥬</div>';
       card.innerHTML = '<div class="goods-img" style="background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:48px;">' + pimg + '</div>' +
         '<div class="goods-info">' +
         '<div class="goods-name">' + item.data.name + '</div>' +
