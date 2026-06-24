@@ -1019,6 +1019,10 @@ function applyProduct() {
     loadMyProducts();
   }
 
+  var products = Storage.get('products', []);
+  var foods = Storage.get('foods', []);
+  var camps = Storage.get('camps', []);
+  var orders = Storage.get('product_orders', []);
   var html = '';
   // 农产品
   if (products.length > 0) {
