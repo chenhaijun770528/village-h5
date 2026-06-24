@@ -633,7 +633,8 @@ function updateFabVisibility() {
   }
 }
 
-var currentApplyImgBase64 = '';
+var _campImages = [];  // 多图片数组
+var currentApplyImgBase64 = '';  // 兼容旧代码
 
 function openApplyModal(appId) {
   var user = checkLoginAndVillager();
@@ -698,13 +699,55 @@ function closeApplyModal() {
 }
 
 function previewApplyImg(event) {
-  var file = event.target.files[0];
-  if (!file) return;
-  compressImage(file, 800, 600, 0.7, function(dataUrl) {
-    currentApplyImgBase64 = dataUrl;
-    var preview = document.getElementById('applyImgPreview');
-    preview.src = dataUrl;
-    preview.style.display = 'block';
+  var files = event.target.files;
+  if (!files || files.length === 0) return;
+  
+  // 限制最多6张
+  var remaining = 6 - _campImages.length;
+  if (remaining <= 0) {
+    toast('最多上传6张图片');
+    return;
+  }
+  
+  var filesToProcess = Array.from(files).slice(0, remaining);
+  var processed = 0;
+  
+  filesToProcess.forEach(function(file) {
+    compressImage(file, 800, 600, 0.7, function(dataUrl) {
+      _campImages.push(dataUrl);
+      processed++;
+      
+      if (processed === filesToProcess.length) {
+        renderCampImagePreview();
+        toast('已添加 ' + processed + ' 张图片');
+      }
+    });
+  });
+}
+
+function renderCampImagePreview() {
+  var preview = document.getElementById('applyImgPreview');
+  preview.innerHTML = '';
+  
+  _campImages.forEach(function(imgData, idx) {
+    var imgContainer = document.createElement('div');
+    imgContainer.style.cssText = 'display:inline-block;position:relative;margin:5px;';
+    
+    var img = document.createElement('img');
+    img.src = imgData;
+    img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:6px;';
+    
+    var deleteBtn = document.createElement('button');
+    deleteBtn.innerHTML = '×';
+    deleteBtn.style.cssText = 'position:absolute;top:-5px;right:-5px;width:20px;height:20px;border-radius:50%;background:#F44336;color:white;border:none;font-size:12px;';
+    deleteBtn.onclick = function() {
+      _campImages.splice(idx, 1);
+      renderCampImagePreview();
+    };
+    
+    imgContainer.appendChild(img);
+    imgContainer.appendChild(deleteBtn);
+    preview.appendChild(imgContainer);
   });
 }
 
@@ -745,7 +788,8 @@ function submitApplication() {
         apps[ei].tags = tags ? tags.split(',') : [];
         apps[ei].villageId = villageId;
         apps[ei].village = villageName;
-        apps[ei].img = currentApplyImgBase64 || apps[ei].img || '';
+        apps[ei].imgs = _campImages.length > 0 ? _campImages : (apps[ei].imgs || []);
+        apps[ei].img = (apps[ei].imgs && apps[ei].imgs[0]) || apps[ei].img || '';
         apps[ei].updateTime = Date.now();
         found = true;
         break;
@@ -765,7 +809,8 @@ function submitApplication() {
       tags: tags ? tags.split(',') : [],
       villageId: villageId,
       village: villageName,
-      img: currentApplyImgBase64 || '',
+      imgs: _campImages,  // 多图片数组
+      img: _campImages.length > 0 ? _campImages[0] : '',  // 兼容旧代码：第一张作为封面
       status: 'waiting',
       createTime: Date.now(),
       updateTime: Date.now()
