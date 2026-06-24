@@ -592,34 +592,29 @@ function rejectItem(appId) {
 // 检查登录和权限
 function checkLoginAndVillager() {
   var user = Storage.get('user', null);
-  if (!user) {
-    toast('请先登录');
-    return null;
-  }
+  if (!user) { toast('请先登录'); return null; }
+  var role = user.role || '';
+  if (role !== '村民' && role !== '村主任') { toast('仅村民可申请上架'); return null; }
   return user;
 }
 
-// 更新FAB按钮可见性
 function updateFabVisibility() {
   var user = Storage.get('user', null);
-  var fabBtn = document.getElementById('fabBtn');
-  var myAppBtn = document.getElementById('myAppBtn');
   if (!user) {
-    fabBtn.style.display = 'none';
-    myAppBtn.style.display = 'none';
+    document.getElementById('fabBtn').style.display = 'none';
+    document.getElementById('myAppBtn').style.display = 'none';
     return;
   }
   var role = user.role || '';
   if (role === '村民' || role === '村主任') {
-    fabBtn.style.display = 'flex';
-    myAppBtn.style.display = 'block';
+    document.getElementById('fabBtn').style.display = 'flex';
+    document.getElementById('myAppBtn').style.display = 'block';
   } else {
-    fabBtn.style.display = 'none';
-    myAppBtn.style.display = 'none';
+    document.getElementById('fabBtn').style.display = 'none';
+    document.getElementById('myAppBtn').style.display = 'none';
   }
 }
 
-// 打开申请弹窗
 var currentApplyImgBase64 = '';
 
 function openApplyModal(appId) {
@@ -634,9 +629,8 @@ function openApplyModal(appId) {
   document.getElementById('applyImgPreview').style.display = 'none';
   document.getElementById('applyEditId').value = '';
   currentApplyImgBase64 = '';
-  document.getElementById('applyModalTitle').textContent = '申请上架农产品';
+  document.getElementById('applyModalTitle').textContent = '申请上架美食';
 
-  // 加载村庄列表
   var villageSelect = document.getElementById('applyVillage');
   var villages = Storage.get('villages', []);
   var options = '';
@@ -645,7 +639,6 @@ function openApplyModal(appId) {
   }
   villageSelect.innerHTML = options;
 
-  // 自动选中当前用户所属村庄
   for (var ci = 0; ci < villages.length; ci++) {
     if (villages[ci].chief && villages[ci].chief.name === user.nickName) {
       villageSelect.value = villages[ci].id;
@@ -653,29 +646,25 @@ function openApplyModal(appId) {
     }
   }
 
-  // 编辑模式
   if (appId) {
-    document.getElementById('applyModalTitle').textContent = '编辑农产品申请';
+    document.getElementById('applyModalTitle').textContent = '编辑美食申请';
     document.getElementById('applyEditId').value = appId;
 
     var apps = Storage.get('product_applications', []);
-    var app = null;
     for (var ei = 0; ei < apps.length; ei++) {
-      if (apps[ei].id === appId) { app = apps[ei]; break; }
-    }
-
-    if (app) {
-      document.getElementById('applyName').value = app.name;
-      document.getElementById('applyPrice').value = app.price;
-      document.getElementById('applyUnit').value = app.unit;
-      document.getElementById('applyDesc').value = app.desc || '';
-      document.getElementById('applyVillage').value = app.villageId || app.village;
-
-      if (app.img) {
-        currentApplyImgBase64 = app.img;
-        var preview = document.getElementById('applyImgPreview');
-        preview.src = app.img;
-        preview.style.display = 'block';
+      if (apps[ei].id === appId) {
+        document.getElementById('applyName').value = apps[ei].name;
+        document.getElementById('applyPrice').value = apps[ei].price;
+        document.getElementById('applyUnit').value = apps[ei].unit;
+        document.getElementById('applyDesc').value = apps[ei].desc || '';
+        document.getElementById('applyVillage').value = apps[ei].villageId || apps[ei].village;
+        if (apps[ei].img) {
+          currentApplyImgBase64 = apps[ei].img;
+          var preview = document.getElementById('applyImgPreview');
+          preview.src = apps[ei].img;
+          preview.style.display = 'block';
+        }
+        break;
       }
     }
   }
@@ -683,12 +672,10 @@ function openApplyModal(appId) {
   document.getElementById('applyModal').classList.add('show');
 }
 
-// 关闭申请弹窗
 function closeApplyModal() {
   document.getElementById('applyModal').classList.remove('show');
 }
 
-// 预览申请图片（带Canvas压缩）
 function previewApplyImg(event) {
   var file = event.target.files[0];
   if (!file) return;
@@ -700,7 +687,6 @@ function previewApplyImg(event) {
   });
 }
 
-// 提交申请
 function submitApplication() {
   var user = checkLoginAndVillager();
   if (!user) return;
@@ -726,14 +712,10 @@ function submitApplication() {
   var apps = Storage.get('product_applications', []);
 
   if (editId) {
-    // 编辑模式：只能编辑自己的申请
     var found = false;
     for (var ei = 0; ei < apps.length; ei++) {
       if (apps[ei].id === editId) {
-        if (apps[ei].userId !== user.id) {
-          toast('无权编辑此申请');
-          return;
-        }
+        if (apps[ei].userId !== user.id) { toast('无权编辑此申请'); return; }
         apps[ei].name = name;
         apps[ei].price = price;
         apps[ei].unit = unit;
@@ -749,7 +731,6 @@ function submitApplication() {
     if (!found) { toast('申请不存在'); return; }
     toast('申请修改成功');
   } else {
-    // 新增模式
     var newApp = {
       id: genId(),
       userId: user.id,
@@ -773,20 +754,14 @@ function submitApplication() {
   closeApplyModal();
 }
 
-// 打开我的申请列表
 function openMyApplications() {
   var user = Storage.get('user', null);
-  if (!user) {
-    toast('请先登录');
-    return;
-  }
+  if (!user) { toast('请先登录'); return; }
 
   var apps = Storage.get('product_applications', []);
   var myApps = [];
   for (var i = 0; i < apps.length; i++) {
-    if (apps[i].userId === user.id) {
-      myApps.push(apps[i]);
-    }
+    if (apps[i].userId === user.id) myApps.push(apps[i]);
   }
 
   var listEl = document.getElementById('myAppList');
@@ -799,20 +774,16 @@ function openMyApplications() {
       var app = myApps[mi];
       var card = document.createElement('div');
       card.className = 'app-card status-' + app.status;
-
       var statusText = app.status === 'waiting' ? '待审核' : app.status === 'pass' ? '已通过' : '已拒绝';
-
       var imgHtml = app.img
         ? '<img src="' + app.img + '" style="width:60px;height:60px;object-fit:cover;border-radius:6px;margin-top:6px;" onerror="this.style.display=\'none\'">'
         : '';
-
       var actionsHtml = '';
       if (app.status === 'waiting') {
         actionsHtml =
           '<button class="btn-edit" onclick="openApplyModal(\'' + app.id + '\')">编辑</button>' +
           '<button class="btn-delete" onclick="deleteApplication(\'' + app.id + '\')">删除</button>';
       }
-
       card.innerHTML =
         '<div class="app-card-top">' +
         '<span class="app-card-name">' + app.name + '</span>' +
@@ -821,7 +792,6 @@ function openMyApplications() {
         '<div class="app-card-info">价格：¥' + app.price + '/' + app.unit + ' | 村庄：' + app.village + '</div>' +
         imgHtml +
         '<div class="app-card-actions" style="margin-top:8px;">' + actionsHtml + '</div>';
-
       listEl.appendChild(card);
     }
   }
@@ -829,12 +799,10 @@ function openMyApplications() {
   document.getElementById('myAppModal').classList.add('show');
 }
 
-// 关闭我的申请弹窗
 function closeMyAppModal() {
   document.getElementById('myAppModal').classList.remove('show');
 }
 
-// 删除申请（只能删除自己的待审核申请）
 function deleteApplication(appId) {
   if (!confirm('确定要删除此申请吗？')) return;
 
@@ -844,16 +812,12 @@ function deleteApplication(appId) {
   var deleted = false;
   for (var i = 0; i < apps.length; i++) {
     if (apps[i].id === appId) {
-      if (apps[i].userId !== user.id) {
-        toast('无权删除此申请');
-        return;
-      }
+      if (apps[i].userId !== user.id) { toast('无权删除此申请'); return; }
       deleted = true;
     } else {
       newApps.push(apps[i]);
     }
   }
-
   if (!deleted) { toast('申请不存在'); return; }
 
   Storage.set('product_applications', newApps);
@@ -861,7 +825,6 @@ function deleteApplication(appId) {
   openMyApplications();
 }
 
-// 页面加载完成后初始化
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
