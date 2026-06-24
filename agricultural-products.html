@@ -285,10 +285,10 @@ body {
   <!-- 申请上架弹窗 -->
   <div class="modal-mask" id="applyModal">
     <div class="modal-panel">
-      <h3 id="applyModalTitle">申请上架</h3>
+      <h3 id="applyModalTitle">申请上架农产品</h3>
       <div class="form-group">
-        <label class="form-label">名称 *</label>
-        <input class="form-input" id="applyName" placeholder="请输入名称">
+        <label class="form-label">农产品名称 *</label>
+        <input class="form-input" id="applyName" placeholder="请输入农产品名称">
       </div>
       <div class="form-group">
         <label class="form-label">价格 *</label>
@@ -296,11 +296,11 @@ body {
       </div>
       <div class="form-group">
         <label class="form-label">单位 *</label>
-        <input class="form-input" id="applyUnit" placeholder="如：袋/10斤、只、斤">
+        <input class="form-input" id="applyUnit" placeholder="如：斤、袋、箱">
       </div>
       <div class="form-group">
         <label class="form-label">描述</label>
-        <textarea class="form-input" id="applyDesc" rows="3" placeholder="请输入描述"></textarea>
+        <textarea class="form-input" id="applyDesc" rows="3" placeholder="请输入农产品描述"></textarea>
       </div>
       <div class="form-group">
         <label class="form-label">图片</label>
@@ -634,7 +634,7 @@ function openApplyModal(appId) {
   document.getElementById('applyImgPreview').style.display = 'none';
   document.getElementById('applyEditId').value = '';
   currentApplyImgBase64 = '';
-  document.getElementById('applyModalTitle').textContent = '申请上架';
+  document.getElementById('applyModalTitle').textContent = '申请上架农产品';
 
   // 加载村庄列表
   var villageSelect = document.getElementById('applyVillage');
@@ -655,7 +655,7 @@ function openApplyModal(appId) {
 
   // 编辑模式
   if (appId) {
-    document.getElementById('applyModalTitle').textContent = '编辑申请';
+    document.getElementById('applyModalTitle').textContent = '编辑农产品申请';
     document.getElementById('applyEditId').value = appId;
 
     var apps = Storage.get('product_applications', []);
