@@ -510,10 +510,10 @@ function renderPage() {
           return (p.status === '待审核' || p.status === 'waiting') && (!myVillage || p.village === myVillage.name || p.village === ''); 
         });
         var pendingFood = Storage.get('food_applications', []).filter(function(f) { 
-          return (f.status === '待审核' || f.status === 'waiting') && (!myVillage || f.village === myVillage.name); 
+          return (f.status === '待审核' || f.status === 'waiting') && (!myVillage || f.villageId === myVillage.id); 
         });
         var pendingCamps = Storage.get('camp_applications', []).filter(function(camp) { 
-          return (camp.status === '待审核' || camp.status === 'waiting') && (!myVillage || camp.village === myVillage.name); 
+          return (camp.status === '待审核' || camp.status === 'waiting') && (!myVillage || camp.villageId === myVillage.id); 
         });
         
         var totalPending = pendingProducts.length + pendingFood.length + pendingCamps.length;
@@ -1553,10 +1553,10 @@ function applyCamp() {
 // ===== 村主任美食/露营地审核 =====
 function auditFood() {
   var currentUser = Storage.get('user');
-  var myVillage = Storage.get('villages', []).find(function(v) { return v.chief && v.chief.name === currentUser.currentRoleName; });
+  var myVillage = Storage.get('villages', []).find(function(v) { return v.chief && v.chief.name === currentUser.nickName; });
   
   var apps = Storage.get('food_applications', []).filter(function(f) { 
-    return (f.status === '待审核' || f.status === 'waiting') && (!myVillage || f.village === myVillage.name); 
+    return (f.status === '待审核' || f.status === 'waiting') && (!myVillage || f.villageId === myVillage.id); 
   });
   
   var html = '<div style="padding:16px;">' +
@@ -1623,10 +1623,10 @@ function rejectFood(id) {
 
 function auditCamps() {
   var currentUser = Storage.get('user');
-  var myVillage = Storage.get('villages', []).find(function(v) { return v.chief && v.chief.name === currentUser.currentRoleName; });
+  var myVillage = Storage.get('villages', []).find(function(v) { return v.chief && v.chief.name === currentUser.nickName; });
   
   var apps = Storage.get('camp_applications', []).filter(function(c) { 
-    return (c.status === '待审核' || c.status === 'waiting') && (!myVillage || c.village === myVillage.name); 
+    return (c.status === '待审核' || c.status === 'waiting') && (!myVillage || c.villageId === myVillage.id); 
   });
   
   var html = '<div style="padding:16px;">' +
