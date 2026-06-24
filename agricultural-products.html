@@ -266,6 +266,12 @@ body {
     <span style="width:40px"></span>
   </div>
 
+  <!-- 调试信息栏 -->
+  <div id="debugBar" style="background:#fff3cd;color:#856404;padding:8px 16px;font-size:12px;display:none;border-bottom:1px solid #ffeaa7;">
+    <span id="debugInfo"></span>
+    <span style="float:right;cursor:pointer;" onclick="document.getElementById('debugBar').style.display='none';">✕</span>
+  </div>
+
   <div class="container">
     <div class="section-title" style="margin-bottom:12px;font-size:16px;font-weight:bold;color:#333;">🌾 精选农产品</div>
     <div class="goods-grid" id="productGrid"></div>
@@ -391,16 +397,68 @@ function compressImage(file, maxWidth, maxHeight, quality, callback) {
   reader.readAsDataURL(file);
 }
 
-// 初始化数据（不再添加示例数据）
+// 初始化示例数据（修复：只在完全没有数据时初始化）
 function initSampleData() {
-  if (!Storage.get('products', null)) Storage.set('products', []);
-  if (!Storage.get('product_applications', null)) Storage.set('product_applications', []);
+  // 修复：检查是否已经有数据，如果有就不再初始化
+  var hasVillages = Storage.get('villages', null);
+  var hasProducts = Storage.get('products', null);
+  var hasApplications = Storage.get('product_applications', null);
+  
+  if (hasVillages && hasProducts && hasApplications) {
+    return; // 已经有数据，不再初始化
+  }
+  
+  if (!hasVillages) {
+    var defaultVillages = [
+      {
+        id: 'v1',
+        name: '幸福村',
+        province: '江苏省',
+        city: '苏州市',
+        population: '3280',
+        totalArea: '4500',
+        farmlandArea: '2800',
+        commercialArea: '200',
+        description: '幸福村位于苏州市郊区，环境优美，基础设施完善，是著名的生态农业示范村。',
+        chief: { name: '张建国', phone: '13800138001' },
+        images: []
+      },
+      {
+        id: 'v2',
+        name: '阳光村',
+        province: '广东省',
+        city: '广州市',
+        population: '4560',
+        totalArea: '6200',
+        farmlandArea: '3500',
+        commercialArea: '350',
+        description: '阳光村是广州市郊的现代化农村，积极发展乡村旅游和生态农业。',
+        chief: { name: '李明华', phone: '13800138002' },
+        images: []
+      }
+    ];
+    Storage.set('villages', defaultVillages);
+  }
+  
+  if (!hasProducts) {
+    Storage.set('products', [
+      { id: 'p1', name: '有机大米', price: '68', unit: '袋/10斤', desc: '绿色有机种植，口感香糯', sales: 328, village: '幸福村', villageId: 'v1', img: '' },
+      { id: 'p2', name: '土鸡蛋', price: '45', unit: '盒/30枚', desc: '散养土鸡，蛋黄饱满', sales: 256, village: '幸福村', villageId: 'v1', img: '' },
+      { id: 'p3', name: '新鲜蜂蜜', price: '88', unit: '瓶/500g', desc: '深山百花蜜，纯天然', sales: 189, village: '阳光村', villageId: 'v2', img: '' }
+    ]);
+  }
+  
+  if (!hasApplications) {
+    Storage.set('product_applications', []);
+  }
 }
 
+// 页面初始化
 function init() {
   initSampleData();
   loadProducts();
   updateFabVisibility();
+  showDebugInfo();
 }
 
 // 加载农产品列表（正式列表 + 村长待审核申请）
@@ -408,26 +466,43 @@ function loadProducts() {
   var grid = document.getElementById('productGrid');
   var products = Storage.get('products', []);
   var user = Storage.get('user', null);
-  var isVillageChief = user && user.role === '村主任';
+  var isVillageChief = user && (user.role === '村主任' || user.role === 'head');
 
   // 如果是村长，加载本村待审核申请
   var pendingApps = [];
   if (isVillageChief) {
     var allApps = Storage.get('product_applications', []);
-    for (var ai = 0; ai < allApps.length; ai++) {
-      var a = allApps[ai];
-      // 找到村长的村庄ID
-      var villages = Storage.get('villages', []);
-      var chiefVillageId = null;
-      for (var vi = 0; vi < villages.length; vi++) {
-        if (villages[vi].chief && villages[vi].chief.name === user.nickName) {
-          chiefVillageId = villages[vi].id;
+    var villages = Storage.get('villages', []);
+    
+    // 修复：通过用户ID查找村长所属村庄（更准确）
+    var chiefVillageId = null;
+    for (var vi = 0; vi < villages.length; vi++) {
+      if (villages[vi].chief && villages[vi].chief.userId === user.id) {
+        chiefVillageId = villages[vi].id;
+        break;
+      }
+    }
+    
+    // 如果找不到，再尝试通过昵称匹配（兼容旧数据）
+    if (!chiefVillageId) {
+      for (var vi2 = 0; vi2 < villages.length; vi2++) {
+        if (villages[vi2].chief && villages[vi2].chief.name === user.nickName) {
+          chiefVillageId = villages[vi2].id;
+          // 修复：更新村长信息，添加userId（便于以后准确识别）
+          villages[vi2].chief.userId = user.id;
+          Storage.set('villages', villages);
           break;
         }
       }
-      // 只显示本村且待审核的申请
-      if (a.villageId === chiefVillageId && a.status === 'waiting') {
-        pendingApps.push(a);
+    }
+    
+    // 只显示本村且待审核的申请
+    if (chiefVillageId) {
+      for (var ai = 0; ai < allApps.length; ai++) {
+        var a = allApps[ai];
+        if (a.villageId === chiefVillageId && a.status === 'waiting') {
+          pendingApps.push(a);
+        }
       }
     }
   }
@@ -482,7 +557,7 @@ function loadProducts() {
         '<div class="goods-info">' +
         '<div class="goods-name">' + item.data.name + '</div>' +
         '<div class="goods-price">¥' + item.data.price + '<span style="font-size:12px;color:#999;font-weight:normal;">/' + item.data.unit + '</span></div>' +
-        '<button class="goods-btn" onclick="location.href=\'product-order.html?id=' + item.data.id + '\'">购买</button>' +
+        '<button class="goods-btn" onclick="location.href=\'product-detail.html?id=' + item.data.id + '\'">查看详情</button>' +
         '</div>';
     }
 
@@ -551,22 +626,18 @@ function rejectItem(appId) {
 
 // ========== 村民申请功能 ==========
 
-// 检查登录和权限
+// 检查登录（已移除角色检查，只要登录就可以申请）
 function checkLoginAndVillager() {
   var user = Storage.get('user', null);
   if (!user) {
     toast('请先登录');
     return null;
   }
-  var role = user.role || '';
-  if (role !== '村民' && role !== '村主任') {
-    toast('仅村民可申请上架');
-    return null;
-  }
+  // 不再检查角色，所有登录用户都可以申请上架
   return user;
 }
 
-// 更新FAB按钮可见性
+// 更新FAB按钮可见性（已移除角色检查，只要登录就显示）
 function updateFabVisibility() {
   var user = Storage.get('user', null);
   var fabBtn = document.getElementById('fabBtn');
@@ -576,14 +647,32 @@ function updateFabVisibility() {
     myAppBtn.style.display = 'none';
     return;
   }
-  var role = user.role || '';
-  if (role === '村民' || role === '村主任') {
-    fabBtn.style.display = 'flex';
-    myAppBtn.style.display = 'block';
+  // 只要登录就显示按钮（不再检查角色）
+  fabBtn.style.display = 'flex';
+  myAppBtn.style.display = 'block';
+}
+
+// 显示调试信息（已移除角色检查相关提示）
+function showDebugInfo() {
+  var debugBar = document.getElementById('debugBar');
+  var debugInfo = document.getElementById('debugInfo');
+  var user = Storage.get('user', null);
+  
+  var info = '';
+  if (!user) {
+    info = '❌ 未登录 | 请先登录账号';
+    debugBar.style.display = 'block';
+    debugBar.style.background = '#f8d7da';
+    debugBar.style.color = '#721c24';
   } else {
-    fabBtn.style.display = 'none';
-    myAppBtn.style.display = 'none';
+    info = '✅ 已登录 | 用户:' + (user.nickName || user.phone || '未知') + ' | 角色:' + (user.role || '(未设置)');
+    info += ' | ✅ 可以申请上架（已移除角色限制）';
+    debugBar.style.display = 'block';
+    debugBar.style.background = '#d4edda';
+    debugBar.style.color = '#155724';
   }
+  
+  debugInfo.textContent = info;
 }
 
 // 打开申请弹窗
@@ -597,6 +686,7 @@ function openApplyModal(appId) {
   document.getElementById('applyPrice').value = '';
   document.getElementById('applyUnit').value = '';
   document.getElementById('applyDesc').value = '';
+  document.getElementById('applyStock').value = '100';
   document.getElementById('applyImgInput').value = '';
   document.getElementById('applyImgPreview').style.display = 'none';
   document.getElementById('applyEditId').value = '';
@@ -614,7 +704,7 @@ function openApplyModal(appId) {
 
   // 自动选中当前用户所属村庄
   for (var ci = 0; ci < villages.length; ci++) {
-    if (villages[ci].chief && villages[ci].chief.name === user.nickName) {
+    if (villages[ci].chief && (villages[ci].chief.userId === user.id || villages[ci].chief.name === user.nickName)) {
       villageSelect.value = villages[ci].id;
       break;
     }
