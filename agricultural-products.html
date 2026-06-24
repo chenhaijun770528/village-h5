@@ -453,9 +453,70 @@ function initSampleData() {
   }
 }
 
+// 确保村主任有对应的村庄数据（如果没有，自动创建）
+// 同时：将已有申请中指向默认村庄(v1/v2)的待审核申请迁移到本村
+function ensureChiefHasVillage() {
+  var user = Storage.get('user', null);
+  if (!user || (user.role !== '村主任' && user.role !== 'head')) return;
+  
+  var villages = Storage.get('villages', []);
+  var chiefVillage = null;
+  
+  // 检查是否已经有所属村庄
+  for (var i = 0; i < villages.length; i++) {
+    if (villages[i].chief) {
+      if (villages[i].chief.userId === user.id) {
+        chiefVillage = villages[i];
+        break;
+      }
+      if (villages[i].chief.name === user.nickName) {
+        // 更新 userId
+        villages[i].chief.userId = user.id;
+        chiefVillage = villages[i];
+        break;
+      }
+    }
+  }
+  
+  // 如果没有所属村庄，自动创建（以用户昵称命名）
+  if (!chiefVillage) {
+    chiefVillage = {
+      id: 'v_' + user.id,
+      name: user.nickName + '的村庄',
+      province: '',
+      city: '',
+      description: '',
+      chief: {
+        name: user.nickName,
+        userId: user.id,
+        phone: user.phone || ''
+      },
+      images: []
+    };
+    villages.push(chiefVillage);
+    Storage.set('villages', villages);
+  }
+  
+  // 迁移已有申请：将指向默认村庄(v1/v2)的待审核申请迁移到本村
+  var apps = Storage.get('product_applications', []);
+  var changed = false;
+  for (var j = 0; j < apps.length; j++) {
+    if (apps[j].status === 'waiting' && 
+        (apps[j].villageId === 'v1' || apps[j].villageId === 'v2')) {
+      apps[j].villageId = chiefVillage.id;
+      apps[j].village = chiefVillage.name;
+      changed = true;
+    }
+  }
+  if (changed) {
+    Storage.set('product_applications', apps);
+  }
+}
+
 // 页面初始化
 function init() {
   initSampleData();
+  ensureChiefHasVillage();
   loadProducts();
   updateFabVisibility();
   showDebugInfo();
