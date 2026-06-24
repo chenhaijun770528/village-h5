@@ -2298,6 +2298,43 @@ window.auditCamps = function() {
       }
 
 
+
+function quickSetRole() {
+  var roles = ['村主任,村民,游客,超市老板,建筑公司,老师,大学生,律师,货运司机,顺风车,按摩技师'];
+  var html = '<div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;" onclick="if(event.target===this)this.remove()">';
+  html += '<div style="background:#fff;border-radius:12px;padding:24px;width:280px;max-height:80vh;overflow-y:auto;">';
+  html += '<h3 style="margin:0 0 16px;text-align:center;">选择角色</h3>';
+  roles.forEach(function(r) {
+    html += '<div onclick="setRoleTo(\"'+r+'\")" style="padding:12px 16px;border-bottom:1px solid #eee;cursor:pointer;">'+r+'</div>';
+  });
+  html += '<div onclick="this.closest(\'div[style]').remove()" style="padding:12px;text-align:center;color:#999;cursor:pointer;">取消</div>';
+  html += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+function setRoleTo(roleName) {
+  var roleMap = {'村主任':'township','村民':'villager','游客':'tourist','超市老板':'market','建筑公司':'construction','老师':'teacher','大学生':'student','律师':'lawyer','货运司机':'truck','顺风车':'carpool','按摩技师':'massage'};
+  var roleVal = roleMap[roleName] || 'villager';
+  var user = Storage.get('user');
+  if (!user) { alert('请先登录'); return; }
+  user.currentRole = roleVal;
+  user.currentRoleName = roleName;
+  Storage.set('user', user);
+  // Also update in accounts
+  var accounts = Storage.get('accounts', []);
+  for (var i = 0; i < accounts.length; i++) {
+    if (accounts[i].id === user.id || accounts[i].account === user.account) {
+      accounts[i].currentRole = roleVal;
+      accounts[i].currentRoleName = roleName;
+      break;
+    }
+  }
+  Storage.set('accounts', accounts);
+  // Close overlay
+  var overlay = document.querySelector('div[style*="z-index:9999"]');
+  if (overlay) overlay.remove();
+  // Refresh page
+  renderPage();
+}
 </script>
 </body>
 </html>
