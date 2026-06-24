@@ -1672,7 +1672,8 @@ function approveCamp(id) {
       sellerName: app.userName || '',
       village: app.village,
       status: '开放中',
-      img: app.img || ''
+      img: app.img || '',
+      imgs: app.imgs || (app.img ? [app.img] : [])  // 多图片数组，兼容旧数据
     });
     Storage.set('camps', camps);
     
