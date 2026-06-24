@@ -596,11 +596,6 @@ function checkLoginAndVillager() {
     toast('请先登录');
     return null;
   }
-  var role = user.role || '';
-  if (role !== '村民' && role !== '村主任') {
-    toast('仅村民可申请上架');
-    return null;
-  }
   return user;
 }
 
