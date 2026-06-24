@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>农产品展示（修复版）</title>
+  <style>
+    /* 与原页面完全相同的样式 */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #2E7D32, #4CAF50);
+      color: white;
+      padding: 12px 16px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .header-title { font-size: 18px; font-weight: bold; }
+    .header-back { font-size: 20px; cursor: pointer; padding: 4px 8px; }
+    .container {
+      padding: 60px 16px 80px;
+      max-width: 750px;
+      margin: 0 auto;
+    }
+    .goods-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .goods-card { background: white; border-radius: 8px; overflow: hidden; }
+    .goods-img { width: 100%; height: 120px; object-fit: cover; }
+    .goods-info { padding: 8px; }
+    .goods-name { font-size: 13px; color: #333; margin-bottom: 4px; }
+    .goods-price { font-size: 16px; color: #FF9800; font-weight: bold; }
+    .goods-btn { background: #2E7D32; color: white; border: none; width: 100%; padding: 6px; border-radius: 4px; font-size: 12px; cursor: pointer; margin-top: 6px; }
+    .tab-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+      z-index: 100;
+    }
+    .tab-item {
+      text-align: center;
+      cursor: pointer;
+      padding: 4px 0;
+    }
+    .tab-icon { font-size: 24px; display: block; }
+    .tab-text { font-size: 11px; color: #999; margin-top: 2px; }
+    .tab-item.active .tab-text { color: #2E7D32; }
+    .fab {
+      position: fixed;
+      right: 20px;
+      bottom: 90px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2E7D32, #4CAF50);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      box-shadow: 0 4px 12px rgba(46,125,50,0.4);
+      cursor: pointer;
+      z-index: 200;
+    }
+    .my-app-btn {
+      position: fixed;
+      right: 20px;
+      bottom: 154px;
+      background: white;
+      color: #2E7D32;
+      border: 1px solid #2E7D32;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      z-index: 200;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .modal-mask {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: flex-end;
+    }
+    .modal-mask.show { display: flex; }
+    .modal-panel {
+      background: white;
+      width: 100%;
+      max-height: 85vh;
+      border-radius: 16px 16px 0 0;
+      padding: 20px 16px;
+      overflow-y: auto;
+      animation: slideUp 0.3s;
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal-panel h3 {
+      text-align: center;
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 16px;
+    }
+    .modal-close {
+      text-align: center;
+      color: #999;
+      padding: 10px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .form-group { margin-bottom: 16px; }
+    .form-label { font-size: 14px; color: #666; margin-bottom: 6px; display: block; }
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus { border-color: #2E7D32; }
+    .btn-primary {
+      width: 100%;
+      padding: 12px;
+      background: #2E7D32;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .btn-primary:active { background: #1B5E20; }
+    .toast {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.75);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 9999;
+    }
+    .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+    .empty-icon { font-size: 48px; display: block; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="header-back" onclick="history.back()">←</span>
+    <span class="header-title">🥬 农产品（修复版）</span>
+    <span style="width:40px"></span>
+  </div>
+
+  <div class="container">
+    <div class="section-title" style="margin-bottom:12px;font-size:16px;font-weight:bold;color:#333;">🌾 精选农产品</div>
+    <div class="goods-grid" id="productGrid"></div>
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab-item" onclick="location.href='index.html'"><span class="tab-icon">🏠</span><span class="tab-text">首页</span></div>
+    <div class="tab-item" onclick="location.href='register.html'"><span class="tab-icon">📝</span><span class="tab-text">注册</span></div>
+    <div class="tab-item" onclick="location.href='profile.html'"><span class="tab-icon">👤</span><span class="tab-text">我的</span></div>
+  </div>
+
+  <div class="my-app-btn" id="myAppBtn" onclick="openMyApplications()">我的申请</div>
+  <div class="fab" id="fabBtn" onclick="openApplyModal()">＋</div>
+
+  <div class="modal-mask" id="applyModal">
+    <div class="modal-panel">
+      <h3>申请上架</h3>
+      <div class="form-group">
+        <label class="form-label">名称 *</label>
+        <input class="form-input" id="applyName" placeholder="请输入名称">
+      </div>
+      <div class="form-group">
+        <label class="form-label">价格 *</label>
+        <input class="form-input" id="applyPrice" type="number" placeholder="请输入价格">
+      </div>
+      <div class="form-group">
+        <label class="form-label">单位 *</label>
+        <input class="form-input" id="applyUnit" placeholder="如：袋/10斤、只、斤">
+      </div>
+      <div class="form-group">
+        <label class="form-label">描述</label>
+        <textarea class="form-input" id="applyDesc" rows="3" placeholder="请输入描述"></textarea>
+      </div>
+      <button class="btn-primary" onclick="submitApplication()">提交申请</button>
+      <div class="modal-close" onclick="closeApplyModal()">取消</div>
+    </div>
+  </div>
+
+  <script>
+    // 简化版：所有登录用户都可以申请
+    var Storage = {
+      get: function(key, def) {
+        try {
+          var v = localStorage.getItem('village_' + key);
+          return v ? JSON.parse(v) : def;
+        } catch(e) { return def; }
+      },
+      set: function(key, val) {
+        localStorage.setItem('village_' + key, JSON.stringify(val));
+      }
+    };
+
+    function toast(msg) {
+      var el = document.createElement('div');
+      el.className = 'toast';
+      el.textContent = msg;
+      document.body.appendChild(el);
+      setTimeout(function() { el.remove(); }, 2000);
+    }
+
+    function init() {
+      // 显示按钮（移除角色检查）
+      var user = Storage.get('user', null);
+      if (user) {
+        document.getElementById('fabBtn').style.display = 'flex';
+        document.getElementById('myAppBtn').style.display = 'block';
+      }
+      
+      // 加载示例数据
+      if (!Storage.get('products', null)) {
+        Storage.set('products', [
+          { id: 'p1', name: '有机大米', price: '68', unit: '袋/10斤' },
+          { id: 'p2', name: '土鸡蛋', price: '45', unit: '盒/30枚' }
+        ]);
+      }
+      
+      loadProducts();
+    }
+
+    function loadProducts() {
+      var products = Storage.get('products', []);
+      var grid = document.getElementById('productGrid');
+      grid.innerHTML = '';
+      
+      for (var i = 0; i < products.length; i++) {
+        var p = products[i];
+        var card = document.createElement('div');
+        card.className = 'goods-card';
+        card.innerHTML = '<div class="goods-img" style="background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:48px;">🥬</div>' +
+          '<div class="goods-info">' +
+          '<div class="goods-name">' + p.name + '</div>' +
+          '<div class="goods-price">¥' + p.price + '/' + p.unit + '</div>' +
+          '</div>';
+        grid.appendChild(card);
+      }
+    }
+
+    function openApplyModal() {
+      var user = Storage.get('user', null);
+      if (!user) {
+        toast('请先登录');
+        return;
+      }
+      document.getElementById('applyModal').classList.add('show');
+    }
+
+    function closeApplyModal() {
+      document.getElementById('applyModal').classList.remove('show');
+    }
+
+    function submitApplication() {
+      var name = document.getElementById('applyName').value.trim();
+      var price = document.getElementById('applyPrice').value.trim();
+      var unit = document.getElementById('applyUnit').value.trim();
+      
+      if (!name || !price || !unit) {
+        toast('请填写完整信息');
+        return;
+      }
+      
+      toast('申请提交成功！');
+      closeApplyModal();
+    }
+
+    function openMyApplications() {
+      toast('我的申请功能开发中...');
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>
