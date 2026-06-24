@@ -339,9 +339,8 @@ window.onerror = function(msg, url, line, col, error) {
 };
 
 function renderPage() {
-  var container;
-
-      var role = ROLES_MAP[currentUser.currentRole] || null;
+  var container = document.getElementById('mainContent');
+  var role = ROLES_MAP[currentUser.currentRole] || null;
       var roleText = '未选择角色';
       var roleCls = 'role-none';
       var roleTag = '<span class="role-badge role-none">❓ 未选择角色</span>';
