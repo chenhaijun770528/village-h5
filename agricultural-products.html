@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>农产品展示</title>
   <style>/* village-h5 全局样式 */
-/* 主题色：绿色乡土风格 #2E7D32 */
+/* 主题色:绿色乡土风格 #2E7D32 */
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -280,7 +280,7 @@ body {
   <!-- 我的申请按钮 -->
   <div class="my-app-btn" id="myAppBtn" onclick="openMyApplications()">我的申请</div>
   <!-- 申请上架悬浮按钮 -->
-  <div class="fab" id="fabBtn" onclick="openApplyModal()">＋</div>
+  <div class="fab" id="fabBtn" onclick="openApplyModal()">+</div>
 
   <!-- 申请上架弹窗 -->
   <div class="modal-mask" id="applyModal">
@@ -296,7 +296,7 @@ body {
       </div>
       <div class="form-group">
         <label class="form-label">单位 *</label>
-        <input class="form-input" id="applyUnit" placeholder="如：斤、袋、箱">
+        <input class="form-input" id="applyUnit" placeholder="如:斤、袋、箱">
       </div>
       <div class="form-group">
         <label class="form-label">描述</label>
@@ -400,7 +400,7 @@ function initSampleData() {
         totalArea: '4500',
         farmlandArea: '2800',
         commercialArea: '200',
-        description: '幸福村位于苏州市郊区，环境优美，基础设施完善，是著名的生态农业示范村。',
+        description: '幸福村位于苏州市郊区,环境优美,基础设施完善,是著名的生态农业示范村。',
         chief: { name: '张建国', phone: '13800138001' },
         images: []
       },
@@ -413,7 +413,7 @@ function initSampleData() {
         totalArea: '6200',
         farmlandArea: '3500',
         commercialArea: '350',
-        description: '阳光村是广州市郊的现代化农村，积极发展乡村旅游和生态农业。',
+        description: '阳光村是广州市郊的现代化农村,积极发展乡村旅游和生态农业。',
         chief: { name: '李明华', phone: '13800138002' },
         images: []
       }
@@ -423,9 +423,9 @@ function initSampleData() {
   // 农产品正式列表
   if (!Storage.get('products', null)) {
     Storage.set('products', [
-      { id: 'p1', name: '有机大米', price: '68', unit: '袋/10斤', desc: '绿色有机种植，口感香糯', sales: 328, village: '幸福村', villageId: 'v1', img: '' },
-      { id: 'p2', name: '土鸡蛋', price: '45', unit: '盒/30枚', desc: '散养土鸡，蛋黄饱满', sales: 256, village: '幸福村', villageId: 'v1', img: '' },
-      { id: 'p3', name: '新鲜蜂蜜', price: '88', unit: '瓶/500g', desc: '深山百花蜜，纯天然', sales: 189, village: '阳光村', villageId: 'v2', img: '' }
+      { id: 'p1', name: '有机大米', price: '68', unit: '袋/10斤', desc: '绿色有机种植,口感香糯', sales: 328, village: '幸福村', villageId: 'v1', img: '' },
+      { id: 'p2', name: '土鸡蛋', price: '45', unit: '盒/30枚', desc: '散养土鸡,蛋黄饱满', sales: 256, village: '幸福村', villageId: 'v1', img: '' },
+      { id: 'p3', name: '新鲜蜂蜜', price: '88', unit: '瓶/500g', desc: '深山百花蜜,纯天然', sales: 189, village: '阳光村', villageId: 'v2', img: '' }
     ]);
   }
   // 农产品申请列表
@@ -441,14 +441,14 @@ function init() {
   updateFabVisibility();
 }
 
-// 加载农产品列表（正式列表 + 村长待审核申请）
+// 加载农产品列表(正式列表 + 村长待审核申请)
 function loadProducts() {
   var grid = document.getElementById('productGrid');
   var products = Storage.get('products', []);
   var user = Storage.get('user', null);
   var isVillageChief = user && user.role === '村主任';
 
-  // 如果是村长，加载本村待审核申请
+  // 如果是村长,加载本村待审核申请
   var pendingApps = [];
   if (isVillageChief) {
     var allApps = Storage.get('product_applications', []);
@@ -479,7 +479,7 @@ function loadProducts() {
     displayItems.push({ type: 'product', data: p });
   }
 
-  // 再加待审核申请（仅村长可见）
+  // 再加待审核申请(仅村长可见)
   for (var ai2 = 0; ai2 < pendingApps.length; ai2++) {
     displayItems.push({ type: 'pending', data: pendingApps[ai2] });
   }
@@ -497,7 +497,7 @@ function loadProducts() {
     card.className = 'goods-card';
 
     if (item.type === 'pending') {
-      // 待审核申请卡片（村长视角）
+      // 待审核申请卡片(村长视角)
       var imgHtml = item.data.img && item.data.img.length > 100
         ? '<div class="goods-img" style="background:#f0f0f0;display:flex;align-items:center;justify-content:center;"><img src="' + item.data.img + '" style="width:100%;height:120px;object-fit:cover;" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div style=\\'font-size:48px;\\'>🥬</div>\'"></div>'
         : '<div class="goods-img" style="background:#fff3e0;display:flex;align-items:center;justify-content:center;font-size:48px;">⏳</div>';
@@ -505,7 +505,7 @@ function loadProducts() {
         '<div class="goods-info">' +
         '<div class="goods-name" style="color:#FF9800;">[待审核] ' + item.data.name + '</div>' +
         '<div class="goods-price">¥' + item.data.price + '<span style="font-size:12px;color:#999;font-weight:normal;">/' + item.data.unit + '</span></div>' +
-        '<div style="font-size:11px;color:#999;margin-top:2px;">申请人：' + item.data.userName + '</div>' +
+        '<div style="font-size:11px;color:#999;margin-top:2px;">申请人:' + item.data.userName + '</div>' +
         '<div style="display:flex;gap:4px;margin-top:4px;">' +
         '<button class="goods-btn" style="background:#4CAF50;flex:1;" onclick="approveItem(\'' + item.data.id + '\')">通过</button>' +
         '<button class="goods-btn" style="background:#F44336;flex:1;" onclick="rejectItem(\'' + item.data.id + '\')">拒绝</button>' +
@@ -514,8 +514,8 @@ function loadProducts() {
     } else {
       // 正式产品卡片
       var pimg = item.data.img && item.data.img.length > 100
-        ? '<img src="' + item.data.img + '" style="width:100%;height:120px;object-fit:cover;" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div style=\\'font-size:48px;\\'>🥬</div>\'">'
-        : '<div style="font-size:48px;">🥬</div>';
+        ? '<img src="' + item.data.img + '" style="width:100%;height:120px;object-fit:cover;" onerror="this.style.display=\'none\';var e=document.createElement(\'div\');e.style.fontSize=\'48px\';e.textContent=\'🥬\';this.parentElement.appendChild(e);">'  
+        : '<div style="font-size:48px;display:flex;align-items:center;justify-content:center;height:120px;background:#f0f0f0;border-radius:8px;">🥬</div>'
       card.innerHTML = '<div class="goods-img" style="background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:48px;">' + pimg + '</div>' +
         '<div class="goods-info">' +
         '<div class="goods-name">' + item.data.name + '</div>' +
@@ -532,7 +532,7 @@ function loadProducts() {
 
 // 通过申请
 function approveItem(appId) {
-  if (!confirm('确定通过此申请？通过后该农产品将上架。')) return;
+  if (!confirm('确定通过此申请?通过后该农产品将上架。')) return;
 
   var apps = Storage.get('product_applications', []);
   var app = null;
@@ -566,13 +566,13 @@ function approveItem(appId) {
   });
   Storage.set('products', products);
 
-  toast('已通过申请，农产品已上架');
+  toast('已通过申请,农产品已上架');
   loadProducts();
 }
 
 // 拒绝申请
 function rejectItem(appId) {
-  if (!confirm('确定拒绝此申请？')) return;
+  if (!confirm('确定拒绝此申请?')) return;
 
   var apps = Storage.get('product_applications', []);
   for (var i = 0; i < apps.length; i++) {
@@ -741,7 +741,8 @@ function submitApplication() {
       desc: desc,
       villageId: villageId,
       village: villageName,
-      img: currentApplyImgBase64 || '',
+      img: currentApplyImgBase64 && currentApplyImgBase64.length < 500000 ? currentApplyImgBase64 : '',  // Limit to ~500KB base64
+      img_size: currentApplyImgBase64 ? currentApplyImgBase64.length : 0,
       status: 'waiting',
       createTime: Date.now(),
       updateTime: Date.now()
@@ -789,7 +790,7 @@ function openMyApplications() {
         '<span class="app-card-name">' + app.name + '</span>' +
         '<span class="app-card-status ' + app.status + '">' + statusText + '</span>' +
         '</div>' +
-        '<div class="app-card-info">价格：¥' + app.price + '/' + app.unit + ' | 村庄：' + app.village + '</div>' +
+        '<div class="app-card-info">价格:¥' + app.price + '/' + app.unit + ' | 村庄:' + app.village + '</div>' +
         imgHtml +
         '<div class="app-card-actions" style="margin-top:8px;">' + actionsHtml + '</div>';
       listEl.appendChild(card);
@@ -804,7 +805,7 @@ function closeMyAppModal() {
 }
 
 function deleteApplication(appId) {
-  if (!confirm('确定要删除此申请吗？')) return;
+  if (!confirm('确定要删除此申请吗?')) return;
 
   var user = Storage.get('user', null);
   var apps = Storage.get('product_applications', []);
