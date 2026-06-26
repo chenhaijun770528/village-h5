@@ -299,7 +299,7 @@ var container = document.getElementById("mainContent");
     if (currentUser && currentUser.currentRole && typeof currentUser.currentRole === 'object') {
       var roleMap = { 'head': 'township', 'villager': 'villager', 'tourist': 'tourist' };
       var newRole = roleMap[currentUser.currentRole.role] || currentUser.currentRole.role || 'none';
-      currentUser.nickName = currentUser.currentRole.roleName || currentUser.nickName || '';
+      currentUser.currentRoleName = currentUser.currentRole.roleName || currentUser.currentRoleName || '';
       currentUser.currentRole = newRole;
       Storage.set('user', currentUser);
       console.log('[兼容] currentRole 已从对象转为字符串:', newRole);
@@ -423,7 +423,7 @@ function renderPage() {
         }
         myVillage = findMyVillage(villages, currentUser);
         for (var vi = 0; vi < villages.length; vi++) {
-          if (villages[vi].chief && villages[vi].chief.name === currentUser.nickName) {
+          if (villages[vi].chief && villages[vi].chief.name === currentUser.currentRoleName) {
             myVillage = villages[vi];
             break;
           }
@@ -615,7 +615,7 @@ function renderPage() {
     function getMyVillage() {
       var villages = Storage.get('villages', []);
       for (var vi = 0; vi < villages.length; vi++) {
-        if (villages[vi].chief && villages[vi].chief.name === currentUser.nickName) {
+        if (villages[vi].chief && villages[vi].chief.name === currentUser.currentRoleName) {
           return { village: villages[vi], index: vi };
         }
       }
@@ -683,7 +683,7 @@ function renderPage() {
           farmlandArea: document.getElementById('vf_farmlandArea').value.trim(),
           address: document.getElementById('vf_address').value.trim(),
           description: document.getElementById('vf_description').value.trim(),
-          chief: { name: currentUser.nickName || currentUser.account, phone: document.getElementById('vf_phone').value.trim() },
+          chief: { name: currentUser.currentRoleName || currentUser.account, phone: document.getElementById('vf_phone').value.trim() },
           images: window._villageImages || [],
           scenery: window._villageScenery || [],
           createTime: Date.now()
@@ -1123,7 +1123,7 @@ window.applyProduct = function(editId) {
       description: desc,
       images: _productImages.length > 0 ? _productImages : undefined,
       sellerId: currentUser.account,
-      sellerName: currentUser.nickName || '',
+      sellerName: currentUser.currentRoleName || '',
       village: myReg ? myReg.village : '',
       status: '待审核',
       createTime: new Date().toISOString()
@@ -1357,7 +1357,7 @@ function auditProducts() {
   } else {
     var villages = Storage.get('villages', []);
     for (var vi = 0; vi < villages.length; vi++) {
-      if (villages[vi].chief && (villages[vi].chief.name === currentUser.nickName || villages[vi].chief.name === currentUser.account || villages[vi].chief.phone === (currentUser.phone || ''))) { vname = villages[vi].name; break; }
+      if (villages[vi].chief && (villages[vi].chief.name === currentUser.currentRoleName || villages[vi].chief.name === currentUser.account || villages[vi].chief.phone === (currentUser.phone || ''))) { vname = villages[vi].name; break; }
     }
   }
   
@@ -1479,7 +1479,7 @@ function applyFood() {
     id: 'food_' + Date.now(),
     name: name,
     sellerId: currentUser.account,
-    sellerName: currentUser.nickName,
+    sellerName: currentUser.currentRoleName,
     village: myReg ? myReg.village : '',
     status: '待审核',
     createTime: new Date().toISOString()
@@ -1538,7 +1538,7 @@ function applyCamp() {
     id: 'camp_' + Date.now(),
     name: name,
     sellerId: currentUser.account,
-    sellerName: currentUser.nickName,
+    sellerName: currentUser.currentRoleName,
     village: myReg ? myReg.village : '',
     status: '待审核',
     createTime: new Date().toISOString()
@@ -1555,7 +1555,7 @@ function applyCamp() {
 // ===== 村主任美食/露营地审核 =====
 function auditFood() {
   var currentUser = Storage.get('user');
-  var myVillage = Storage.get('villages', []).find(function(v) { return v.chief && (v.chief.name === currentUser.nickName || v.chief.name === currentUser.account || (v.chief.phone && v.chief.phone === (currentUser.phone || ''))); });
+  var myVillage = Storage.get('villages', []).find(function(v) { return v.chief && (v.chief.name === currentUser.currentRoleName || v.chief.name === currentUser.account || (v.chief.phone && v.chief.phone === (currentUser.phone || ''))); });
   
   var apps = Storage.get('food_applications', []).filter(function(f) { 
     return (f.status === '待审核' || f.status === 'waiting') && (!myVillage || f.villageId === myVillage.id); 
@@ -1629,7 +1629,7 @@ function rejectFood(id) {
 
 function auditCamps() {
   var currentUser = Storage.get('user');
-  var myVillage = Storage.get('villages', []).find(function(v) { return v.chief && (v.chief.name === currentUser.nickName || v.chief.name === currentUser.account || (v.chief.phone && v.chief.phone === (currentUser.phone || ''))); });
+  var myVillage = Storage.get('villages', []).find(function(v) { return v.chief && (v.chief.name === currentUser.currentRoleName || v.chief.name === currentUser.account || (v.chief.phone && v.chief.phone === (currentUser.phone || ''))); });
   
   var apps = Storage.get('camp_applications', []).filter(function(c) { 
     return (c.status === '待审核' || c.status === 'waiting') && (!myVillage || c.villageId === myVillage.id); 
@@ -1896,7 +1896,7 @@ window.applyFood = function(editId) {
       description: desc,
       images: _foodImages.length > 0 ? _foodImages : undefined,
       sellerId: currentUser.account,
-      sellerName: currentUser.nickName || '',
+      sellerName: currentUser.currentRoleName || '',
       village: myReg ? myReg.village : '',
       status: '待审核',
       createTime: new Date().toISOString()
@@ -2193,7 +2193,7 @@ window.applyCamp = function(editId) {
       description: desc,
       images: _campImages.length > 0 ? _campImages : undefined,
       sellerId: currentUser.account,
-      sellerName: currentUser.nickName || '',
+      sellerName: currentUser.currentRoleName || '',
       village: myReg ? myReg.village : '',
       status: '待审核',
       createTime: new Date().toISOString()
@@ -2331,7 +2331,7 @@ window.auditProducts = function() {
   var myVillage = null;
   var villages = Storage.get('villages', []);
   for (var i = 0; i < villages.length; i++) {
-    if (villages[i].chief && (villages[i].chief.name === currentUser.nickName || villages[i].chief.name === currentUser.account || (villages[i].chief.phone && villages[i].chief.phone === (currentUser.phone || '')))) {
+    if (villages[i].chief && (villages[i].chief.name === currentUser.currentRoleName || villages[i].chief.name === currentUser.account || (villages[i].chief.phone && villages[i].chief.phone === (currentUser.phone || '')))) {
       myVillage = villages[i]; break;
     }
   }
@@ -2406,7 +2406,7 @@ window.auditFoods = function() {
   var myVillage = null;
   var villages = Storage.get('villages', []);
   for (var i = 0; i < villages.length; i++) {
-    if (villages[i].chief && (villages[i].chief.name === currentUser.nickName || villages[i].chief.name === currentUser.account || (villages[i].chief.phone && villages[i].chief.phone === (currentUser.phone || '')))) {
+    if (villages[i].chief && (villages[i].chief.name === currentUser.currentRoleName || villages[i].chief.name === currentUser.account || (villages[i].chief.phone && villages[i].chief.phone === (currentUser.phone || '')))) {
       myVillage = villages[i]; break;
     }
   }
@@ -2480,7 +2480,7 @@ window.auditCamps = function() {
   var myVillage = null;
   var villages = Storage.get('villages', []);
   for (var i = 0; i < villages.length; i++) {
-    if (villages[i].chief && (villages[i].chief.name === currentUser.nickName || villages[i].chief.name === currentUser.account || (villages[i].chief.phone && villages[i].chief.phone === (currentUser.phone || '')))) {
+    if (villages[i].chief && (villages[i].chief.name === currentUser.currentRoleName || villages[i].chief.name === currentUser.account || (villages[i].chief.phone && villages[i].chief.phone === (currentUser.phone || '')))) {
       myVillage = villages[i]; break;
     }
   }
