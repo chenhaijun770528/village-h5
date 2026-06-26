@@ -516,11 +516,22 @@ function loadProducts() {
       var pimg = item.data.img
         ? '<img src="' + item.data.img + '" style="width:100%;height:120px;object-fit:cover;" onerror="this.parentElement.innerHTML=\'🥬\'">'
         : '🥬';
+      
+      // 检查当前用户是否是商品所有者
+      var user = Storage.get('user', null);
+      var isOwner = user && item.data.sellerId && item.data.sellerId === user.id;
+      
+      var deleteBtnHtml = '';
+      if (isOwner) {
+        deleteBtnHtml = '<button class="goods-btn" style="background:#F44336;margin-top:4px;" onclick="deleteProduct(\' + item.data.id + '\')">删除</button>';
+      }
+      
       card.innerHTML = '<div class="goods-img" style="background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:48px;">' + pimg + '</div>' +
         '<div class="goods-info">' +
         '<div class="goods-name">' + item.data.name + '</div>' +
         '<div class="goods-price">¥' + item.data.price + '<span style="font-size:12px;color:#999;font-weight:normal;">/' + item.data.unit + '</span></div>' +
         '<button class="goods-btn" onclick="location.href=\'product-order.html?id=' + item.data.id + '\'">购买</button>' +
+        deleteBtnHtml +
         '</div>';
     }
 
@@ -584,6 +595,45 @@ function rejectItem(appId) {
   }
   Storage.set('product_applications', apps);
   toast('已拒绝该申请');
+  loadProducts();
+}
+
+// 删除已上架产品（仅商品所有者可删除）
+function deleteProduct(productId) {
+  if (!confirm('确定要删除此产品吗？删除后不可恢复。')) {
+    return;
+  }
+  
+  var user = Storage.get('user', null);
+  if (!user) {
+    toast('请先登录');
+    return;
+  }
+  
+  var products = Storage.get('products', []);
+  var newProducts = [];
+  var deleted = false;
+  
+  for (var i = 0; i < products.length; i++) {
+    if (products[i].id === productId) {
+      // 验证是否是商品所有者
+      if (products[i].sellerId && products[i].sellerId !== user.id) {
+        toast('无权删除此产品');
+        return;
+      }
+      deleted = true;
+    } else {
+      newProducts.push(products[i]);
+    }
+  }
+  
+  if (!deleted) {
+    toast('产品不存在');
+    return;
+  }
+  
+  Storage.set('products', newProducts);
+  toast('产品已删除');
   loadProducts();
 }
 
