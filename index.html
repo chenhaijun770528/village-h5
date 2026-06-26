@@ -419,6 +419,31 @@ body {
 .announcement-meta { font-size: 11px; color: #999; }
 .announcement-content { font-size: 13px; color: #666; margin-top: 4px; line-height: 1.6; display: block; }
 .announcement-item.expanded .announcement-content { display: block; }
+
+/* 建筑园林设计师卡片 */
+.landscape-card {
+  flex-shrink: 0;
+  width: 140px;
+  background: white;
+  border-radius: 12px;
+  padding: 16px 12px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  cursor: pointer;
+}
+.landscape-card:active { transform: scale(0.95); }
+.landscape-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2E7D32, #4CAF50);
+  color: white;
+  font-size: 28px;
+  line-height: 60px;
+  margin: 0 auto 10px;
+}
+.landscape-name { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 4px; }
+.landscape-desc { font-size: 11px; color: #999; line-height: 1.4; }
 </style>
 </head>
 <body>
@@ -485,7 +510,17 @@ body {
         <span class="func-icon">👤</span>
         <span class="func-text">我的</span>
       </div>
-    <div class="func-item" onclick="goPage('massage-list.html')"><span class="func-icon">💆</span><span class="func-text">按摩</span></div></div>
+    <div class="func-item" onclick="goPage('massage-list.html')"><span class="func-icon">💆</span><span class="func-text">按摩</span></div>
+    </div>
+
+    <!-- 建筑园林设计师展示区 -->
+    <div class="section" id="landscapeSection" style="display:none;">
+      <div class="section-title">
+        🏗️ 建筑园林设计师
+        <span class="landscape-count" id="landscapeCount">共 0 位设计师</span>
+      </div>
+      <div id="landscapeList" style="display:flex;gap:12px;overflow-x:auto;padding-bottom:10px;"></div>
+    </div>
 
     <!-- 村庄列表 -->
     <div class="section">
@@ -767,11 +802,61 @@ function logout() {
     let currentFilter = null
     let currentBanner = 0
 
+    // 加载建筑园林设计师
+    function loadLandscapeDesigners() {
+      var section = document.getElementById('landscapeSection');
+      var list = document.getElementById('landscapeList');
+      var count = document.getElementById('landscapeCount');
+      
+      if (!section || !list) return;
+      
+      // 从localStorage读取已审核通过的设计师
+      var registrations = Storage.get('registrations', []);
+      var designers = [];
+      
+      for (var i = 0; i < registrations.length; i++) {
+        var r = registrations[i];
+        if (r.role === '建筑园林设计师' && (r.status === '已通过' || r.status === 'approved')) {
+          designers.push(r);
+        }
+      }
+      
+      if (designers.length === 0) {
+        section.style.display = 'none';
+        return;
+      }
+      
+      section.style.display = 'block';
+      count.textContent = '共 ' + designers.length + ' 位设计师';
+      
+      var html = '';
+      for (var j = 0; j < designers.length; j++) {
+        var d = designers[j];
+        var avatar = d.avatarUrl || '🏗️';
+        var name = d.nickName || d.name || '设计师';
+        var desc = d.desc || '专业建筑园林设计';
+        
+        html += '<div class="landscape-card" onclick="goDesignerDetail(\'' + d.id + '\')">';        
+        html += '  <div class="landscape-avatar">' + avatar + '</div>';
+        html += '  <div class="landscape-name">' + name + '</div>';
+        html += '  <div class="landscape-desc">' + desc + '</div>';
+        html += '</div>';
+      }
+      
+      list.innerHTML = html;
+    }
+
+    function goDesignerDetail(id) {
+      // 跳转到设计师详情页（暂未实现，先跳转到注册页）
+      toast('设计师详情页开发中');
+    }
+
     function init() {
 initSampleData();
       renderBanner()
 
       loadAnnouncements();      renderVillages()
+      loadLandscapeDesigners()
     }
 
     function renderBanner() {
