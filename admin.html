@@ -788,7 +788,11 @@ function deleteVillage(villageId) {
 
 // ========== 角色注册审核 ==========
 function loadRoleApplications() {
+  console.log('=== loadRoleApplications() START ===');
+  try {
   var panel = document.getElementById('panelRoleApps');
+  if (!panel) { console.error('未找到 panelRoleApps 元素'); return; }
+  console.log('   panel 元素已找到');
   var regs = Storage.get('registrations', []);
   var pending = [];
   for (var i = 0; i < regs.length; i++) { if (regs[i].status === '待审核') pending.push(regs[i]); }
@@ -874,29 +878,59 @@ if (pending.length === 0) {
 }
 
 function approveRole(regId) {
-  console.log('approveRole() called, regId:', regId);
-  if (!confirm('确定通过此注册申请？')) return;
-  var regs = Storage.get('registrations', []);
-  var reg = null;
-  for (var i = 0; i < regs.length; i++) {
-    if (regs[i].id === regId) { reg = regs[i]; regs[i].status = '已通过'; regs[i].reviewTime = Date.now(); break; }
+  console.log('=== approveRole() START ===');
+  console.log('regId:', regId);
+  
+  if (!confirm('确定通过此注册申请？')) {
+    console.log('用户取消');
+    return;
   }
-  Storage.set('registrations', regs);
-  if (reg && reg.accountId) {
-    var accounts = Storage.get('accounts', []);
-    var roleMap = {'村民':'villager','村主任':'township','游客':'tourist','农产品商家':'market','建筑队':'construction','老师':'teacher','大学生':'student','律师事务所':'law-firm','律师':'lawyer','货车司机':'truck','拼车':'carpool','按摩师':'massage','建筑园林设计师':'landscape'};
-    for (var ai = 0; ai < accounts.length; ai++) {
-      if (accounts[ai].id === reg.accountId) {
-        accounts[ai].currentRole = roleMap[reg.role] || reg.role;
-        accounts[ai].currentRoleId = reg.id;
-        accounts[ai].currentRoleName = reg.name;
-        break;
-      }
+  
+  try {
+    console.log('1. 读取 registrations...');
+    var regs = Storage.get('registrations', []);
+    console.log('   共', regs.length, '条注册数据');
+    
+    var reg = null;
+    for (var i = 0; i < regs.length; i++) {
+      if (regs[i].id === regId) { reg = regs[i]; regs[i].status = '已通过'; regs[i].reviewTime = Date.now(); break; }
     }
-    Storage.set('accounts', accounts);
+    
+    if (!reg) {
+      console.error('未找到 regId 对应的数据:', regId);
+      toast('错误：未找到该申请');
+      return;
+    }
+    
+    console.log('2. 更新状态为已通过:', reg);
+    Storage.set('registrations', regs);
+    
+    if (reg && reg.accountId) {
+      console.log('3. 更新账号角色:', reg.accountId);
+      var accounts = Storage.get('accounts', []);
+      var roleMap = {'村民':'villager','村主任':'township','游客':'tourist','农产品商家':'market','建筑队':'construction','老师':'teacher','大学生':'student','律师事务所':'law-firm','律师':'lawyer','货车司机':'truck','拼车':'carpool','按摩师':'massage','建筑园林设计师':'landscape'};
+      for (var ai = 0; ai < accounts.length; ai++) {
+        if (accounts[ai].id === reg.accountId) {
+          accounts[ai].currentRole = roleMap[reg.role] || reg.role;
+          accounts[ai].currentRoleId = reg.id;
+          accounts[ai].currentRoleName = reg.name;
+          break;
+        }
+      }
+      Storage.set('accounts', accounts);
+      console.log('   账号角色已更新');
+    }
+    
+    console.log('4. 显示提示...');
+    toast('已通过！' + (reg ? reg.role : '') + '角色已开通');
+    
+    console.log('5. 重新加载角色审核列表...');
+    loadRoleApplications();
+    console.log('=== approveRole() END ===');
+  } catch(e) {
+    console.error('approveRole() 错误:', e);
+    toast('操作失败：' + e.message);
   }
-  toast('已通过！' + (reg ? reg.role : '') + '角色已开通');
-  loadRoleApplications();
 }
 
 
