@@ -535,6 +535,24 @@ function renderPage() {
         '</div>';
       }
 
+      // ===== 按摩技师资料编辑 =====
+      var myMassageReg = null;
+      for (var mri = 0; mri < regs.length; mri++) {
+        if (regs[mri].accountId === currentUser.id && regs[mri].role === '按摩师' && regs[mri].status === '已通过') {
+          myMassageReg = regs[mri];
+          break;
+        }
+      }
+      if (myMassageReg) {
+        html += '<div class="village-panel"><div class="village-panel-title">💆 我的技师资料</div>';
+        html += '<div style="text-align:center;padding:12px 0;">';
+        html += myMassageReg.photo ? '<img src="' + myMassageReg.photo + '" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #E91E63;">' : '<div style="width:80px;height:80px;border-radius:50%;background:#FCE4EC;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:36px;">💆</div>';
+        html += '<div style="font-size:16px;font-weight:bold;color:#E91E63;margin-top:8px;">' + (myMassageReg.name || '未填写') + '</div>';
+        html += '<div style="font-size:12px;color:#888;">📱 ' + (myMassageReg.phone || '未填写') + '</div>';
+        html += '<div style="font-size:12px;color:#888;">📍 ' + (myMassageReg.curAddress || myMassageReg.regAddress || '未填写') + '</div>';
+        html += '</div><button onclick="openMassageEditModal()" style="width:100%;padding:10px;background:#E91E63;color:white;border:none;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;">✏️ 编辑我的资料</button></div>';
+      }
+
       // 菜单
       html += '<div class="section-title">快捷功能</div>';
       html += '<div class="menu-list">';
@@ -924,6 +942,74 @@ function renderPage() {
       }
       closeSceneryForm();
       renderScenerySections();
+    }
+
+    function openMassageEditModal() {
+      var regs = Storage.get('registrations', []);
+      var myReg = null, myIdx = -1;
+      for (var i = 0; i < regs.length; i++) {
+        if (regs[i].accountId === currentUser.id && regs[i].role === '按摩师' && regs[i].status === '已通过') {
+          myReg = regs[i]; myIdx = i; break;
+        }
+      }
+      if (!myReg) { toast('未找到技师资料'); return; }
+      var html = '<div class="modal-overlay" id="massageEditModal" onclick="closeMassageEditModal(event)" style="display:flex;"><div class="modal-box" onclick="event.stopPropagation()" style="max-width:400px;"><div class="modal-title">编辑我的资料</div>';
+      html += '<div style="text-align:center;margin-bottom:16px;"><img id="massagePhotoPreview" src="' + (myReg.photo || '') + '" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid #E91E63;background:#FCE4EC;">';
+      html += '<div style="margin-top:8px;"><label style="display:inline-block;padding:6px 14px;background:#E91E63;color:white;border-radius:16px;font-size:12px;cursor:pointer;">更换照片<input type="file" accept="image/*" id="massagePhotoInput" onchange="previewMassagePhoto(this)" style="display:none"></label></div></div>';
+      html += '<div class="modal-form-group"><label class="modal-label">联系电话</label><input class="modal-input" type="tel" id="editMassagePhone" value="' + (myReg.phone || '') + '" placeholder="请输入联系电话"></div>';
+      html += '<div class="modal-form-group"><label class="modal-label">当前地址</label><input class="modal-input" type="text" id="editMassageAddress" value="' + (myReg.curAddress || '') + '" placeholder="请输入当前地址"></div>';
+      html += '<div class="modal-form-group"><label class="modal-label">擅长项目</label><input class="modal-input" type="text" id="editMassageSkill" value="' + (myReg.skill || '') + '" placeholder="如：足疗、推拿、艾灸"></div>';
+      html += '<div class="modal-form-group"><label class="modal-label">从业年限</label><input class="modal-input" type="text" id="editMassageYears" value="' + (myReg.years || '') + '" placeholder="如：5年"></div>';
+      html += '<button class="modal-btn modal-btn-save" onclick="saveMassageEdit(' + myIdx + ')">保存修改</button><button class="modal-btn modal-btn-cancel" onclick="closeMassageEditModal()">取消</button></div></div>';
+      var wrapper = document.createElement('div');
+      wrapper.id = 'massageEditWrapper';
+      wrapper.innerHTML = html;
+      document.body.appendChild(wrapper);
+      window._massageNewPhoto = myReg.photo || '';
+    }
+    function closeMassageEditModal(e) {
+      if (e && e.target && e.target.id !== 'massageEditModal') return;
+      var w = document.getElementById('massageEditWrapper');
+      if (w) w.remove();
+    }
+    function previewMassagePhoto(input) {
+      if (!input.files || !input.files[0]) return;
+      var file = input.files[0];
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var img = new Image();
+        img.onload = function() {
+          var canvas = document.createElement('canvas');
+          var maxW = 800, maxH = 600;
+          var w = img.width, h = img.height;
+          if (w > maxW) { h = h * maxW / w; w = maxW; }
+          if (h > maxH) { w = w * maxH / h; h = maxH; }
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          var dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          window._massageNewPhoto = dataUrl;
+          document.getElementById('massagePhotoPreview').src = dataUrl;
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+    function saveMassageEdit(idx) {
+      var newPhone = document.getElementById('editMassagePhone').value.trim();
+      var newAddress = document.getElementById('editMassageAddress').value.trim();
+      var newSkill = document.getElementById('editMassageSkill').value.trim();
+      var newYears = document.getElementById('editMassageYears').value.trim();
+      if (newPhone && !/^1\d{10}$/.test(newPhone)) { toast('请输入正确的手机号'); return; }
+      var regs = Storage.get('registrations', []);
+      regs[idx].phone = newPhone;
+      regs[idx].curAddress = newAddress;
+      regs[idx].skill = newSkill;
+      regs[idx].years = newYears;
+      if (window._massageNewPhoto) { regs[idx].photo = window._massageNewPhoto; }
+      Storage.set('registrations', regs);
+      toast('保存成功');
+      closeMassageEditModal();
+      renderPage();
     }
 
     function doLogout() {
