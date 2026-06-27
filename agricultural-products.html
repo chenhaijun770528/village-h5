@@ -303,6 +303,10 @@ body {
         <textarea class="form-input" id="applyDesc" rows="3" placeholder="请输入描述"></textarea>
       </div>
       <div class="form-group">
+        <label class="form-label">库存数量</label>
+        <input class="form-input" id="applyStock" type="number" min="1" value="100" placeholder="请输入库存数量">
+      </div>
+      <div class="form-group">
         <label class="form-label">图片</label>
         <input type="file" id="applyImgInput" accept="image/*" onchange="previewApplyImg(event)" style="font-size:13px">
         <img class="img-preview" id="applyImgPreview">
@@ -387,54 +391,12 @@ function compressImage(file, maxWidth, maxHeight, quality, callback) {
   reader.readAsDataURL(file);
 }
 
-// 初始化示例数据
+// 初始化数据（不再添加示例数据）
 function initSampleData() {
-  if (!Storage.get('villages', null)) {
-    var defaultVillages = [
-      {
-        id: 'v1',
-        name: '幸福村',
-        province: '江苏省',
-        city: '苏州市',
-        population: '3280',
-        totalArea: '4500',
-        farmlandArea: '2800',
-        commercialArea: '200',
-        description: '幸福村位于苏州市郊区，环境优美，基础设施完善，是著名的生态农业示范村。',
-        chief: { name: '张建国', phone: '13800138001' },
-        images: []
-      },
-      {
-        id: 'v2',
-        name: '阳光村',
-        province: '广东省',
-        city: '广州市',
-        population: '4560',
-        totalArea: '6200',
-        farmlandArea: '3500',
-        commercialArea: '350',
-        description: '阳光村是广州市郊的现代化农村，积极发展乡村旅游和生态农业。',
-        chief: { name: '李明华', phone: '13800138002' },
-        images: []
-      }
-    ];
-    Storage.set('villages', defaultVillages);
-  }
-  // 农产品正式列表
-  if (!Storage.get('products', null)) {
-    Storage.set('products', [
-      { id: 'p1', name: '有机大米', price: '68', unit: '袋/10斤', desc: '绿色有机种植，口感香糯', sales: 328, village: '幸福村', villageId: 'v1', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPueslOS6juaVsOeoi+WKoOi9veaZrzwvdGV4dD48L3N2Zz4=' },
-      { id: 'p2', name: '土鸡蛋', price: '45', unit: '盒/30枚', desc: '散养土鸡，蛋黄饱满', sales: 256, village: '幸福村', villageId: 'v1', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWcqOeJueiCkzogcmVjdCBvZiBkaW1lbnNpb27jgII8L3RleHQ+PC9zdmc+' },
-      { id: 'p3', name: '新鲜蜂蜜', price: '88', unit: '瓶/500g', desc: '深山百花蜜，纯天然', sales: 189, village: '阳光村', villageId: 'v2', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuaWsOaWsOmCruiBsOaZrzwvdGV4dD48L3N2Zz4=' }
-    ]);
-  }
-  // 农产品申请列表
-  if (!Storage.get('product_applications', null)) {
-    Storage.set('product_applications', []);
-  }
+  if (!Storage.get('products', null)) Storage.set('products', []);
+  if (!Storage.get('product_applications', null)) Storage.set('product_applications', []);
 }
 
-// 页面初始化
 function init() {
   initSampleData();
   loadProducts();
@@ -547,8 +509,10 @@ function approveItem(appId) {
   apps[appIdx].updateTime = Date.now();
   Storage.set('product_applications', apps);
 
-  // 写入正式列表
+  // 写入正式列表（强制保留图片）
   var products = Storage.get('products', []);
+  var productImg = app.img || '';
+  console.log('[审核通过] 产品:', app.name, '图片长度:', productImg.length);
   products.push({
     id: app.id,
     name: app.name,
@@ -559,12 +523,13 @@ function approveItem(appId) {
     sales: 0,
     village: app.village,
     villageId: app.villageId,
-    img: app.img || '',
-    sellerId: app.sellerId || '',
-    sellerName: app.sellerName || '',
+    img: productImg,
+    sellerId: app.userId || '',
+    sellerName: app.userName || '',
     createTime: Date.now()
   });
   Storage.set('products', products);
+  console.log('[写入完成] products数组长度:', products.length);
 
   toast('已通过申请，农产品已上架');
   loadProducts();
@@ -674,6 +639,7 @@ function openApplyModal(appId) {
       document.getElementById('applyPrice').value = app.price;
       document.getElementById('applyUnit').value = app.unit;
       document.getElementById('applyDesc').value = app.desc || '';
+      document.getElementById('applyStock').value = app.stock || '100';
       document.getElementById('applyVillage').value = app.villageId || app.village;
 
       if (app.img) {
@@ -714,6 +680,7 @@ function submitApplication() {
   var price = document.getElementById('applyPrice').value.trim();
   var unit = document.getElementById('applyUnit').value.trim();
   var desc = document.getElementById('applyDesc').value.trim();
+  var stock = document.getElementById('applyStock').value.trim() || '100';
   var villageId = document.getElementById('applyVillage').value;
   var editId = document.getElementById('applyEditId').value;
 
@@ -743,6 +710,7 @@ function submitApplication() {
         apps[ei].price = price;
         apps[ei].unit = unit;
         apps[ei].desc = desc;
+        apps[ei].stock = stock;
         apps[ei].villageId = villageId;
         apps[ei].village = villageName;
         apps[ei].img = currentApplyImgBase64 || apps[ei].img || '';
@@ -763,9 +731,10 @@ function submitApplication() {
       price: price,
       unit: unit,
       desc: desc,
+      stock: stock,
       villageId: villageId,
       village: villageName,
-      img: currentApplyImgBase64 || '',
+      img: currentApplyImgBase64 || '',  // 强制保存图片base64
       status: 'waiting',
       createTime: Date.now(),
       updateTime: Date.now()
