@@ -108,7 +108,7 @@ var Storage = {
 };
 
 function getCurrentUser() {
-  return Storage.get("current_user", null);
+  return Storage.get("user", null);
 }
 
 function toast(msg) {
@@ -251,9 +251,7 @@ function init() {
     var yearsTag = t.years ? '<span class="massage-tag">' + t.years + '年经验</span>' : '';
     var villageTag = t.village ? '<span class="massage-tag">📍 ' + t.village + '</span>' : '';
     
-    var editBtn = isOwner 
-      ? '<button class="edit-btn" onclick="openEdit(' + item.index + ')">✏️ 编辑</button>'
-      : '';
+    var editBtn = '<button class="edit-btn" onclick="openEdit(' + item.index + ')">编辑</button>';
     
     html += '<div class="massage-card">' +
       avatar +
