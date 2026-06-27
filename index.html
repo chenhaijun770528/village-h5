@@ -804,21 +804,62 @@ function logout() {
 
     // 加载建筑园林设计师
     function loadLandscapeDesigners() {
+      console.log('loadLandscapeDesigners() 被调用');
+      
       var section = document.getElementById('landscapeSection');
       var list = document.getElementById('landscapeList');
       var count = document.getElementById('landscapeCount');
       
-      if (!section || !list) return;
+      if (!section || !list) {
+        console.log('未找到DOM元素');
+        return;
+      }
       
-      // 从localStorage读取已审核通过的设计师
+      // 从localStorage读取所有注册数据
       var registrations = Storage.get('registrations', []);
+      console.log('所有注册数据:', registrations);
+      
       var designers = [];
       
+      // 过滤出建筑园林设计师（只显示已通过的）
       for (var i = 0; i < registrations.length; i++) {
         var r = registrations[i];
-        if (r.role === '建筑园林设计师' && (r.status === '已通过' || r.status === 'approved')) {
+        console.log('检查:', r.role, r.status);
+        if (r.role && r.role.indexOf('建筑') !== -1 && r.status === '已通过') {
           designers.push(r);
         }
+      }
+      
+      console.log('找到的设计师:', designers);
+      
+      // 始终显示展示区
+      section.style.display = 'block';
+      
+      if (designers.length === 0) {
+        console.log('未找到设计师，显示暂无数据提示');
+        list.innerHTML = '<div style="text-align:center;padding:20px;color:#999;">暂无建筑园林设计师数据</div>';
+        count.textContent = '共 0 位设计师';
+        return;
+      }
+      
+      count.textContent = '共 ' + designers.length + ' 位设计师';
+      
+      var html = '';
+      for (var j = 0; j < designers.length; j++) {
+        var d = designers[j];
+        var avatar = d.avatarUrl || '🏗️';
+        var name = d.nickName || d.name || '设计师';
+        var desc = d.desc || '专业建筑园林设计';
+        
+        html += '<div class="landscape-card" onclick="goDesignerDetail('' + d.id + '')">';
+        html += '  <div class="landscape-avatar">' + avatar + '</div>';
+        html += '  <div class="landscape-name">' + name + '</div>';
+        html += '  <div class="landscape-desc">' + desc + '</div>';
+        html += '</div>';
+      }
+      
+      list.innerHTML = html;
+    }
       }
       
       if (designers.length === 0) {
