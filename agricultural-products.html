@@ -508,6 +508,7 @@ function approveItem(appId) {
   apps[appIdx].status = 'pass';
   apps[appIdx].updateTime = Date.now();
   Storage.set('product_applications', apps);
+  if (typeof CloudDB !== 'undefined') CloudDB.push({product_applications: apps}, '提交农产品申请').catch(function(){});
 
   // 写入正式列表（强制保留图片）
   var products = Storage.get('products', []);
@@ -531,6 +532,7 @@ function approveItem(appId) {
   });
   Storage.set('products', products);
   console.log('[写入完成] products数组长度:', products.length);
+  if (typeof CloudDB !== 'undefined') CloudDB.push({products: products, product_applications: apps}, '审核农产品申请').catch(function(){});
 
   toast('已通过申请，农产品已上架');
   loadProducts();
@@ -843,5 +845,6 @@ if (document.readyState === 'loading') {
   init();
 }
 </script>
+<script src="cloud_db.js"></script>
 </body>
 </html>
