@@ -674,7 +674,6 @@ function deleteVillage(villageId) {
   var newC = [];
   for (var ci = 0; ci < camps.length; ci++) { if (camps[ci].villageId !== villageId) newC.push(camps[ci]); }
   Storage.set('camps', newC);
-  if (typeof CloudDB !== 'undefined') CloudDB.push({products: newP, foods: newF, camps: newC}, '删除村庄级联清理').catch(function(){});
   // 清除该村主任用户账号的角色绑定
   var accounts = Storage.get('accounts', []);
   var tApps = Storage.get('township_applications', []);
@@ -701,67 +700,72 @@ function deleteVillage(villageId) {
 // ========== 角色注册审核 ==========
 function loadRoleApplications() {
   var panel = document.getElementById('panelRoleApps');
-  panel.innerHTML = '<div style="text-align:center;padding:20px;color:#999;">正在从云端加载...</div>';
-  if (typeof CloudDB !== 'undefined') {
-    CloudDB.fetch().then(function(cloudDB) {
-      var regs = (cloudDB && cloudDB.registrations) || [];
-      renderRoleList(panel, regs);
-    }).catch(function() {
-      renderRoleList(panel, Storage.get('registrations', []));
-    });
-  } else {
-    renderRoleList(panel, Storage.get('registrations', []));
-  }
-}
-
-function renderRoleList(panel, regs) {
-  // 所有记录统一渲染，每条都有✅❌🗑️三个按钮
-  var approved = 0, rejected = 0, pending = 0;
+  var regs = Storage.get('registrations', []);
+  // pending和processed都记录原始索引，确保操作时能准确定位
+  var pendingList = [];
+  for (var i = 0; i < regs.length; i++) { if (regs[i].status === '待审核') pendingList.push({reg: regs[i], idx: i}); }
+  pendingList.sort(function(a,b){ return (b.reg.applyTime||b.reg.createTime||0) - (a.reg.applyTime||a.reg.createTime||0); });
+  var approved = 0, rejected = 0;
   for (var j = 0; j < regs.length; j++) {
     if (regs[j].status === '已通过') approved++;
     else if (regs[j].status === '已拒绝') rejected++;
-    else pending++;
   }
-  var html = '<div class="stats-grid" style="margin-bottom:16px;">' +
-    '<div class="stat-card"><div class="stat-value" style="color:#FF9800;">' + pending + '</div><div class="stat-label">待审核</div></div>' +
+  panel.innerHTML =
+    '<div class="stats-grid" style="margin-bottom:16px;">' +
+    '<div class="stat-card"><div class="stat-value" style="color:#FF9800;">' + pendingList.length + '</div><div class="stat-label">待审核</div></div>' +
     '<div class="stat-card"><div class="stat-value" style="color:#4CAF50;">' + approved + '</div><div class="stat-label">已通过</div></div>' +
     '<div class="stat-card"><div class="stat-value" style="color:#F44336;">' + rejected + '</div><div class="stat-label">已拒绝</div></div>' +
     '<div class="stat-card"><div class="stat-value">' + regs.length + '</div><div class="stat-label">注册总数</div></div>' +
     '</div>' +
-    '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:12px;">📋 角色注册审核（共' + regs.length + '条）</div>';
-
-  if (regs.length === 0) {
-    panel.innerHTML = html + '<div class="empty-state"><span class="empty-icon">📋</span><div>暂无注册申请</div></div>';
+    '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:4px;">📋 所有角色注册审核</div>';
+    '<button class="sort-mode-btn" onclick="setSortMode(\'roles\')" id="sortBtnRoles">📌 拖拽排序</button>';
+    '<div class="sort-tip" id="sortTipRoles" style="display:none">💡 拖住卡片可上下移动</div>';
+  if (pendingList.length === 0) {
+    panel.innerHTML += '<div class="empty-state"><span class="empty-icon">📋</span><div>暂无待审核的注册申请</div></div>';
     return;
   }
-
-  var roleIcons = {'村民':'🌾','村主任':'🏠','游客':'🎒','农产品商家':'🥬','建筑队':'🏗️','老师':'👩‍🏫','大学生':'🎓','律师事务所':'⚖️','律师':'👔','货车司机':'🚛','拼车':'🚗','按摩师':'💆','建筑园林设计师':'🏡'};
-  // 按时间倒序
-  var sorted = [];
-  for (var si = 0; si < regs.length; si++) { sorted.push({reg: regs[si], idx: si}); }
-  sorted.sort(function(a,b){ return (b.reg.applyTime||b.reg.createTime||b.reg.time||0) - (a.reg.applyTime||a.reg.createTime||a.reg.time||0); });
-
-  for (var pi = 0; pi < sorted.length; pi++) {
-    var item = sorted[pi];
+  var roleIcons = {'村民':'🌾','村主任':'🏠','游客':'🎒','农产品商家':'🥬','建筑队':'🏗️','老师':'👩‍🏫','大学生':'🎓','律师事务所':'⚖️','律师':'👔','货车司机':'🚛','拼车':'🚗','按摩师':'💆'};
+  for (var pi = 0; pi < pendingList.length; pi++) {
+    var item = pendingList[pi];
     var reg = item.reg;
     var ridx = item.idx;
     var icon = roleIcons[reg.role] || '👤';
-    var status = reg.status || '待审核';
-    var statusColor = status === '已通过' ? '#4CAF50' : (status === '已拒绝' ? '#F44336' : '#FF9800');
-    var statusBg = status === '已通过' ? '#E8F5E9' : (status === '已拒绝' ? '#FFEBEE' : '#FFF3E0');
-    var isPending = status === '待审核';
-    html += '<div class="app-card">' +
-      '<div class="app-card-name">' + icon + ' ' + (reg.name || '未知') + ' <span style="font-size:12px;color:' + statusColor + ';background:' + statusBg + ';padding:1px 8px;border-radius:4px;margin-left:4px;">' + status + '</span></div>' +
-      '<div class="app-card-info">角色：' + (reg.role || '未知') + ' | 手机：' + (reg.phone || '无') + '</div>' +
-      '<div class="app-card-info">村庄：' + (reg.village || '无') + ' | 账号：' + (reg.accountName || reg.accountId || '无') + '</div>' +
+    panel.innerHTML += '<div class="app-card">' +
+      '<div class="app-card-name">' + icon + ' ' + (reg.name || '未知') + ' <span style="font-size:12px;color:#FF9800;background:#FFF3E0;padding:1px 8px;border-radius:4px;margin-left:4px;">' + (reg.role || '未知') + '</span></div>' +
+      '<div class="app-card-info">村庄：' + (reg.village || '无') + ' | 手机：' + (reg.phone || '无') + '</div>' +
+      '<div class="app-card-info">账号：' + (reg.accountName || reg.accountId || '无') + ' | 地区：' + (reg.province || '') + ' ' + (reg.city || '') + '</div>' +
       '<div class="app-card-actions">' +
-      (isPending ? '<button class="btn-approve" onclick="approveRole(\'' + (reg.id||'') + '\',' + ridx + ')">✅ 通过</button>' : '<button disabled style="opacity:0.3;padding:4px 8px;border:none;border-radius:4px;font-size:12px;">✅ 已通过</button>') +
-      (isPending ? '<button class="btn-reject" onclick="rejectRole(\'' + (reg.id||'') + '\',' + ridx + ')">❌ 拒绝</button>' : '<button disabled style="opacity:0.3;padding:4px 8px;border:none;border-radius:4px;font-size:12px;">❌ 已处理</button>') +
+      '<button class="btn-approve" onclick="approveRole(\'' + (reg.id||'') + '\',' + ridx + ')">✅ 通过</button>' +
+      '<button class="btn-reject" onclick="rejectRole(\'' + (reg.id||'') + '\',' + ridx + ')">❌ 拒绝</button>' +
       '<button class="btn-delete" onclick="deleteRole(\'' + (reg.id||'') + '\',' + ridx + ')">🗑️ 删除</button>' +
       '</div>' +
       '</div>';
   }
-  panel.innerHTML = html;
+
+  // 🗃️ 已处理记录
+  var processedList = [];
+  for (var pi2 = 0; pi2 < regs.length; pi2++) {
+    if (regs[pi2].status !== '待审核') processedList.push({reg: regs[pi2], idx: pi2});
+  }
+  if (processedList.length > 0) {
+    panel.innerHTML += '<div style="margin-top:16px;font-size:14px;font-weight:bold;color:#333;margin-bottom:12px;">📋 已处理记录（' + processedList.length + '条）</div>';
+    for (var pi3 = 0; pi3 < processedList.length; pi3++) {
+      var item2 = processedList[pi3];
+      var reg2 = item2.reg;
+      var ridx2 = item2.idx;
+      var icon2 = roleIcons[reg2.role] || '👤';
+      var statusColor2 = reg2.status === '已通过' ? '#4CAF50' : '#F44336';
+      panel.innerHTML += '<div class="app-card">' +
+        '<div class="app-card-name">' + icon2 + ' ' + (reg2.name || '未知') + ' <span style="font-size:12px;color:' + statusColor2 + ';background:' + (reg2.status === '已通过' ? '#E8F5E9' : '#FFEBEE') + ';padding:1px 8px;border-radius:4px;margin-left:4px;">' + (reg2.role || '未知') + '</span>' +
+        ' <span style="font-size:11px;color:' + statusColor2 + ';">[' + reg2.status + ']</span></div>' +
+        '<div class="app-card-info">村庄：' + (reg2.village || '无') + ' | 手机：' + (reg2.phone || '无') + '</div>' +
+        '<div class="app-card-info">账号：' + (reg2.accountName || reg2.accountId || '无') + ' | 地区：' + (reg2.province || '') + ' ' + (reg2.city || '') + '</div>' +
+        '<div class="app-card-actions">' +
+        '<button class="btn-delete" onclick="deleteRole(\'' + (reg2.id||'') + '\',' + ridx2 + ')">🗑️ 删除</button>' +
+        '</div>' +
+        '</div>';
+    }
+  }
 }
 
 function approveRole(regId, idx) {
@@ -783,9 +787,6 @@ function approveRole(regId, idx) {
   regs[regIdx].reviewTime = Date.now();
   if (!regs[regIdx].id) regs[regIdx].id = 'r' + Date.now();
   Storage.set('registrations', regs);
-  if (typeof CloudDB !== 'undefined') {
-    CloudDB.push({ registrations: regs }, '批准角色注册：' + (reg ? reg.name : '')).catch(function(){});
-  }
   if (reg && reg.accountId) {
     var accounts = Storage.get('accounts', []);
     var roleMap = {'村民':'villager','村主任':'township','游客':'tourist','农产品商家':'market','建筑队':'construction','老师':'teacher','大学生':'student','律师事务所':'law-firm','律师':'lawyer','货车司机':'truck','拼车':'carpool','按摩师':'massage','建筑园林设计师':'landscape'};
@@ -794,14 +795,6 @@ function approveRole(regId, idx) {
         accounts[ai].currentRole = roleMap[reg.role] || reg.role;
         accounts[ai].currentRoleId = reg.id;
         accounts[ai].currentRoleName = reg.name;
-        // 同步更新当前登录用户的 user 存储（防止审核后"未选择角色"）
-        var curUser = Storage.get('user', null);
-        if (curUser && curUser.id === reg.accountId) {
-          curUser.currentRole = accounts[ai].currentRole;
-          curUser.currentRoleId = accounts[ai].currentRoleId;
-          curUser.currentRoleName = accounts[ai].currentRoleName;
-          Storage.set('user', curUser);
-        }
         break;
       }
     }
@@ -818,25 +811,18 @@ function deleteRole(regId, idx) {
   if (!confirm('确定删除此角色注册记录？该操作不可恢复。')) return;
   var regs = Storage.get('registrations', []);
   var delIdx = -1;
-  // 按id查找
   for (var i = 0; i < regs.length; i++) {
     if (regs[i].id === regId) { delIdx = i; break; }
   }
-  // id找不到时用index兜底
   if (delIdx < 0 && typeof idx !== 'undefined' && idx >= 0 && idx < regs.length) delIdx = idx;
   if (delIdx < 0) { toast('未找到该记录'); return; }
   var reg = regs[delIdx];
-  var regIdForCleanup = reg.id || regId; // 用原始id清理账号
   regs.splice(delIdx, 1);
   Storage.set('registrations', regs);
-  if (typeof CloudDB !== 'undefined') {
-    CloudDB.push({ registrations: regs }, '删除角色注册记录').catch(function(){});
-  }
-  // 清理账号的角色绑定
   if (reg && reg.accountId) {
     var accounts = Storage.get('accounts', []);
     for (var ai = 0; ai < accounts.length; ai++) {
-      if (accounts[ai].id === reg.accountId && accounts[ai].currentRoleId === regIdForCleanup) {
+      if (accounts[ai].id === reg.accountId && (accounts[ai].currentRoleId === regId || accounts[ai].currentRoleId === regs[delIdx]&&regs[delIdx]&&regs[delIdx].id)) {
         delete accounts[ai].currentRole;
         delete accounts[ai].currentRoleId;
         delete accounts[ai].currentRoleName;
@@ -860,9 +846,6 @@ function deleteRole(regId, idx) {
   regs[rejIdx].reviewTime = Date.now();
   if (!regs[rejIdx].id) regs[rejIdx].id = 'r' + Date.now();
   Storage.set('registrations', regs);
-  if (typeof CloudDB !== 'undefined') {
-    CloudDB.push({ registrations: regs }, '拒绝角色注册').catch(function(){});
-  }
   toast('已拒绝');
   loadRoleApplications();
 }
@@ -973,70 +956,7 @@ function makeDraggable(el,idx,type){
     else if(type==='chiefs'){var a=Storage.get('township_applications',[]);var ta=a.splice(_dragSrc,1)[0];a.splice(idx,0,ta);Storage.set('township_applications',a);}
     _dragSrc=-1;renderAllPanels();});
 }
-function renderAllPanels(){loadVillageStats();loadChiefApplications();loadRoleApplications();loadCloudData();}
-
-// 云端数据加载（农产品/美食/露营审核用）
-function loadCloudData() {
-  if (typeof CloudDB === 'undefined') return;
-  CloudDB.fetch().then(function(cloudDB) {
-    if (cloudDB.products && cloudDB.products.length > 0) {
-      var localProducts = Storage.get('products', []);
-      if (localProducts.length === 0 || (localProducts.length < cloudDB.products.length)) {
-        Storage.set('products', cloudDB.products);
-      }
-    }
-    if (cloudDB.product_applications) {
-      var localApps = Storage.get('product_applications', []);
-      if (localApps.length === 0) Storage.set('product_applications', cloudDB.product_applications);
-    }
-    if (cloudDB.food) {
-      var localFood = Storage.get('food', []);
-      if (localFood.length === 0) Storage.set('food', cloudDB.food);
-    }
-    if (cloudDB.food_applications) {
-      var localFoodApps = Storage.get('food_applications', []);
-      if (localFoodApps.length === 0) Storage.set('food_applications', cloudDB.food_applications);
-    }
-    if (cloudDB.camps) {
-      var localCamps = Storage.get('registered_camps', []);
-      if (localCamps.length === 0) Storage.set('registered_camps', cloudDB.camps);
-    }
-    if (cloudDB.registrations && cloudDB.registrations.length > 0) {
-      var localRegs = Storage.get('registrations', []);
-      if (localRegs.length === 0 || (localRegs.length < cloudDB.registrations.length)) {
-        Storage.set('registrations', cloudDB.registrations);
-        if (typeof loadRoleApplications === 'function') loadRoleApplications();
-      }
-    }
-    if (cloudDB.villages && cloudDB.villages.length > 0) {
-      var localV = Storage.get('villages', []);
-      if (localV.length === 0) Storage.set('villages', cloudDB.villages);
-    }
-    if (cloudDB.accounts && cloudDB.accounts.length > 0) {
-      var localAccts = Storage.get('accounts', []);
-      if (localAccts.length === 0) Storage.set('accounts', cloudDB.accounts);
-    }
-  }).catch(function(e) { console.log('云数据加载失败', e); });
-}
-    if (cloudDB.camp_applications) {
-      var localCampApps = Storage.get('camp_applications', []);
-      if (localCampApps.length === 0) Storage.set('camp_applications', cloudDB.camp_applications);
-    }
-  }).catch(function(){});
-}
-
-// 云端同步：操作后写回云
-function syncRoleToCloud(regs) {
-  Storage.set('registrations', regs);
-  if (typeof CloudDB !== 'undefined') {
-    CloudDB.push({ registrations: regs }, '管理员更新角色注册数据').catch(function(){});
-  }
-}
-</script>
-<script src="cloud_db.js">
-if (typeof CloudDB !== 'undefined' && CloudDB.loadFromPublic) {
-  CloudDB.loadFromPublic().catch(function(){});
-}
+function renderAllPanels(){loadVillageStats();loadChiefApplications();loadRoleApplications();}
 </script>
 </body>
 </html>
