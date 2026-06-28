@@ -262,8 +262,11 @@ function toast(msg, duration) {
 }
 
 // 管理员账号（支持修改，存储在localStorage）
-var ADMIN_ACCOUNT = localStorage.getItem('village_admin_account') || 'admin';
-var ADMIN_PASSWORD = localStorage.getItem('village_admin_password') || 'admin123';
+var ADMIN_ACCOUNT = 'admin';
+var ADMIN_PASSWORD = 'admin123';
+var _cloudAdminAccount = null;
+var _cloudAdminPassword = null;
+var _initDone = false;
 
 // 当前状态
 var isLoggedIn = false;
@@ -271,12 +274,40 @@ var currentTab = 'villages';
 
 // 初始化
 function init() {
+  // 从云端获取管理员账号
+  var cloudAcc = null;
+  if (typeof CLOUD_DATA !== 'undefined' && CLOUD_DATA.accounts) {
+    CLOUD_DATA.accounts.forEach(function(a) {
+      if (a.role === '管理员') { cloudAcc = a; }
+    });
+  }
+  if (cloudAcc) {
+    _cloudAdminAccount = cloudAcc.username;
+    _cloudAdminPassword = cloudAcc.password;
+  }
+
   // 检查是否已登录（从sessionStorage）
   var savedLogin = sessionStorage.getItem('village_admin_logged');
   if (savedLogin === 'true') {
     isLoggedIn = true;
   }
   loadUI();
+
+  // 首次加载时同步云端数据
+  if (!_initDone && typeof CloudDB !== 'undefined' && CloudDB.loadFromPublic) {
+    _initDone = true;
+    CloudDB.loadFromPublic().then(function() {
+      if (typeof CLOUD_DATA !== 'undefined' && CLOUD_DATA.accounts) {
+        CLOUD_DATA.accounts.forEach(function(a) {
+          if (a.role === '管理员') {
+            _cloudAdminAccount = a.username;
+            _cloudAdminPassword = a.password;
+          }
+        });
+      }
+      if (typeof renderAllPanels === 'function') renderAllPanels();
+    }).catch(function() {});
+  }
 }
 
 function loadUI() {
@@ -318,7 +349,10 @@ function adminLogin() {
     return;
   }
 
-  if (account !== ADMIN_ACCOUNT || password !== ADMIN_PASSWORD) {
+  var cloudU = _cloudAdminAccount, cloudP = _cloudAdminPassword;
+  var ok = (cloudU && cloudP && account === cloudU && password === cloudP) ||
+           (account === ADMIN_ACCOUNT && password === ADMIN_PASSWORD);
+  if (!ok) {
     toast('账号或密码错误');
     return;
   }
@@ -372,10 +406,16 @@ function saveAdminAccount() {
 
   ADMIN_ACCOUNT = newAccount;
   ADMIN_PASSWORD = newPassword;
+  _cloudAdminAccount = newAccount;
+  _cloudAdminPassword = newPassword;
   localStorage.setItem('village_admin_account', newAccount);
   localStorage.setItem('village_admin_password', newPassword);
+  // 同步到云端
+  if (typeof CloudDB !== 'undefined' && CloudDB.push) {
+    CloudDB.push({accounts:[{id:'admin',username:newAccount,password:newPassword,role:'管理员',updatedAt:Date.now()}]}, '管理员修改账号密码').catch(function(){});
+  }
   closeChangeAdmin();
-  toast('账号密码修改成功，下次登录生效');
+  toast('账号密码修改成功');
 }
 
 function adminLogout() {
@@ -959,19 +999,6 @@ function renderAllPanels(){loadVillageStats();loadChiefApplications();loadRoleAp
 </script>
 
 <script src="cloud_db.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    if (typeof CloudDB !== 'undefined' && CloudDB.loadFromPublic) {
-        CloudDB.loadFromPublic().then(function() {
-            if (typeof renderAllPanels === 'function') renderAllPanels();
-        }).catch(function() {
-            if (typeof renderAllPanels === 'function') renderAllPanels();
-        });
-    } else {
-        if (typeof renderAllPanels === 'function') renderAllPanels();
-    }
-});
-</script>
 
 </body>
 </html>
