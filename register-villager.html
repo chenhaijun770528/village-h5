@@ -668,10 +668,12 @@ function logout() {
       var regs = Storage.get('registrations', [])
       regs.unshift(data)
       Storage.set('registrations', regs)
+      if (typeof CloudDB !== 'undefined') CloudDB.push({registrations: regs}, 'villager注册申请同步').catch(function(){});
 
       toast('注册已提交，等待村主任审核！')
       setTimeout(function() { location.href = 'select-role.html' }, 1500)
     }
   </script>
+<script src="cloud_db.js"></script>
 </body>
 </html>
