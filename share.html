@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>收到的申请</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f5;min-height:100vh}
+.header{background:linear-gradient(135deg,#2E7D32,#4CAF50);color:#fff;padding:20px 16px;text-align:center;}
+.header h1{font-size:18px;font-weight:bold;margin-bottom:4px;}
+.header p{font-size:13px;opacity:0.85;}
+.card{background:#fff;margin:16px;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.card-title{font-size:16px;font-weight:bold;color:#333;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #eee;}
+.info-row{display:flex;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:14px;}
+.info-row:last-child{border-bottom:none;}
+.info-label{color:#888;width:80px;flex-shrink:0;}
+.info-value{color:#333;flex:1;word-break:break-all;}
+.btn-group{display:flex;gap:12px;margin-top:16px;}
+.btn{flex:1;padding:12px;border:none;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer;text-align:center;}
+.btn-pass{background:#2E7D32;color:#fff;}
+.btn-reject{background:#fff;color:#F44336;border:1px solid #F44336;}
+.error{background:#fff3e0;color:#e65100;padding:16px;border-radius:8px;margin:16px;font-size:14px;text-align:center;}
+.success{background:#e8f5e9;color:#2E7D32;padding:16px;border-radius:8px;margin:16px;font-size:14px;text-align:center;}
+.back-link{display:block;text-align:center;padding:16px;color:#2E7D32;font-size:14px;text-decoration:none;}
+.photo{max-width:80px;max-height:80px;border-radius:6px;}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📋 收到新的注册申请</h1>
+  <p id="subTitle">正在加载...</p>
+</div>
+<div id="app"></div>
+<script>
+(function() {
+  var Storage = {
+    get: function(k, def) {
+      try { var v = localStorage.getItem('village_' + k); return v ? JSON.parse(v) : def; }
+      catch(e) { return def; }
+    },
+    set: function(k, v) {
+      try { localStorage.setItem('village_' + k, JSON.stringify(v)); return true; } catch(e) { return false; }
+    }
+  };
+
+  var data = null;
+  try {
+    var params = new URLSearchParams(location.search);
+    var encoded = params.get('data');
+    if (encoded) data = JSON.parse(decodeURIComponent(encoded));
+  } catch(e) {
+    try {
+      var hash = location.hash.substring(1);
+      if (hash) data = JSON.parse(decodeURIComponent(hash));
+    } catch(e2) {}
+  }
+
+  var sub = document.getElementById('subTitle');
+  var app = document.getElementById('app');
+
+  if (!data) {
+    app.innerHTML = '<div class="error">⚠️ 无效的申请链接<br><br>请确认链接是否完整</div><a href="admin.html" class="back-link">前往管理后台 →</a>';
+    sub.textContent = '链接无效';
+    return;
+  }
+
+  sub.textContent = '收到时间: ' + new Date(data.time || Date.now()).toLocaleString('zh-CN');
+
+  var html = '<div class="card"><div class="card-title">📝 ' + (data.role || '未知角色') + ' - ' + (data.name || '未填姓名') + '</div>';
+  var fields = [
+    ['姓名', data.name],
+    ['手机', data.phone],
+    ['角色', data.role],
+    ['地址', data.curAddress || data.regAddress || '无'],
+    ['擅长', data.skill || '无'],
+    ['年限', data.years || '无'],
+    ['账号', data.accountName || (data.accountId ? data.accountId.substring(0, 8) + '...' : '游客')]
+  ];
+  fields.forEach(function(f) {
+    if (f[1]) html += '<div class="info-row"><span class="info-label">' + f[0] + '</span><span class="info-value">' + f[1] + '</span></div>';
+  });
+  if (data.photo && data.photo.indexOf('data:') === 0) {
+    html += '<div class="info-row"><span class="info-label">照片</span><span class="info-value"><img src="' + data.photo + '" class="photo"></span></div>';
+  }
+  html += '<div id="actionArea"><div class="btn-group"><button class="btn btn-pass" id="btnPass">✅ 通过</button><button class="btn btn-reject" id="btnReject">❌ 拒绝</button></div></div>';
+  html += '</div>';
+  html += '<a href="admin.html" class="back-link">前往完整管理后台 →</a>';
+  app.innerHTML = html;
+
+  document.getElementById('btnPass').onclick = function() {
+    if (!confirm('确定通过此申请？')) return;
+    var regs = Storage.get('registrations', []);
+    data.status = '已通过';
+    data.reviewTime = Date.now();
+    regs.unshift(data);
+    Storage.set('registrations', regs);
+    // 同步账号 + 同步当前登录用户状态
+    if (data.accountId) {
+      var accounts = Storage.get('accounts', []);
+      var roleMap = {'按摩师': 'massage', '园林设计师': 'landscape', '律师': 'lawyer',
+        '超市老板': 'market', '建筑公司': 'construction', '老师': 'teacher',
+        '大学生': 'student', '律师事务所': 'law-firm', '货运司机': 'truck', '顺风车': 'carpool'};
+      for (var i = 0; i < accounts.length; i++) {
+        if (accounts[i].id === data.accountId) {
+          accounts[i].currentRole = roleMap[data.role] || data.role;
+          accounts[i].currentRoleName = data.name;
+          accounts[i].roleStatus = '已通过';
+          Storage.set('accounts', accounts);
+          break;
+        }
+      }
+      // 如果当前有登录用户就是申请人本人，同步其状态
+      var curUser = Storage.get('current_user', null);
+      if (curUser && curUser.id === data.accountId) {
+        curUser.currentRole = roleMap[data.role] || data.role;
+        curUser.currentRoleName = data.name;
+        curUser.roleStatus = '已通过';
+        Storage.set('current_user', curUser);
+      }
+    }
+    document.getElementById('actionArea').innerHTML = '<div class="success">✅ 已通过申请！<br>申请人刷新后可查看结果</div>';
+  };
+
+  document.getElementById('btnReject').onclick = function() {
+    if (!confirm('确定拒绝此申请？')) return;
+    var regs = Storage.get('registrations', []);
+    data.status = '已拒绝';
+    data.reviewTime = Date.now();
+    regs.unshift(data);
+    Storage.set('registrations', regs);
+    document.getElementById('actionArea').innerHTML = '<div class="error">❌ 已拒绝申请</div>';
+  };
+})();
+</script>
+</body>
+</html>
