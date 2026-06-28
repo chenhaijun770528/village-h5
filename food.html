@@ -387,37 +387,22 @@ function compressImage(file, maxWidth, maxHeight, quality, callback) {
   reader.readAsDataURL(file);
 }
 
-// 初始化示例数据
+// 初始化数据（不再添加示例数据）
 function initSampleData() {
-  if (!Storage.get('villages', null)) {
-    var defaultVillages = [
-      {
-        id: 'v1', name: '幸福村', province: '江苏省', city: '苏州市',
-        population: '3280', totalArea: '4500', farmlandArea: '2800',
-        description: '幸福村位于苏州市郊区，环境优美，著名的生态农业示范村。',
-        chief: { name: '张建国', phone: '13800138001' }, images: []
-      },
-      {
-        id: 'v2', name: '阳光村', province: '广东省', city: '广州市',
-        population: '4560', totalArea: '6200', farmlandArea: '3500',
-        description: '阳光村是广州市郊的现代化农村，积极发展乡村旅游。',
-        chief: { name: '李明华', phone: '13800138002' }, images: []
-      }
-    ];
-    Storage.set('villages', defaultVillages);
-  }
-  // 美食正式列表
+  // 强制清空并初始化空数据
+  Storage.set('villages', []);
+  Storage.set('foods', []);
+  Storage.set('food_applications', []);
+}
+  // 美食正式列表 - 空数组
   if (!Storage.get('foods', null)) {
-    Storage.set('foods', [
-      { id: 'f1', name: '农家土鸡', price: '98', unit: '只', desc: '散养土鸡，肉质鲜嫩', sales: 189, village: '幸福村', villageId: 'v1', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuWGnuWutuW+g+aZrzwvdGV4dD48L3N2Zz4=' },
-      { id: 'f2', name: '新鲜虾仁', price: '58', unit: '斤', desc: '本地河虾，当日捕捞', sales: 256, village: '阳光村', villageId: 'v2', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuaWsO细则i6I86i5iBuaZrzwvdGV4dD48L3N2Zz4=' },
-      { id: 'f3', name: '手工年糕', price: '25', unit: '斤', desc: '传统工艺，口感软糯', sales: 312, village: '幸福村', villageId: 'v1', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuaLi+W3neW5suazrzwvdGV4dD48L3N2Zz4=' }
-    ]);
+    Storage.set('foods', []);
   }
   // 美食申请列表
   if (!Storage.get('food_applications', null)) {
     Storage.set('food_applications', []);
   }
+}
 }
 
 // 页面初始化
@@ -534,6 +519,7 @@ function approveItem(appId) {
     createTime: Date.now()
   });
   Storage.set('foods', foods);
+  if (typeof CloudDB !== 'undefined') CloudDB.push({foods: foods, food_applications: apps}, '审核通过美食申请').catch(function(){});
 
   toast('已通过申请，美食已上架');
   loadFoods();
@@ -719,6 +705,7 @@ function submitApplication() {
   }
 
   Storage.set('food_applications', apps);
+  if (typeof CloudDB !== 'undefined') CloudDB.push({food_applications: apps}, '提交美食申请').catch(function(){});
   closeApplyModal();
 }
 
@@ -799,5 +786,6 @@ if (document.readyState === 'loading') {
   init();
 }
 </script>
+<script src="cloud_db.js"></script>
 </body>
 </html>
