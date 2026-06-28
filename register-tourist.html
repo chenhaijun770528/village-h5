@@ -231,6 +231,7 @@
       var regs = Storage.get('registrations', []);
       regs.unshift(data);
       Storage.set('registrations', regs);
+      if (typeof CloudDB !== 'undefined') CloudDB.push({registrations: regs}, '提交tourist注册申请').catch(function(){});
 
       // 立即开通游客角色
       currentAccount.currentRole = 'tourist';
@@ -254,5 +255,6 @@
       setTimeout(function() { location.href = 'index.html'; }, 1500);
     }
   </script>
+<script src="cloud_db.js"></script>
 </body>
 </html>
