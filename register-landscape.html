@@ -605,8 +605,10 @@ function logout() {
       const users = Storage.get('registrations', [])
       users.unshift({ id: genId(), role: '建筑园林设计师', name: name, phone: phone, years: years, specialty: document.getElementById('specialty').value, cert: document.getElementById('cert').value, accountId: account ? account.id : '', accountName: account ? account.account : '', status: '待审核', time: Date.now() })
       Storage.set('registrations', users)
+      if (typeof CloudDB !== 'undefined') CloudDB.push({registrations: regs}, 'landscape注册申请同步').catch(function(){});
       toast('注册成功！'); setTimeout(() => location.href = 'index.html', 1500)
     }
   </script>
+<script src="cloud_db.js"></script>
 </body>
 </html>
