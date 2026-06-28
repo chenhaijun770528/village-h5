@@ -511,7 +511,7 @@ function approveItem(appId) {
 
   // 写入正式列表（强制保留图片）
   var products = Storage.get('products', []);
-  var productImg = app.img || '';
+  var productImg = app.img || (app.images && app.images[0]) || '';
   console.log('[审核通过] 产品:', app.name, '图片长度:', productImg.length);
   products.push({
     id: app.id,
@@ -524,6 +524,7 @@ function approveItem(appId) {
     village: app.village,
     villageId: app.villageId,
     img: productImg,
+    images: app.images || [],
     sellerId: app.userId || '',
     sellerName: app.userName || '',
     createTime: Date.now()
