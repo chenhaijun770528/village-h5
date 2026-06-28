@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>我的订单</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif;background:#f5f5f5;color:#333;font-size:14px}
+.header{position:fixed;top:0;left:0;right:0;background:linear-gradient(135deg,#2E7D32,#4CAF50);color:#fff;padding:12px 16px;z-index:100;display:flex;align-items:center}
+.header-back{font-size:20px;cursor:pointer;padding-right:12px}
+.header-title{font-size:18px;font-weight:bold}
+.tab-box{display:flex;background:#fff;position:sticky;top:48px;z-index:50;border-bottom:1px solid #e0e0e0}
+.tab-item{flex:1;text-align:center;padding:10px 0;font-size:14px;color:#666;cursor:pointer;position:relative}
+.tab-item.active{color:#2E7D32;font-weight:600}
+.tab-item.active::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:40px;height:3px;background:#2E7D32;border-radius:2px}
+.container{padding:100px 16px 80px;max-width:750px;margin:0 auto}
+.order-card{background:#fff;border-radius:10px;padding:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);border-left:4px solid #FF9800}
+.order-card.completed{border-left-color:#2E7D32}
+.order-card.cancelled{border-left-color:#999}
+.order-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.order-id{font-size:12px;color:#999}
+.order-status{padding:2px 8px;border-radius:4px;font-size:12px;font-weight:500;background:#fff3e0;color:#FF9800}
+.order-status.s1{background:#e8f5e9;color:#2E7D32}
+.order-status.s2{background:#e3f2fd;color:#1976D2}
+.order-status.s3{background:#f5f5f5;color:#999}
+.order-status.s4{background:#fce4ec;color:#E91E63}
+.order-info{font-size:13px;color:#666;line-height:1.7}
+.order-info strong{color:#333}
+.order-total{font-size:15px;color:#FF9800;font-weight:bold;margin-top:6px}
+.order-actions{display:flex;gap:8px;margin-top:10px}
+.btn-action{padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;border:1px solid #e0e0e0;background:#fff;color:#333}
+.btn-action.primary{background:#2E7D32;color:#fff;border-color:#2E7D32}
+.btn-action.danger{background:#F44336;color:#fff;border-color:#F44336}
+.empty{text-align:center;padding:60px 0;color:#999}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.modal-mask{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+.modal-box{background:#fff;border-radius:14px 14px 0 0;width:100%;max-width:500px;max-height:85vh;overflow-y:auto;padding:20px 16px 30px;animation:slideUp .25s}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-title{font-size:18px;font-weight:bold;margin-bottom:16px;text-align:center}
+.modal-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0}
+.modal-label{color:#666;font-size:13px}
+.modal-val{font-size:14px;font-weight:500;max-width:60%;text-align:right;word-break:break-all}
+.modal-val.green{color:#2E7D32}
+.modal-val.orange{color:#FF9800}
+.modal-section{font-size:13px;color:#999;margin:12px 0 6px;font-weight:600}
+.modal-close{width:100%;padding:12px;background:#f5f5f5;border:none;border-radius:8px;font-size:15px;cursor:pointer;margin-top:16px}
+.tip{text-align:center;font-size:12px;color:#999;padding:8px 0}
+</style>
+</head>
+<body>
+<div class="header">
+  <span class="header-back" onclick="history.back()">←</span>
+  <span class="header-title">我的订单</span>
+</div>
+<div class="tab-box">
+  <div class="tab-item active" onclick="switchTab(0,this)" id="tab0">全部</div>
+  <div class="tab-item" onclick="switchTab(1,this)" id="tab1">待发货</div>
+  <div class="tab-item" onclick="switchTab(2,this)" id="tab2">已完成</div>
+  <div class="tab-item" onclick="switchTab(3,this)" id="tab3">已取消</div>
+</div>
+<div class="container" id="list"></div>
+<div id="modalRoot"></div>
+<script src="app.js"></script>
+<script>
+var statusMap = { '待发货': 0, '待确认': 0, '待消费': 0, '已发货': 1, '已完成': 2, '已取消': 3 };
+var statusList = ['全部', '待发货', '已完成', '已取消'];
+var statusClass = ['', 's1', 's2', 's3'];
+var currentTab = 0;
+
+function init() {
+  var user = Storage.get('user', null);
+  if (!user) {
+    alert('请先登录');
+    location.href = 'login.html';
+    return;
+  }
+  loadOrders();
+}
+
+function switchTab(idx, el) {
+  currentTab = idx;
+  var tabs = document.querySelectorAll('.tab-item');
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+  el.classList.add('active');
+  loadOrders();
+}
+
+function loadOrders() {
+  var user = Storage.get('user', null);
+  var orders = Storage.get('orders', []);
+  
+  // 过滤：此用户是买家（buyerId匹配）
+  var myOrders = orders.filter(function(o) {
+    return o.buyerId === (user.account || user.id || '') ||
+           o.buyerId === user.id ||
+           o.buyerId === (user.phone || '');
+  });
+  
+  var list = document.getElementById('list');
+  list.innerHTML = '';
+  
+  var targetStatus = statusList[currentTab];
+  var filtered = myOrders.filter(function(o) {
+    if (currentTab === 0) return true; // 全部
+    if (currentTab === 1) return o.status === '待发货' || o.status === '待确认' || o.status === '待消费';
+    if (currentTab === 2) return o.status === '已完成';
+    if (currentTab === 3) return o.status === '已取消';
+    return true;
+  });
+  
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">📦</div><div>暂无订单</div><div style="font-size:12px;margin-top:8px">去农产品/美食/露营地下单吧</div></div>';
+    return;
+  }
+  
+  var typeLabels = { product: '🥬 农产品', food: '🍜 美食', camp: '🏕️ 露营' };
+  
+  for (var i = 0; i < filtered.length; i++) {
+    var o = filtered[i];
+    var sc = statusClass[statusMap[o.status] || 0] || '';
+    var typeLabel = typeLabels[o.type] || '📦 商品';
+    var pname = o.productName || o.foodName || o.campName || '商品';
+    var qty = o.qty || o.quantity || 1;
+    var sellerName = o.sellerName || '未知卖家';
+    var actions = '';
+    
+    if (o.status === '待发货' || o.status === '待确认' || o.status === '待消费') {
+      actions = '<button class="btn-action danger" onclick="cancelOrder(\'' + o.id + '\')">取消订单</button>';
+    } else if (o.status === '已发货') {
+      actions = '<button class="btn-action primary" onclick="confirmReceive(\'' + o.id + '\')">确认收货</button>';
+    } else if (o.status === '已完成') {
+      actions = '<span style="font-size:12px;color:#2E7D32">已完成</span>';
+    } else if (o.status === '已取消') {
+      actions = '<span style="font-size:12px;color:#999">已取消</span>';
+    }
+    
+    var card = document.createElement('div');
+    card.className = 'order-card' + (o.status === '已完成' ? ' completed' : '') + (o.status === '已取消' ? ' cancelled' : '');
+    card.innerHTML =
+      '<div class="order-header">' +
+        '<span class="order-id">' + typeLabel + '</span>' +
+        '<span class="order-status ' + sc + '">' + o.status + '</span>' +
+      '</div>' +
+      '<div style="font-weight:bold;margin-bottom:4px;">' + pname + '</div>' +
+      '<div class="order-info">' +
+        '卖家：' + sellerName + '<br>' +
+        '数量：' + qty + ' ' + (o.unit || '件') + '<br>' +
+        '下单时间：' + new Date(o.createTime).toLocaleString() +
+      '</div>' +
+      '<div class="order-total">合计 ¥' + o.total + '</div>' +
+      '<div class="order-actions">' +
+        '<button class="btn-action" onclick="showDetail(\'' + o.id + '\')">📋 订单详情</button>' +
+        actions +
+      '</div>';
+    list.appendChild(card);
+  }
+}
+
+function showDetail(orderId) {
+  var orders = Storage.get('orders', []);
+  var o = null;
+  for (var i = 0; i < orders.length; i++) {
+    if (orders[i].id === orderId) { o = orders[i]; break; }
+  }
+  if (!o) return;
+  
+  var typeLabels = { product: '🥬 农产品', food: '🍜 美食', camp: '🏕️ 露营' };
+  var typeLabel = typeLabels[o.type] || '📦 商品';
+  var pname = o.productName || o.foodName || o.campName || '商品';
+  var qty = o.qty || o.quantity || 1;
+  var sellerPhone = o.sellerPhone || '—';
+  var pickupTime = o.pickupTime ? '<div class="modal-row"><span class="modal-label">取餐时间</span><span class="modal-val">' + o.pickupTime + '</span></div>' : '';
+  var checkin = o.checkin ? '<div class="modal-row"><span class="modal-label">入住日期</span><span class="modal-val">' + o.checkin + '</span></div>' : '';
+  var remark = o.remark ? '<div class="modal-row"><span class="modal-label">备注</span><span class="modal-val">' + o.remark + '</span></div>' : '';
+  var buyerPhone = o.buyerPhone || o.phone || '—';
+  var buyerAddr = o.buyerAddr || o.address || '—';
+  var myPhone = o.buyerPhone || o.phone || '';
+  var myAddr = o.buyerAddr || o.address || '';
+  
+  var html =
+    '<div class="modal-mask" onclick="closeModal(event)">' +
+      '<div class="modal-box" onclick="event.stopPropagation()">' +
+        '<div class="modal-title">📋 订单详情</div>' +
+        
+        '<div class="modal-section">🛒 订单信息</div>' +
+        '<div class="modal-row"><span class="modal-label">订单号</span><span class="modal-val" style="font-size:11px">' + o.id + '</span></div>' +
+        '<div class="modal-row"><span class="modal-label">商品类型</span><span class="modal-val">' + typeLabel + '</span></div>' +
+        '<div class="modal-row"><span class="modal-label">商品名称</span><span class="modal-val">' + pname + '</span></div>' +
+        '<div class="modal-row"><span class="modal-label">数量</span><span class="modal-val">×' + qty + ' ' + (o.unit || '') + '</span></div>' +
+        '<div class="modal-row"><span class="modal-label">订单状态</span><span class="modal-val orange">' + o.status + '</span></div>' +
+        '<div class="modal-row"><span class="modal-label">合计金额</span><span class="modal-val orange" style="font-size:16px">¥' + o.total + '</span></div>' +
+        remark +
+        
+        '<div class="modal-section">🏪 卖家信息</div>' +
+        '<div class="modal-row"><span class="modal-label">卖家名称</span><span class="modal-val">' + (o.sellerName || '未知') + '</span></div>' +
+        '<div class="modal-row"><span class="modal-label">卖家电话</span><span class="modal-val green" style="cursor:pointer" onclick="location.href=\'tel:' + sellerPhone + '\'">' + sellerPhone + (sellerPhone !== '—' ? ' 📞' : '') + '</span></div>' +
+        
+        '<div class="modal-section">📦 我的收货信息</div>' +
+        '<div class="modal-row"><span class="modal-label">收货人</span><span class="modal-val">' + (o.buyerName || o.buyerNick || o.name || '未知') + '</span></div>' +
+        '<div class="modal-row"><span class="modal-label">联系电话</span><span class="modal-val">' + myPhone + '</span></div>' +
+        '<div class="modal-row"><span class="modal-label">收货地址</span><span class="modal-val">' + myAddr + '</span></div>' +
+        pickupTime + checkin +
+        
+        '<div class="modal-section">📅 时间</div>' +
+        '<div class="modal-row"><span class="modal-label">下单时间</span><span class="modal-val">' + new Date(o.createTime).toLocaleString() + '</span></div>' +
+        
+        '<button class="modal-close" onclick="closeModal()">关闭</button>' +
+      '</div>' +
+    '</div>';
+  
+  document.getElementById('modalRoot').innerHTML = html;
+}
+
+function closeModal(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('modalRoot').innerHTML = '';
+}
+
+function cancelOrder(orderId) {
+  if (!confirm('确认取消此订单？')) return;
+  var orders = Storage.get('orders', []);
+  for (var i = 0; i < orders.length; i++) {
+    if (orders[i].id === orderId) {
+      orders[i].status = '已取消';
+      // 恢复库存
+      var o = orders[i];
+      if (o.type === 'product') {
+        var products = Storage.get('products', []);
+        for (var j = 0; j < products.length; j++) {
+          if (products[j].id === o.productId) {
+            products[j].stock = (parseInt(products[j].stock) || 0) + (o.qty || 1);
+            break;
+          }
+        }
+        Storage.set('products', products);
+      }
+      break;
+    }
+  }
+  Storage.set('orders', orders);
+  alert('订单已取消');
+  loadOrders();
+}
+
+function confirmReceive(orderId) {
+  if (!confirm('确认已收到货？')) return;
+  var orders = Storage.get('orders', []);
+  for (var i = 0; i < orders.length; i++) {
+    if (orders[i].id === orderId) { orders[i].status = '已完成'; break; }
+  }
+  Storage.set('orders', orders);
+  alert('收货确认完成！');
+  loadOrders();
+}
+
+init();
+</script>
+</body>
+</html>
