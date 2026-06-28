@@ -281,6 +281,10 @@
       setTimeout(function() { location.href = 'index.html'; }, 1500);
     }
   </script>
-<script src="cloud_db.js"></script>
+<script src="cloud_db.js">
+if (typeof CloudDB !== 'undefined' && CloudDB.loadFromPublic) {
+  CloudDB.loadFromPublic().catch(function(){});
+}
+</script>
 </body>
 </html>
