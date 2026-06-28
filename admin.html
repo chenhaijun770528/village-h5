@@ -811,18 +811,22 @@ function deleteRole(regId, idx) {
   if (!confirm('确定删除此角色注册记录？该操作不可恢复。')) return;
   var regs = Storage.get('registrations', []);
   var delIdx = -1;
+  // 按id查找
   for (var i = 0; i < regs.length; i++) {
     if (regs[i].id === regId) { delIdx = i; break; }
   }
+  // id找不到时用index兜底
   if (delIdx < 0 && typeof idx !== 'undefined' && idx >= 0 && idx < regs.length) delIdx = idx;
   if (delIdx < 0) { toast('未找到该记录'); return; }
   var reg = regs[delIdx];
+  var regIdForCleanup = reg.id || regId; // 用原始id清理账号
   regs.splice(delIdx, 1);
   Storage.set('registrations', regs);
+  // 清理账号的角色绑定
   if (reg && reg.accountId) {
     var accounts = Storage.get('accounts', []);
     for (var ai = 0; ai < accounts.length; ai++) {
-      if (accounts[ai].id === reg.accountId && (accounts[ai].currentRoleId === regId || accounts[ai].currentRoleId === regs[delIdx]&&regs[delIdx]&&regs[delIdx].id)) {
+      if (accounts[ai].id === reg.accountId && accounts[ai].currentRoleId === regIdForCleanup) {
         delete accounts[ai].currentRole;
         delete accounts[ai].currentRoleId;
         delete accounts[ai].currentRoleName;
