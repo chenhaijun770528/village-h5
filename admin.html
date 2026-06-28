@@ -700,7 +700,20 @@ function deleteVillage(villageId) {
 // ========== 角色注册审核 ==========
 function loadRoleApplications() {
   var panel = document.getElementById('panelRoleApps');
-  var regs = Storage.get('registrations', []);
+  panel.innerHTML = '<div style="text-align:center;padding:20px;color:#999;">正在从云端加载...</div>';
+  if (typeof CloudDB !== 'undefined') {
+    CloudDB.fetch().then(function(cloudDB) {
+      var regs = (cloudDB && cloudDB.registrations) || [];
+      renderRoleList(panel, regs);
+    }).catch(function() {
+      renderRoleList(panel, Storage.get('registrations', []));
+    });
+  } else {
+    renderRoleList(panel, Storage.get('registrations', []));
+  }
+}
+
+function renderRoleList(panel, regs) {
   // 所有记录统一渲染，每条都有✅❌🗑️三个按钮
   var approved = 0, rejected = 0, pending = 0;
   for (var j = 0; j < regs.length; j++) {
@@ -769,6 +782,9 @@ function approveRole(regId, idx) {
   regs[regIdx].reviewTime = Date.now();
   if (!regs[regIdx].id) regs[regIdx].id = 'r' + Date.now();
   Storage.set('registrations', regs);
+  if (typeof CloudDB !== 'undefined') {
+    CloudDB.push({ registrations: regs }, '批准角色注册：' + (reg ? reg.name : '')).catch(function(){});
+  }
   if (reg && reg.accountId) {
     var accounts = Storage.get('accounts', []);
     var roleMap = {'村民':'villager','村主任':'township','游客':'tourist','农产品商家':'market','建筑队':'construction','老师':'teacher','大学生':'student','律师事务所':'law-firm','律师':'lawyer','货车司机':'truck','拼车':'carpool','按摩师':'massage','建筑园林设计师':'landscape'};
@@ -812,6 +828,9 @@ function deleteRole(regId, idx) {
   var regIdForCleanup = reg.id || regId; // 用原始id清理账号
   regs.splice(delIdx, 1);
   Storage.set('registrations', regs);
+  if (typeof CloudDB !== 'undefined') {
+    CloudDB.push({ registrations: regs }, '删除角色注册记录').catch(function(){});
+  }
   // 清理账号的角色绑定
   if (reg && reg.accountId) {
     var accounts = Storage.get('accounts', []);
@@ -840,6 +859,9 @@ function deleteRole(regId, idx) {
   regs[rejIdx].reviewTime = Date.now();
   if (!regs[rejIdx].id) regs[rejIdx].id = 'r' + Date.now();
   Storage.set('registrations', regs);
+  if (typeof CloudDB !== 'undefined') {
+    CloudDB.push({ registrations: regs }, '拒绝角色注册').catch(function(){});
+  }
   toast('已拒绝');
   loadRoleApplications();
 }
@@ -951,6 +973,15 @@ function makeDraggable(el,idx,type){
     _dragSrc=-1;renderAllPanels();});
 }
 function renderAllPanels(){loadVillageStats();loadChiefApplications();loadRoleApplications();}
+
+// 云端同步：操作后写回云
+function syncRoleToCloud(regs) {
+  Storage.set('registrations', regs);
+  if (typeof CloudDB !== 'undefined') {
+    CloudDB.push({ registrations: regs }, '管理员更新角色注册数据').catch(function(){});
+  }
+}
 </script>
+<script src="cloud_db.js"></script>
 </body>
 </html>
