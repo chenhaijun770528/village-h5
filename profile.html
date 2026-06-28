@@ -501,7 +501,8 @@ function renderPage() {
             '</div>' +
           '</div>' +
           '          <div id="myProductsPanel" style="background:#f9f9f9;border-radius:8px;padding:10px;margin-bottom:10px;display:none;">            <div style="font-size:12px;color:#666;margin-bottom:6px;font-weight:bold;">📦 我的产品（含待处理订单）</div>            <div id="myProductsList"></div>          </div>' +
-          '<button onclick="showMyOrders()" style="width:100%;padding:10px;background:#2E7D32;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;">📦 查看我的订单</button>' +
+          '<button onclick="showMyOrders()" style="width:49%;padding:10px;background:#2E7D32;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;margin-right:2%;">📦 售出订单</button>' +
+          '<button onclick="location.href=\'my-orders.html\'" style="width:49%;padding:10px;background:#FF9800;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer;">🛒 我买到的</button>' +
         '</div>';
       }
 
@@ -1404,23 +1405,40 @@ function initMyProducts() {
 function showMyOrders() {
   var currentUser = Storage.get('user');
   var orders = Storage.get('orders', []).filter(function(o) { 
-    return o.sellerId === currentUser.account; 
+    return o.sellerId === currentUser.account || o.sellerId === currentUser.id || o.sellerId === (currentUser.phone || ''); 
   });
   
+  var typeMap = { product: '🥬 农产品', food: '🍜 美食', camp: '🏕️ 露营' };
+  var statusBg = { '待发货': '#fff3e0', '已发货': '#e3f2fd', '已完成': '#e8f5e9', '已取消': '#f5f5f5' };
+  var statusColor = { '待发货': '#FF9800', '已发货': '#1976D2', '已完成': '#2E7D32', '已取消': '#999' };
+  
   var html = '<div style="padding:16px;">' +
-    '<h3 style="margin-bottom:16px;">📦 我的订单</h3>';
+    '<h3 style="margin-bottom:16px;">📦 售出订单 (' + orders.length + ')</h3>' +
+    '<div style="font-size:12px;color:#999;margin-bottom:12px;">以下订单来自您申请上架的农产品/美食/露营地</div>';
   
   if (orders.length === 0) {
-    html += '<div style="text-align:center;padding:40px;color:#999;">暂无订单</div>';
+    html += '<div style="text-align:center;padding:40px;color:#999;">暂无售出订单<br><span style="font-size:12px">去申请上架农产品/美食/露营地吧</span></div>';
   } else {
     orders.forEach(function(o) {
-      html += '<div style="background:white;padding:12px;border-radius:8px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">' +
-        '<div style="display:flex;justify-content:space-between;">' +
-          '<div style="font-weight:bold;">' + o.productName + '</div>' +
-          '<div style="color:#2E7D32;font-weight:bold;">¥' + o.total + '</div>' +
+      var pname = o.productName || o.foodName || o.campName || '商品';
+      var typeLabel = typeMap[o.type] || '📦 商品';
+      var bg = statusBg[o.status] || '#fff';
+      var fc = statusColor[o.status] || '#333';
+      var qty = o.qty || o.quantity || 1;
+      var phone = o.buyerPhone || o.phone || '未填写';
+      var addr = o.buyerAddr || o.address || '未填写';
+      html += '<div style="background:white;padding:12px;border-radius:8px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.1);border-left:4px solid ' + fc + ';">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+          '<div style="font-weight:bold;font-size:14px;">' + typeLabel + ' · ' + pname + '</div>' +
+          '<div style="color:' + fc + ';font-weight:bold;font-size:13px;">' + o.status + '</div>' +
         '</div>' +
-        '<div style="color:#666;font-size:12px;margin-top:4px;">买家: ' + (o.buyerName || '未知') + ' · ' + o.quantity + (o.unit || '件') + '</div>' +
-        '<div style="color:#999;font-size:11px;margin-top:4px;">' + o.createTime + '</div>' +
+        '<div style="font-size:13px;color:#333;margin-bottom:4px;">¥' + o.total + ' × ' + qty + (o.unit || '件') + '</div>' +
+        '<div style="background:#f9f9f9;padding:6px 8px;border-radius:6px;margin:6px 0;font-size:12px;line-height:1.6;">' +
+          '<div>👤 买家：' + (o.buyerName || o.buyerNick || o.name || '未知') + '</div>' +
+          '<div>☎ 电话：' + phone + '</div>' +
+          '<div>📍 地址：' + addr + '</div>' +
+        '</div>' +
+        '<div style="color:#999;font-size:11px;margin-top:4px;">' + new Date(o.createTime).toLocaleString() + '</div>' +
       '</div>';
     });
   }
