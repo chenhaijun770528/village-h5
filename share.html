@@ -93,8 +93,19 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f5;m
     var regs = Storage.get('registrations', []);
     data.status = '已通过';
     data.reviewTime = Date.now();
-    regs.unshift(data);
+    // 如果已有相同accountId+role的记录，替换；否则unshift
+    var existIdx = -1;
+    for (var ri = 0; ri < regs.length; ri++) {
+      if (regs[ri].accountId === data.accountId && regs[ri].role === data.role) {
+        existIdx = ri; break;
+      }
+    }
+    if (existIdx >= 0) regs[existIdx] = data; else regs.unshift(data);
     Storage.set('registrations', regs);
+    // 推送到云端（admin电脑用GitHub API，WeChat用户用GET触发CDN刷新）
+    if (typeof CloudDB !== 'undefined') {
+      CloudDB.push({ registrations: regs }, 'share-link批准：' + (data.name || data.role)).catch(function(){});
+    }
     // 同步账号 + 同步当前登录用户状态
     if (data.accountId) {
       var accounts = Storage.get('accounts', []);
@@ -130,6 +141,11 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f5;m
         curUser.roleStatus = '已通过';
         Storage.set('current_user', curUser);
       }
+      // 同步云端账号
+      if (typeof CloudDB !== 'undefined') {
+        var accts = Storage.get('accounts', []);
+        CloudDB.push({ accounts: accts }, 'share-link同步账号').catch(function(){});
+      }
     }
     document.getElementById('actionArea').innerHTML = '<div class="success">✅ 已通过申请！<br>申请人刷新后可查看结果</div>';
   };
@@ -139,11 +155,22 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f5;m
     var regs = Storage.get('registrations', []);
     data.status = '已拒绝';
     data.reviewTime = Date.now();
-    regs.unshift(data);
+    // 如果已有相同accountId+role，替换；否则unshift
+    var existRj = -1;
+    for (var rj = 0; rj < regs.length; rj++) {
+      if (regs[rj].accountId === data.accountId && regs[rj].role === data.role) {
+        existRj = rj; break;
+      }
+    }
+    if (existRj >= 0) regs[existRj] = data; else regs.unshift(data);
     Storage.set('registrations', regs);
+    if (typeof CloudDB !== 'undefined') {
+      CloudDB.push({ registrations: regs }, 'share-link拒绝：' + (data.name || data.role)).catch(function(){});
+    }
     document.getElementById('actionArea').innerHTML = '<div class="error">❌ 已拒绝申请</div>';
   };
 })();
 </script>
+<script src="cloud_db.js"></script>
 </body>
 </html>
