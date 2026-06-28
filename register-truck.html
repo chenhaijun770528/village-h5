@@ -604,8 +604,10 @@ function logout() {
       const users = Storage.get('registrations', [])
       users.unshift({ role: '货运司机', name, phone, plate, vehicle: document.getElementById('vehicle').value, load: document.getElementById('load').value, time: Date.now() })
       Storage.set('registrations', users)
+      if (typeof CloudDB !== 'undefined') CloudDB.push({registrations: regs}, 'truck注册申请同步').catch(function(){});
       toast('注册成功！'); setTimeout(() => location.href = 'index.html', 1500)
     }
   </script>
+<script src="cloud_db.js"></script>
 </body>
 </html>
