@@ -602,12 +602,22 @@ function logout() {
       const name = document.getElementById('name').value.trim(), phone = document.getElementById('phone').value.trim()
       if (!name || !phone) { toast('请填写必填项'); return }
       var account = Storage.get('user', null);
-      var regs = Storage.get('registrations', []);
       var newReg = { id: genId(), role: '按摩师', name: name, phone: phone, skill: document.getElementById('skill').value, years: document.getElementById('years').value, photo: window._massagePhoto || '', regAddress: document.getElementById('regAddress').value.trim(), curAddress: document.getElementById('curAddress').value.trim(), accountId: account ? account.id : '', accountName: account ? account.account : '', status: '待审核', time: Date.now() };
+      // 1. 先写入本地（即时反馈）
+      var regs = Storage.get('registrations', []);
       regs.unshift(newReg);
       Storage.set('registrations', regs);
-      toast('提交成功，请等待审核！'); setTimeout(function(){ location.href = 'index.html'; }, 1500); return;
-      
+      // 2. 同时推送到云端（所有人共享）
+      CloudDB.push({ registrations: regs }, '新增按摩技师注册：' + name)
+        .then(function() {
+          toast('提交成功，请等待审核！');
+          setTimeout(function() { location.href = 'index.html'; }, 1500);
+        })
+        .catch(function(e) {
+          // 云端失败也继续，毕竟本地已写入
+          toast('提交成功，请等待审核！');
+          setTimeout(function() { location.href = 'index.html'; }, 1500);
+        });
     }
       // 证件照预览 + Canvas压缩
     window._massagePhoto = '';
@@ -632,5 +642,6 @@ function logout() {
       reader.readAsDataURL(file);
     }
 </script>
+<script src="cloud_db.js"></script>
 </body>
 </html>
