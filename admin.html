@@ -674,6 +674,7 @@ function deleteVillage(villageId) {
   var newC = [];
   for (var ci = 0; ci < camps.length; ci++) { if (camps[ci].villageId !== villageId) newC.push(camps[ci]); }
   Storage.set('camps', newC);
+  if (typeof CloudDB !== 'undefined') CloudDB.push({products: newP, foods: newF, camps: newC}, '删除村庄级联清理').catch(function(){});
   // 清除该村主任用户账号的角色绑定
   var accounts = Storage.get('accounts', []);
   var tApps = Storage.get('township_applications', []);
@@ -972,7 +973,40 @@ function makeDraggable(el,idx,type){
     else if(type==='chiefs'){var a=Storage.get('township_applications',[]);var ta=a.splice(_dragSrc,1)[0];a.splice(idx,0,ta);Storage.set('township_applications',a);}
     _dragSrc=-1;renderAllPanels();});
 }
-function renderAllPanels(){loadVillageStats();loadChiefApplications();loadRoleApplications();}
+function renderAllPanels(){loadVillageStats();loadChiefApplications();loadRoleApplications();loadCloudData();}
+
+// 云端数据加载（农产品/美食/露营审核用）
+function loadCloudData() {
+  if (typeof CloudDB === 'undefined') return;
+  CloudDB.fetch().then(function(cloudDB) {
+    if (cloudDB.products && cloudDB.products.length > 0) {
+      var localProducts = Storage.get('products', []);
+      if (localProducts.length === 0 || (localProducts.length < cloudDB.products.length)) {
+        Storage.set('products', cloudDB.products);
+      }
+    }
+    if (cloudDB.product_applications) {
+      var localApps = Storage.get('product_applications', []);
+      if (localApps.length === 0) Storage.set('product_applications', cloudDB.product_applications);
+    }
+    if (cloudDB.food) {
+      var localFood = Storage.get('food', []);
+      if (localFood.length === 0) Storage.set('food', cloudDB.food);
+    }
+    if (cloudDB.food_applications) {
+      var localFoodApps = Storage.get('food_applications', []);
+      if (localFoodApps.length === 0) Storage.set('food_applications', cloudDB.food_applications);
+    }
+    if (cloudDB.camps) {
+      var localCamps = Storage.get('registered_camps', []);
+      if (localCamps.length === 0) Storage.set('registered_camps', cloudDB.camps);
+    }
+    if (cloudDB.camp_applications) {
+      var localCampApps = Storage.get('camp_applications', []);
+      if (localCampApps.length === 0) Storage.set('camp_applications', cloudDB.camp_applications);
+    }
+  }).catch(function(){});
+}
 
 // 云端同步：操作后写回云
 function syncRoleToCloud(regs) {
