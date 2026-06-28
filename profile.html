@@ -511,10 +511,10 @@ function renderPage() {
           return (p.status === '待审核' || p.status === 'waiting') && (!myVillage || p.village === myVillage.name || p.village === ''); 
         });
         var pendingFood = Storage.get('food_applications', []).filter(function(f) { 
-          return (f.status === '待审核' || f.status === 'waiting') && (!myVillage || f.villageId === myVillage.id); 
+          return (f.status === '待审核' || f.status === 'waiting') && (!myVillage || f.village === myVillage.name || f.village === ''); 
         });
         var pendingCamps = Storage.get('camp_applications', []).filter(function(camp) { 
-          return (camp.status === '待审核' || camp.status === 'waiting') && (!myVillage || camp.villageId === myVillage.id); 
+          return (camp.status === '待审核' || camp.status === 'waiting') && (!myVillage || camp.village === myVillage.name || camp.village === ''); 
         });
         
         var totalPending = pendingProducts.length + pendingFood.length + pendingCamps.length;
@@ -1645,7 +1645,7 @@ function auditFood() {
   var myVillage = Storage.get('villages', []).find(function(v) { return v.chief && (v.chief.name === currentUser.currentRoleName || v.chief.name === currentUser.account || (v.chief.phone && v.chief.phone === (currentUser.phone || ''))); });
   
   var apps = Storage.get('food_applications', []).filter(function(f) { 
-    return (f.status === '待审核' || f.status === 'waiting') && (!myVillage || f.villageId === myVillage.id); 
+    return (f.status === '待审核' || f.status === 'waiting') && (!myVillage || f.village === myVillage.name || f.village === ''); 
   });
   
   var html = '<div style="padding:16px;">' +
@@ -1719,7 +1719,7 @@ function auditCamps() {
   var myVillage = Storage.get('villages', []).find(function(v) { return v.chief && (v.chief.name === currentUser.currentRoleName || v.chief.name === currentUser.account || (v.chief.phone && v.chief.phone === (currentUser.phone || ''))); });
   
   var apps = Storage.get('camp_applications', []).filter(function(c) { 
-    return (c.status === '待审核' || c.status === 'waiting') && (!myVillage || c.villageId === myVillage.id); 
+    return (c.status === '待审核' || c.status === 'waiting') && (!myVillage || c.village === myVillage.name || c.village === ''); 
   });
   
   var html = '<div style="padding:16px;">' +
