@@ -79,6 +79,54 @@
             });
         },
 
-        rawURL: CLOUD_RAW
+        rawURL: CLOUD_RAW,
+
+        // 公开读取（无需token，微信浏览器可用）
+        // 从 GitHub Pages 加载云端数据并合并到 localStorage
+        loadFromPublic: function() {
+            var base = location.origin + location.pathname.replace(/\/[^/]+$/, '/');
+            var url = base + 'cloud_data.js?v=' + Date.now();
+            return fetch(url).then(function(r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.text();
+            }).then(function(text) {
+                try {
+                    var fn = new Function(text);
+                    fn();
+                    if (typeof CLOUD_DATA === 'undefined') throw new Error('no CLOUD_DATA');
+                    var cd = CLOUD_DATA;
+                    // 合并 registrations（云端有新数据时更新本地）
+                    if (cd.registrations && cd.registrations.length > 0) {
+                        var localRegs = Storage.get('registrations', []);
+                        var merged = localRegs.concat();
+                        cd.registrations.forEach(function(cr) {
+                            var exists = merged.some(function(lr) {
+                                return lr.accountId && lr.accountId === cr.accountId && lr.role === cr.role;
+                            });
+                            if (!exists) merged.push(cr);
+                        });
+                        Storage.set('registrations', merged);
+                    }
+                    // 合并 villages
+                    if (cd.villages && cd.villages.length > 0) {
+                        var localV = Storage.get('villages', []);
+                        if (localV.length === 0) Storage.set('villages', cd.villages);
+                    }
+                    // 合并 products
+                    if (cd.products && cd.products.length > 0) {
+                        var localP = Storage.get('products', []);
+                        if (localP.length === 0) Storage.set('products', cd.products);
+                    }
+                    // 合并 food
+                    if (cd.food && cd.food.length > 0) {
+                        var localF = Storage.get('food', []);
+                        if (localF.length === 0) Storage.set('food', cd.food);
+                    }
+                    return cd;
+                } catch(e) {
+                    throw new Error('解析云数据失败: ' + e.message);
+                }
+            });
+        }
     };
 })(window);
