@@ -1498,7 +1498,8 @@ function approveProduct(id) {
       sellerName: app.userName || '',
       village: app.village,
       status: '在售',
-      img: app.img || ''
+      img: app.img || (app.images && app.images[0]) || '',
+      images: app.images || []
     });
     Storage.set('products', products);
     
@@ -1767,7 +1768,8 @@ function approveCamp(id) {
       unit: app.unit || '',
       desc: app.description || app.desc || '',
       tags: app.tags || [],
-      img: app.img || '',
+      img: app.img || (app.images && app.images[0]) || '',
+      images: app.images || [],
       imgs: app.imgs || (app.img ? [app.img] : [])  // 多图片数组，兼容旧数据
     });
     Storage.set('camps', camps);
