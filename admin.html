@@ -943,7 +943,6 @@ function setSortMode(type){
   var show=document.getElementById('sortTip'+type.charAt(0).toUpperCase()+type.slice(1));
   if(show) show.style.display=_sortMode[type]?'block':'none';
   document.getElementById('sortBtn'+type.charAt(0).toUpperCase()+type.slice(1)).classList.toggle('active',_sortMode[type]);
-  renderAllPanels();
 }
 function makeDraggable(el,idx,type){
   el.setAttribute('draggable',true);
@@ -954,9 +953,25 @@ function makeDraggable(el,idx,type){
   el.addEventListener('drop',function(e){e.preventDefault();el.classList.remove('drag-over');if(_dragSrc===idx)return;
     if(type==='villages'){var v=Storage.get('villages',[]);var t=v.splice(_dragSrc,1)[0];v.splice(idx,0,t);Storage.set('villages',v);}
     else if(type==='chiefs'){var a=Storage.get('township_applications',[]);var ta=a.splice(_dragSrc,1)[0];a.splice(idx,0,ta);Storage.set('township_applications',a);}
-    _dragSrc=-1;renderAllPanels();});
+    _dragSrc=-1;});
 }
 function renderAllPanels(){loadVillageStats();loadChiefApplications();loadRoleApplications();}
 </script>
+
+<script src="cloud_db.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof CloudDB !== 'undefined' && CloudDB.loadFromPublic) {
+        CloudDB.loadFromPublic().then(function() {
+            if (typeof renderAllPanels === 'function') renderAllPanels();
+        }).catch(function() {
+            if (typeof renderAllPanels === 'function') renderAllPanels();
+        });
+    } else {
+        if (typeof renderAllPanels === 'function') renderAllPanels();
+    }
+});
+</script>
+
 </body>
 </html>
