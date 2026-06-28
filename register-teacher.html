@@ -608,8 +608,10 @@ function logout() {
       const users = Storage.get('registrations', [])
       users.unshift({ role: '老师', name, phone, school: document.getElementById('school').value, subject: document.getElementById('subject').value, years: document.getElementById('years').value, time: Date.now() })
       Storage.set('registrations', users)
+      if (typeof CloudDB !== 'undefined') CloudDB.push({registrations: regs}, 'teacher注册申请同步').catch(function(){});
       toast('注册成功！'); setTimeout(() => location.href = 'index.html', 1500)
     }
   </script>
+<script src="cloud_db.js"></script>
 </body>
 </html>
