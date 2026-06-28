@@ -9,6 +9,6 @@ var CLOUD_DATA = {
   food: [],
   camps: [],
   messages: [],
-  accounts: [],
+  accounts: [{id:'admin',username:'admin',password:'admin123',role:'管理员',updatedAt:Date.now()}],
   updatedAt: Date.now()
 };
