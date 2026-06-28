@@ -98,9 +98,21 @@ body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f5;m
     // 同步账号 + 同步当前登录用户状态
     if (data.accountId) {
       var accounts = Storage.get('accounts', []);
-      var roleMap = {'按摩师': 'massage', '园林设计师': 'landscape', '律师': 'lawyer',
-        '超市老板': 'market', '建筑公司': 'construction', '老师': 'teacher',
-        '大学生': 'student', '律师事务所': 'law-firm', '货运司机': 'truck', '顺风车': 'carpool'};
+      var roleMap = {
+        '按摩技师': 'massage', '按摩师': 'massage',
+        '园林设计师': 'landscape', '园林': 'landscape',
+        '律师': 'lawyer',
+        '超市老板': 'market', '超市': 'market',
+        '建筑公司': 'construction', '建筑园林设计师': 'landscape',
+        '老师': 'teacher',
+        '大学生': 'student',
+        '律师事务所': 'law-firm',
+        '货运司机': 'truck',
+        '顺风车': 'carpool',
+        '村主任': 'township',
+        '村民': 'villager',
+        '游客': 'tourist'
+      };
       for (var i = 0; i < accounts.length; i++) {
         if (accounts[i].id === data.accountId) {
           accounts[i].currentRole = roleMap[data.role] || data.role;
