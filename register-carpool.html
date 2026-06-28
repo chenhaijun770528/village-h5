@@ -603,8 +603,10 @@ function logout() {
       const users = Storage.get('registrations', [])
       users.unshift({ role: '顺风车司机', name, phone, plate, route: document.getElementById('route').value, time: Date.now() })
       Storage.set('registrations', users)
+      if (typeof CloudDB !== 'undefined') CloudDB.push({registrations: regs}, 'carpool注册申请同步').catch(function(){});
       toast('注册成功！'); setTimeout(() => location.href = 'index.html', 1500)
     }
   </script>
+<script src="cloud_db.js"></script>
 </body>
 </html>
