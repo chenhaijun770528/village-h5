@@ -569,7 +569,11 @@ const Storage = {
 }
 
 // 初始化示例数据到localStorage
-function initSampleData() {
+function initSampleData() 
+if (typeof CloudDB !== 'undefined' && CloudDB.loadFromPublic) {
+  CloudDB.loadFromPublic().catch(function(){});
+}
+{
   if (!localStorage.getItem('village_villages')) {
     Storage.set('villages', DB.villages)
   }
