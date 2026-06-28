@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -23,6 +23,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-
 .s1{background:#e8f5e9;color:#2E7D32}
 .s2{background:#e3f2fd;color:#1976D2}
 .s3{background:#f5f5f5;color:#999}
+.s4{background:#fce4ec;color:#E91E63}
 .order-info{font-size:13px;color:#666;line-height:1.6;margin-bottom:8px}
 .order-actions{display:flex;gap:8px;margin-top:8px}
 .btn-action{padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;border:1px solid #e0e0e0;background:#fff;color:#333}
@@ -83,7 +84,7 @@ function loadOrders(){
 
   var myOrders=[];
   for(var i=0;i<orders.length;i++){
-    if(orders[i].sellerId===user.account || orders[i].sellerId===user.id){
+    if(orders[i].sellerId===user.account || orders[i].sellerId===user.id || orders[i].sellerId===(user.phone||'')){
       myOrders.push(orders[i]);
     }
   }
@@ -110,6 +111,10 @@ function loadOrders(){
       actions='<span style="font-size:12px;color:#2E7D32">等待买家确认收货</span>';
     }
 
+    // 卡片内也显示买家电话（如果有）
+    var cardPhone = o.buyerPhone || o.phone || '—';
+    var cardAddr = o.buyerAddr || o.address || '—';
+
     var card=document.createElement('div');
     card.className='order-card';
     card.innerHTML=
@@ -119,6 +124,8 @@ function loadOrders(){
       '</div>'+
       '<div class="order-info">'+
         (o.productName||o.foodName||o.campName||'商品')+' × '+o.qty+' = ¥'+o.total+'<br>'+
+        '买家：'+(o.buyerName||o.buyerNick||o.name||'未知')+' &nbsp; ☎'+cardPhone+'<br>'+
+        '地址：'+cardAddr+'<br>'+
         '下单时间：'+new Date(o.createTime).toLocaleString()+
       '</div>'+
       '<div class="order-actions">'+
@@ -135,23 +142,37 @@ function showDetail(orderId){
   for(var i=0;i<orders.length;i++){if(orders[i].id===orderId){o=orders[i];break;}}
   if(!o)return;
 
-  var phone=o.buyerPhone||o.phone||'未填写';
-  var addr=o.buyerAddr||o.address||'未填写';
-  var name=o.buyerName||o.name||'未填写';
+  // 优先用订单里的买家信息，没有则显示"未填写"
+  var phone=o.buyerPhone||o.phone||'';
+  var addr=o.buyerAddr||o.address||'';
+  var name=o.buyerName||o.buyerNick||o.name||'';
+
+  var phoneHtml='<span class="modal-val" style="color:#999">未填写</span>';
+  if(phone){
+    phoneHtml='<span class="modal-val phone" onclick="callPhone(\''+phone+'\')">'+phone+' 📞</span>';
+  }
+  var addrHtml='<span class="modal-val" style="color:#999">未填写</span>';
+  if(addr){
+    addrHtml='<span class="modal-val">'+addr+'</span>';
+  }
+  var nameHtml='<span class="modal-val" style="color:#999">未填写</span>';
+  if(name){
+    nameHtml='<span class="modal-val">'+name+'</span>';
+  }
 
   var html='<div class="modal-mask" onclick="closeModal(event)">'+
     '<div class="modal-box" onclick="event.stopPropagation()">'+
       '<div class="modal-title">订单详情</div>'+
       '<div class="modal-section">🛒 商品信息</div>'+
       '<div class="modal-row"><span class="modal-label">商品名称</span><span class="modal-val">'+(o.productName||o.foodName||o.campName||'商品')+'</span></div>'+
-      '<div class="modal-row"><span class="modal-label">数量</span><span class="modal-val">'+o.qty+'</span></div>'+
+      '<div class="modal-row"><span class="modal-label\">数量</span><span class="modal-val">'+o.qty+'</span></div>'+
       '<div class="modal-row"><span class="modal-label">金额</span><span class="modal-val" style="color:#FF9800">¥'+o.total+'</span></div>'+
       '<div class="modal-row"><span class="modal-label">订单状态</span><span class="modal-val">'+o.status+'</span></div>'+
       (o.remark||o.note?'<div class="modal-row"><span class="modal-label">备注</span><span class="modal-val">'+(o.remark||o.note)+'</span></div>':'')+
       '<div class="modal-section">👤 买家信息</div>'+
-      '<div class="modal-row"><span class="modal-label">姓名</span><span class="modal-val">'+name+'</span></div>'+
-      '<div class="modal-row"><span class="modal-label">电话</span><span class="modal-val phone" onclick="callPhone(\''+phone+'\')">'+phone+' 📞</span></div>'+
-      '<div class="modal-row"><span class="modal-label">地址</span><span class="modal-val">'+addr+'</span></div>'+
+      '<div class="modal-row"><span class="modal-label">姓名</span>'+nameHtml+'</div>'+
+      '<div class="modal-row"><span class="modal-label">电话</span>'+phoneHtml+'</div>'+
+      '<div class="modal-row"><span class="modal-label">地址</span>'+addrHtml+'</div>'+
       (o.pickupTime?'<div class="modal-row"><span class="modal-label">取餐时间</span><span class="modal-val">'+o.pickupTime+'</span></div>':'')+
       (o.checkin?'<div class="modal-row"><span class="modal-label">入住日期</span><span class="modal-val">'+o.checkin+'</span></div>':'')+
       '<div class="modal-section">📅 订单时间</div>'+
@@ -163,7 +184,7 @@ function showDetail(orderId){
 }
 
 function callPhone(phone){
-  if(phone && phone!=='未填写'){
+  if(phone){
     location.href='tel:'+phone;
   }
 }
