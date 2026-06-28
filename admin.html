@@ -795,6 +795,14 @@ function approveRole(regId, idx) {
         accounts[ai].currentRole = roleMap[reg.role] || reg.role;
         accounts[ai].currentRoleId = reg.id;
         accounts[ai].currentRoleName = reg.name;
+        // 同步更新当前登录用户的 user 存储（防止审核后"未选择角色"）
+        var curUser = Storage.get('user', null);
+        if (curUser && curUser.id === reg.accountId) {
+          curUser.currentRole = accounts[ai].currentRole;
+          curUser.currentRoleId = accounts[ai].currentRoleId;
+          curUser.currentRoleName = accounts[ai].currentRoleName;
+          Storage.set('user', curUser);
+        }
         break;
       }
     }
