@@ -1494,7 +1494,7 @@ function approveProduct(id) {
       price: app.price,
       unit: app.unit,
       stock: app.stock,
-      sellerId: app.userId || '',
+      sellerId: app.sellerId || app.userId || '',
       sellerName: app.userName || '',
       village: app.village,
       status: '在售',
@@ -1686,7 +1686,7 @@ function approveFood(id) {
     foods.push({
       id: app.id,
       name: app.name,
-      sellerId: app.userId || '',
+      sellerId: app.sellerId || app.userId || '',
       sellerName: app.userName || '',
       village: app.village,
       status: '展示中',
@@ -1760,7 +1760,7 @@ function approveCamp(id) {
     camps.push({
       id: app.id,
       name: app.name,
-      sellerId: app.userId || '',
+      sellerId: app.sellerId || app.userId || '',
       sellerName: app.userName || '',
       village: app.village,
       status: '开放中',
