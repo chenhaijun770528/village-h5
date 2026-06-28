@@ -411,37 +411,22 @@ function compressImage(file, maxWidth, maxHeight, quality, callback) {
   reader.readAsDataURL(file);
 }
 
-// 初始化示例数据
+// 初始化数据（不再添加示例数据）
 function initSampleData() {
-  if (!Storage.get('villages', null)) {
-    var defaultVillages = [
-      {
-        id: 'v1', name: '幸福村', province: '江苏省', city: '苏州市',
-        population: '3280', totalArea: '4500', farmlandArea: '2800',
-        description: '幸福村位于苏州市郊区，环境优美，著名的生态农业示范村。',
-        chief: { name: '张建国', phone: '13800138001' }, images: []
-      },
-      {
-        id: 'v2', name: '阳光村', province: '广东省', city: '广州市',
-        population: '4560', totalArea: '6200', farmlandArea: '3500',
-        description: '阳光村是广州市郊的现代化农村，积极发展乡村旅游。',
-        chief: { name: '李明华', phone: '13800138002' }, images: []
-      }
-    ];
-    Storage.set('villages', defaultVillages);
-  }
-  // 露营正式列表
+  // 强制清空并初始化空数据
+  Storage.set('villages', []);
+  Storage.set('camps', []);
+  Storage.set('camp_applications', []);
+}
+  // 露营正式列表 - 空数组
   if (!Storage.get('camps', null)) {
-    Storage.set('camps', [
-      { id: 'c1', name: '星空露营基地', desc: '海拔800米，远离光污染，是观星圣地', price: '188', unit: '顶/晚', tags: ['观星', '烧烤', '篝火'], village: '幸福村', villageId: 'v1', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuaYn+epuuacjeWEvuaZrzwvdGV4dD48L3N2Zz4=' },
-      { id: 'c2', name: '湖畔露营区', desc: '紧邻水库，湖光山色，宁静惬意', price: '158', unit: '顶/晚', tags: ['钓鱼', '划船', '亲子'], village: '阳光村', villageId: 'v2', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuaYjOayvOmZhuWBoOaZrzwvdGV4dD48L3N2Zz4=' },
-      { id: 'c3', name: '森林木屋营地', desc: '独栋木屋掩映在松林间，呼吸森林负氧离子', price: '288', unit: '间/晚', tags: ['森林', '静修', '养生'], village: '幸福村', villageId: 'v1', img: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjYzhlOWNhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtc2l6ZT0iMjAiPuaUtOeRnuacrOWxguWkqeWcsOaZrzwvdGV4dD48L3N2Zz4=' }
-    ]);
+    Storage.set('camps', []);
   }
   // 露营申请列表
   if (!Storage.get('camp_applications', null)) {
     Storage.set('camp_applications', []);
   }
+}
 }
 
 // 页面初始化
@@ -569,6 +554,7 @@ function approveItem(appId) {
   apps[appIdx].status = 'pass';
   apps[appIdx].updateTime = Date.now();
   Storage.set('camp_applications', apps);
+  if (typeof CloudDB !== 'undefined') CloudDB.push({camp_applications: apps}, '提交露营地申请').catch(function(){});
 
   var camps = Storage.get('camps', []);
   camps.push({
@@ -633,8 +619,7 @@ function updateFabVisibility() {
   }
 }
 
-var _campImages = [];  // 多图片数组
-var currentApplyImgBase64 = '';  // 兼容旧代码
+var currentApplyImgBase64 = '';
 
 function openApplyModal(appId) {
   var user = checkLoginAndVillager();
@@ -699,55 +684,13 @@ function closeApplyModal() {
 }
 
 function previewApplyImg(event) {
-  var files = event.target.files;
-  if (!files || files.length === 0) return;
-  
-  // 限制最多6张
-  var remaining = 6 - _campImages.length;
-  if (remaining <= 0) {
-    toast('最多上传6张图片');
-    return;
-  }
-  
-  var filesToProcess = Array.from(files).slice(0, remaining);
-  var processed = 0;
-  
-  filesToProcess.forEach(function(file) {
-    compressImage(file, 800, 600, 0.7, function(dataUrl) {
-      _campImages.push(dataUrl);
-      processed++;
-      
-      if (processed === filesToProcess.length) {
-        renderCampImagePreview();
-        toast('已添加 ' + processed + ' 张图片');
-      }
-    });
-  });
-}
-
-function renderCampImagePreview() {
-  var preview = document.getElementById('applyImgPreview');
-  preview.innerHTML = '';
-  
-  _campImages.forEach(function(imgData, idx) {
-    var imgContainer = document.createElement('div');
-    imgContainer.style.cssText = 'display:inline-block;position:relative;margin:5px;';
-    
-    var img = document.createElement('img');
-    img.src = imgData;
-    img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:6px;';
-    
-    var deleteBtn = document.createElement('button');
-    deleteBtn.innerHTML = '×';
-    deleteBtn.style.cssText = 'position:absolute;top:-5px;right:-5px;width:20px;height:20px;border-radius:50%;background:#F44336;color:white;border:none;font-size:12px;';
-    deleteBtn.onclick = function() {
-      _campImages.splice(idx, 1);
-      renderCampImagePreview();
-    };
-    
-    imgContainer.appendChild(img);
-    imgContainer.appendChild(deleteBtn);
-    preview.appendChild(imgContainer);
+  var file = event.target.files[0];
+  if (!file) return;
+  compressImage(file, 800, 600, 0.7, function(dataUrl) {
+    currentApplyImgBase64 = dataUrl;
+    var preview = document.getElementById('applyImgPreview');
+    preview.src = dataUrl;
+    preview.style.display = 'block';
   });
 }
 
@@ -788,8 +731,7 @@ function submitApplication() {
         apps[ei].tags = tags ? tags.split(',') : [];
         apps[ei].villageId = villageId;
         apps[ei].village = villageName;
-        apps[ei].imgs = _campImages.length > 0 ? _campImages : (apps[ei].imgs || []);
-        apps[ei].img = (apps[ei].imgs && apps[ei].imgs[0]) || apps[ei].img || '';
+        apps[ei].img = currentApplyImgBase64 || apps[ei].img || '';
         apps[ei].updateTime = Date.now();
         found = true;
         break;
@@ -809,8 +751,7 @@ function submitApplication() {
       tags: tags ? tags.split(',') : [],
       villageId: villageId,
       village: villageName,
-      imgs: _campImages,  // 多图片数组
-      img: _campImages.length > 0 ? _campImages[0] : '',  // 兼容旧代码：第一张作为封面
+      img: currentApplyImgBase64 || '',
       status: 'waiting',
       createTime: Date.now(),
       updateTime: Date.now()
@@ -902,5 +843,6 @@ if (document.readyState === 'loading') {
   init();
 }
 </script>
+<script src="cloud_db.js"></script>
 </body>
 </html>
