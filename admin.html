@@ -1001,6 +1001,23 @@ function loadCloudData() {
       var localCamps = Storage.get('registered_camps', []);
       if (localCamps.length === 0) Storage.set('registered_camps', cloudDB.camps);
     }
+    if (cloudDB.registrations && cloudDB.registrations.length > 0) {
+      var localRegs = Storage.get('registrations', []);
+      if (localRegs.length === 0 || (localRegs.length < cloudDB.registrations.length)) {
+        Storage.set('registrations', cloudDB.registrations);
+        if (typeof loadRoleApplications === 'function') loadRoleApplications();
+      }
+    }
+    if (cloudDB.villages && cloudDB.villages.length > 0) {
+      var localV = Storage.get('villages', []);
+      if (localV.length === 0) Storage.set('villages', cloudDB.villages);
+    }
+    if (cloudDB.accounts && cloudDB.accounts.length > 0) {
+      var localAccts = Storage.get('accounts', []);
+      if (localAccts.length === 0) Storage.set('accounts', cloudDB.accounts);
+    }
+  }).catch(function(e) { console.log('云数据加载失败', e); });
+}
     if (cloudDB.camp_applications) {
       var localCampApps = Storage.get('camp_applications', []);
       if (localCampApps.length === 0) Storage.set('camp_applications', cloudDB.camp_applications);
@@ -1016,6 +1033,10 @@ function syncRoleToCloud(regs) {
   }
 }
 </script>
-<script src="cloud_db.js"></script>
+<script src="cloud_db.js">
+if (typeof CloudDB !== 'undefined' && CloudDB.loadFromPublic) {
+  CloudDB.loadFromPublic().catch(function(){});
+}
+</script>
 </body>
 </html>
