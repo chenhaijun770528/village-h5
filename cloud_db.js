@@ -1,15 +1,26 @@
-// cloud_db.js - Supabase 版本（修正版）
+// cloud_db.js - Supabase 版本（修复 Accept-Profile header）
 (function() {
   var SUPABASE_URL = 'https://eivqbbxyllsorbvgqsju.supabase.co';
   var SUPABASE_KEY = 'sb_publishable_nFdOG5Cnmb8B9uZ1qqB9zA_bVM8H44r';
   var TABLE = 'village_data';
   var ROW_ID = 'init';
   
+  // 统一请求头（关键：必须加 Accept-Profile 指定 public schema）
+  function headers() {
+    return {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Accept-Profile': 'public',
+      'Content-Profile': 'public'
+    };
+  }
+  
   // 从 Supabase 读取数据并写入 localStorage
   function loadFromSupabase(callback) {
-    fetch(SUPABASE_URL + '/rest/v1/' + TABLE + '?id=eq.' + ROW_ID + '&select=data', {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-    })
+    var h = headers();
+    h['Accept'] = 'application/json';
+    
+    fetch(SUPABASE_URL + '/rest/v1/' + TABLE + '?id=eq.' + ROW_ID + '&select=data', { headers: h })
     .then(function(r) { return r.json(); })
     .then(function(rows) {
       if (rows && rows.length > 0) {
@@ -34,14 +45,13 @@
       try { data[key] = JSON.parse(localStorage.getItem('village_' + key) || '[]'); } catch(e) { data[key] = []; }
     });
     
+    var h = headers();
+    h['Content-Type'] = 'application/json';
+    h['Prefer'] = 'return=representation';
+    
     fetch(SUPABASE_URL + '/rest/v1/' + TABLE + '?id=eq.' + ROW_ID, {
       method: 'PATCH',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation'
-      },
+      headers: h,
       body: JSON.stringify({ data: data, updated_at: new Date().toISOString() })
     })
     .then(function(r) {
@@ -56,17 +66,15 @@
   
   window.CloudDB = {
     // ===== 注册页用的 push() =====
-    // 追加新数据到云端，data格式: { registrations: [...] }
     push: function(data, description) {
       return new Promise(function(resolve, reject) {
-        // 1. 先写本地 localStorage（即时生效）
+        // 1. 先写本地
         Object.keys(data).forEach(function(key) {
           try { localStorage.setItem('village_' + key, JSON.stringify(data[key])); } catch(e) {}
         });
         console.log('[CloudDB] 已写入本地:', description || '');
         
-        // 2. 直接保存当前全部 localStorage 到 Supabase（不先加载，避免覆盖）
-        //    saveToSupabase 会自动读取所有 village_ 前缀的 key
+        // 2. 直接保存到 Supabase
         saveToSupabase(function(success) {
           if (success) {
             console.log('[CloudDB] push 云端成功:', description || '');
@@ -80,7 +88,6 @@
     },
     
     // ===== admin.html/首页 用的 loadFromPublic() =====
-    // 从 Supabase 拉取全量数据写入 localStorage
     loadFromPublic: function(callback) {
       if (typeof callback === 'function') {
         loadFromSupabase(callback);
