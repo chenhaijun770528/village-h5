@@ -1023,5 +1023,17 @@ initSampleData();
 
 </script>
 <script src="cloud_db.js"></script>
+
+<script>
+// 从云端加载最新数据
+if (window.CloudDB) {
+  window.CloudDB.init(function() {
+    console.log("[Index] 云端数据已加载");
+    // 触发页面重新渲染
+    if (typeof renderPage === "function") renderPage();
+    else if (typeof init === "function") init();
+  });
+}
+</script>
 </body>
 </html>
