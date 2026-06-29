@@ -505,7 +505,16 @@ body {
       </div>
     <div class="func-item" onclick="goPage('massage-list.html')"><span class="func-icon">💆</span><span class="func-text">按摩</span></div></div>
 
-    <!-- 村庄列表 -->
+        <!-- 按摩技师板块 -->
+    <div id="massageSection" class="section" style="display:none;">
+      <div class="section-title">
+        💆 按摩技师
+        <span style="font-size:12px;color:#999;font-weight:normal;margin-left:4px;">已认证</span>
+      </div>
+      <div class="massage-list"></div>
+    </div>
+
+<!-- 村庄列表 -->
     <div class="section">
       <div class="section-title">
         🏘️ 村庄列表
@@ -781,29 +790,12 @@ function logout() {
   
     // 从云端加载初始数据（多设备同步）
     function loadCloudData() {
-      if (typeof CloudDB === "undefined") return;
-      CloudDB.fetch().then(function(cloudDB) {
-        if (!cloudDB) return;
-        if (cloudDB.villages && cloudDB.villages.length > 0) {
-          var localV = Storage.get("villages", []);
-          if (localV.length === 0) Storage.set("villages", cloudDB.villages);
-        }
-        if (cloudDB.products && cloudDB.products.length > 0) {
-          var localP = Storage.get("products", []);
-          if (localP.length === 0) Storage.set("products", cloudDB.products);
-        }
-        if (cloudDB.foods && cloudDB.foods.length > 0) {
-          var localF = Storage.get("foods", []);
-          if (localF.length === 0) Storage.set("foods", cloudDB.foods);
-        }
-        if (cloudDB.camps && cloudDB.camps.length > 0) {
-          var localC = Storage.get("registered_camps", []);
-          if (localC.length === 0) Storage.set("registered_camps", cloudDB.camps);
-        }
-        if (cloudDB.registrations && cloudDB.registrations.length > 0) {
-          var localR = Storage.get("registrations", []);
-          if (localR.length === 0) Storage.set("registrations", cloudDB.registrations);
-        }
+      if (typeof CloudDB === "undefined" || !CloudDB.loadFromPublic) return;
+      CloudDB.loadFromPublic().then(function() {
+        console.log("[CloudDB] index.html loaded from cloud");
+        // 重新加载村庄列表
+        if (typeof loadVillages === "function") loadVillages();
+        if (typeof renderMassageSection === "function") renderMassageSection();
       }).catch(function(){});
     }
 </script>
@@ -818,7 +810,8 @@ initSampleData();
       renderBanner()
 
       loadAnnouncements();      renderVillages()
-    }
+      loadCloudData();
+}
 
     function renderBanner() {
       var banners = [
@@ -1034,6 +1027,56 @@ if (window.CloudDB) {
     else if (typeof init === "function") init();
   });
 }
+
+// 渲染按摩技师板块
+function renderMassageSection() {
+  var regs = Storage.get('registrations', []);
+  var approvedMassage = [];
+  for (var mi = 0; mi < regs.length; mi++) {
+    if (regs[mi].role === '按摩师' && regs[mi].status === '已通过') {
+      approvedMassage.push(regs[mi]);
+    }
+  }
+  
+  var section = document.getElementById('massageSection');
+  if (!section) return;
+  
+  if (approvedMassage.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  
+  section.style.display = 'block';
+  var list = section.querySelector('.massage-list');
+  if (!list) return;
+  
+  var html = '';
+  for (var si = 0; si < approvedMassage.length; si++) {
+    var m = approvedMassage[si];
+    html += '<div class="massage-card" onclick="goMassageDetail('' + (m.id || '') + '')" style="display:flex;align-items:center;gap:12px;padding:12px;background:white;border-radius:8px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);cursor:pointer;">';
+    html += '<div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#81C784,#4CAF50);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">💆</div>';
+    html += '<div style="flex:1;">';
+    html += '<div style="font-weight:bold;color:#333;font-size:15px;">' + (m.name || '未知') + '</div>';
+    html += '<div style="color:#666;font-size:12px;margin-top:2px;">' + (m.skill || '专业按摩') + ' | ' + (m.years || '经验丰富') + '</div>';
+    html += '<div style="color:#999;font-size:11px;margin-top:2px;">📞 ' + (m.phone || '') + '</div>';
+    html += '</div>';
+    html += '<div style="color:#2E7D32;font-size:13px;font-weight:bold;">在线</div>';
+    html += '</div>';
+  }
+  list.innerHTML = html;
+}
+
+function goMassageDetail(id) {
+  location.href = 'massage-list.html';
+}
+
+// 首页初始化完成后渲染按摩技师
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function() { setTimeout(renderMassageSection, 1000); });
+} else {
+  setTimeout(renderMassageSection, 1000);
+}
+
 </script>
 </body>
 </html>
