@@ -273,7 +273,8 @@
     加载中...
   </div>
 
-  <script>
+  <script src="cloud_db.js"></script>
+<script>
 // SAFETY NET: prevent ReferenceError
 var container = document.getElementById("mainContent");
 
@@ -290,6 +291,11 @@ var container = document.getElementById("mainContent");
       }
     };
 
+    // 首次加载时从云端拉取数据
+    if (!window._profileCloudLoaded && typeof CloudDB !== 'undefined' && CloudDB.loadFromPublic) {
+      window._profileCloudLoaded = true;
+      CloudDB.loadFromPublic();
+    }
     var currentUser = Storage.get('user', null);
     if (!currentUser) {
       location.href = 'login.html';
