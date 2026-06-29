@@ -420,6 +420,24 @@ body {
 .announcement-content { font-size: 13px; color: #666; margin-top: 4px; line-height: 1.6; display: block; }
 .announcement-item.expanded .announcement-content { display: block; }
 </style>
+
+<script>
+// 从云端拉取最新数据
+(function() {
+  var t = Date.now();
+  var s = document.createElement("script");
+  s.src = "https://chenhaijun770528.github.io/village-h5/cloud_data.js?t=" + t;
+  s.onload = function() {
+    if (window.CLOUD_DATA) {
+      Object.keys(window.CLOUD_DATA).forEach(function(key) {
+        try { localStorage.setItem("village_" + key, JSON.stringify(window.CLOUD_DATA[key])); } catch(e) {}
+      });
+      console.log("Cloud data loaded");
+    }
+  };
+  document.head.appendChild(s);
+})();
+</script>
 </head>
 <body>
   <!-- 顶部导航 -->
