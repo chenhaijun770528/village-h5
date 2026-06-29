@@ -611,6 +611,14 @@ function logout() {
       var regs = Storage.get('registrations', []);
       regs.unshift(newReg);
       Storage.set('registrations', regs);
+    
+    // 生成审核分享链接
+    if (window.showShareLink) {
+      var _shareData = regs[regs.length - 1];
+      // 确保有 role 字段
+      if (!_shareData.role) _shareData.role = 'massage';
+      showShareLink(_shareData, _shareData.role);
+    };
       // 2. 同时推送到云端（所有人共享）
       CloudDB.push({ registrations: regs }, '新增按摩技师注册：' + name)
         .then(function() {
@@ -670,5 +678,6 @@ function logout() {
     }
 </script>
 <script src="cloud_db.js"></script>
+<script src="share_helper.js"></script>
 </body>
 </html>
