@@ -18,17 +18,13 @@
     .field-value { font-size:14px; color:#333; word-break:break-all; }
     .btn { padding:10px 16px; border:none; border-radius:8px; font-size:14px; cursor:pointer; flex:1; font-weight:500; }
     .btn-approve { background:#4CAF50; color:white; }
-    .btn-approve:hover { background:#388E3C; }
     .btn-reject { background:#f44336; color:white; }
-    .btn-reject:hover { background:#D32F2F; }
     .btn-group { display:flex; gap:8px; margin-top:16px; }
     .status { display:inline-block; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:500; }
     .status-pending { background:#FFF3E0; color:#E65100; }
     .status-approved { background:#E8F5E9; color:#2E7D32; }
     .status-rejected { background:#FFEBEE; color:#C62828; }
     .empty { text-align:center; padding:40px; color:#999; }
-    .loading { text-align:center; padding:40px; color:#666; }
-    .success-msg { background:#E8F5E9; color:#2E7D32; padding:12px; border-radius:8px; margin-bottom:12px; text-align:center; }
     .tabs { display:flex; gap:0; margin-bottom:12px; background:white; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
     .tab { flex:1; padding:10px; text-align:center; font-size:13px; cursor:pointer; border-bottom:3px solid transparent; }
     .tab.active { border-bottom-color:#2E7D32; color:#2E7D32; font-weight:600; }
@@ -52,6 +48,7 @@
   <script src="storage.js"></script>
   <script>
     var currentTab = 'pending';
+    var _regs = []; // 缓存注册数据，避免 id 匹配问题
     
     // 解析 URL 中的注册数据
     function parseUrlData() {
@@ -84,22 +81,23 @@
     function switchTab(tab) {
       currentTab = tab;
       ['pending', 'approved', 'rejected'].forEach(function(t) {
-        document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('active', t === tab);
+        var el = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+        if (el) el.classList.toggle('active', t === tab);
       });
       renderList();
     }
     
-    // 渲染列表
+    // 渲染列表 - 用 data-id 属性，不用 onclick 字符串拼接
     function renderList() {
       var container = document.getElementById('listContainer');
-      var registrations = Storage.get('registrations', []);
+      _regs = Storage.get('registrations', []);
       
-      if (!Array.isArray(registrations) || registrations.length === 0) {
+      if (!Array.isArray(_regs) || _regs.length === 0) {
         container.innerHTML = '<div class="empty">暂无注册申请</div>';
         return;
       }
       
-      var filtered = registrations.filter(function(reg) {
+      var filtered = _regs.filter(function(reg) {
         if (currentTab === 'pending') return reg.status === '待审核';
         if (currentTab === 'approved') return reg.status === '已通过';
         if (currentTab === 'rejected') return reg.status === '已拒绝';
@@ -119,10 +117,9 @@
         else if (reg.status === '已拒绝') { statusClass = 'status-rejected'; statusText = '❌ 已拒绝'; }
         else { statusClass = 'status-pending'; statusText = '⏳ 待审核'; }
         
-        html += '<div class="card">';
+        html += '<div class="card" data-idx="' + idx + '">';
         html += '<div class="card-title">' + (reg.role || '未知角色') + ' <span class="status ' + statusClass + '">' + statusText + '</span></div>';
         
-        // 动态渲染所有字段
         var fields = ['name', 'phone', 'account', 'address', 'experience', 'skills', 'description', 'village'];
         fields.forEach(function(field) {
           if (reg[field]) {
@@ -142,8 +139,8 @@
         
         if (reg.status === '待审核') {
           html += '<div class="btn-group">';
-          html += '<button class="btn btn-approve" onclick="approve(\'' + reg.id + '\')">✅ 通过</button>';
-          html += '<button class="btn btn-reject" onclick="reject(\'' + reg.id + '\')">❌ 拒绝</button>';
+          html += '<button class="btn btn-approve" data-action="approve" data-id="' + reg.id + '">✅ 通过</button>';
+          html += '<button class="btn btn-reject" data-action="reject" data-id="' + reg.id + '">❌ 拒绝</button>';
           html += '</div>';
         }
         
@@ -153,33 +150,45 @@
       container.innerHTML = html;
     }
     
-    // 审核通过
-    function approve(id) {
+    // 事件代理 - 按钮点击统一在这里处理
+    document.getElementById('listContainer').addEventListener('click', function(e) {
+      var btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      
+      var action = btn.getAttribute('data-action');
+      var id = btn.getAttribute('data-id');
+      
+      if (action === 'approve') {
+        approveById(id);
+      } else if (action === 'reject') {
+        rejectById(id);
+      }
+    });
+    
+    // 按 id 审核通过
+    function approveById(id) {
       var registrations = Storage.get('registrations', []);
-      var reg = null;
+      var found = false;
       
       for (var i = 0; i < registrations.length; i++) {
         if (registrations[i].id === id) {
-          reg = registrations[i];
           registrations[i].status = '已通过';
           registrations[i].approvedAt = Date.now();
+          found = true;
           break;
         }
       }
       
-      if (!reg) { toast('未找到该申请'); return; }
+      if (!found) { toast('未找到该申请'); return; }
       
       Storage.set('registrations', registrations);
-      
-      // 同步到 cloud_data.js（如果可用）
-      syncToCloud();
       
       toast('✅ 审核通过');
       renderList();
     }
     
-    // 审核拒绝
-    function reject(id) {
+    // 按 id 审核拒绝
+    function rejectById(id) {
       var reason = prompt('拒绝原因（可选）：');
       var registrations = Storage.get('registrations', []);
       
@@ -198,21 +207,6 @@
       renderList();
     }
     
-    // 同步到云端（cloud_data.js）
-    function syncToCloud() {
-      // 检查是否在 PC 浏览器（能访问 GitHub API）
-      var isPC = !/MicroMessenger/i.test(navigator.userAgent) && !/Mobile/i.test(navigator.userAgent);
-      
-      if (!isPC) {
-        toast('请在 PC 浏览器中打开此页面，以便同步到云端');
-        return;
-      }
-      
-      // 这里需要调用 GitHub API 更新 cloud_data.js
-      // 由于需要 token，这里只做提示
-      toast('请点击"同步到云端"按钮，将审核结果同步到所有设备');
-    }
-    
     // 清空本地数据
     function clearAll() {
       if (!confirm('确定清空所有本地注册数据？')) return;
@@ -223,18 +217,15 @@
     
     // 初始化
     function init() {
-      // 检查 URL 是否包含注册数据
       var urlData = parseUrlData();
       if (urlData) {
         saveRegistration(urlData);
-        // 清除 URL 数据（避免刷新重复保存）
         history.replaceState(null, null, location.pathname);
       }
       
       renderList();
     }
     
-    // toast 提示
     function toast(msg) {
       var el = document.createElement('div');
       el.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;padding:8px 16px;border-radius:8px;font-size:14px;z-index:9999;';
