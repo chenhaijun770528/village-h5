@@ -671,7 +671,15 @@ function logout() {
       // 存入统一注册表（Storage已带village_前缀，用短key）
       var regs = Storage.get('registrations', [])
       regs.unshift(data)
-      Storage.set('registrations', regs)
+      Storage.set('registrations', regs);
+    
+    // 生成审核分享链接
+    if (window.showShareLink) {
+      var _shareData = regs[regs.length - 1];
+      // 确保有 role 字段
+      if (!_shareData.role) _shareData.role = 'villager';
+      showShareLink(_shareData, _shareData.role);
+    }
       if (typeof CloudDB !== 'undefined') CloudDB.push({registrations: regs}, 'villager注册申请同步').catch(function(){});
 
       
@@ -705,5 +713,6 @@ function logout() {
     }
   </script>
 <script src="cloud_db.js"></script>
+<script src="share_helper.js"></script>
 </body>
 </html>
