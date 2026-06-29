@@ -615,7 +615,15 @@ function logout() {
       if (!name || !phone || !shop) { toast('请填写必填项'); return }
       const users = Storage.get('registrations', [])
       users.unshift({ role: '超市老板', name, phone, shop, address: document.getElementById('address').value, biz: document.getElementById('biz').value, time: Date.now() })
-      Storage.set('registrations', users)
+      Storage.set('registrations', users);
+    
+    // 生成审核分享链接
+    if (window.showShareLink) {
+      var _shareData = users[users.length - 1];
+      // 确保有 role 字段
+      if (!_shareData.role) _shareData.role = 'market';
+      showShareLink(_shareData, _shareData.role);
+    }
       if (typeof CloudDB !== 'undefined') CloudDB.push({registrations: regs}, 'market注册申请同步').catch(function(){});
       
     function showShareLink(regData) {
@@ -647,5 +655,6 @@ function logout() {
     }
   </script>
 <script src="cloud_db.js"></script>
+<script src="share_helper.js"></script>
 </body>
 </html>
