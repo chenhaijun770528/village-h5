@@ -292,8 +292,6 @@ function init() {
   if (savedLogin === 'true') {
     isLoggedIn = true;
   }
-  loadUI();
-
   // 首次加载时同步云端数据
   if (!_initDone && typeof CloudDB !== 'undefined' && CloudDB.loadFromPublic) {
     _initDone = true;
@@ -309,6 +307,7 @@ function init() {
       if (typeof renderAllPanels === 'function') renderAllPanels();
     }).catch(function() {});
   }
+  loadUI();
 }
 
 function loadUI() {
@@ -413,7 +412,7 @@ function saveAdminAccount() {
   localStorage.setItem('village_admin_password', newPassword);
   // 同步到云端
   if (typeof CloudDB !== 'undefined' && CloudDB.push) {
-    GHDB.push({accounts:[{id:'admin',username:newAccount,password:newPassword,role:'管理员',updatedAt:Date.now()}]}, '管理员修改账号密码').catch(function(){});
+    if (typeof CloudDB !== 'undefined' && CloudDB.save) CloudDB.save();
   }
   closeChangeAdmin();
   toast('账号密码修改成功');
@@ -675,6 +674,7 @@ function approveChief(appId) {
   }
 
   toast('已通过！用户角色已开通，可直接登录使用');
+  if (typeof CloudDB !== 'undefined' && CloudDB.save) CloudDB.save();
   loadChiefApplications();
 }
 
@@ -692,6 +692,7 @@ function rejectChief(appId) {
   }
   Storage.set('township_applications', apps);
   toast('已拒绝该申请');
+  if (typeof CloudDB !== 'undefined' && CloudDB.save) CloudDB.save();
   loadChiefApplications();
 }
 
@@ -842,6 +843,7 @@ function approveRole(regId, idx) {
     Storage.set('accounts', accounts);
   }
   toast('已通过！' + (reg ? reg.role : '') + '角色已开通');
+  if (typeof CloudDB !== 'undefined' && CloudDB.save) CloudDB.save();
   loadRoleApplications();
 }
 
@@ -873,6 +875,7 @@ function deleteRole(regId, idx) {
     Storage.set('accounts', accounts);
   }
   toast('已删除角色注册记录');
+  if (typeof CloudDB !== 'undefined' && CloudDB.save) CloudDB.save();
   loadRoleApplications();
 }function rejectRole(regId, idx) {
   if (!confirm('确定拒绝此注册申请？')) return;
@@ -888,6 +891,7 @@ function deleteRole(regId, idx) {
   if (!regs[rejIdx].id) regs[rejIdx].id = 'r' + Date.now();
   Storage.set('registrations', regs);
   toast('已拒绝');
+  if (typeof CloudDB !== 'undefined' && CloudDB.save) CloudDB.save();
   loadRoleApplications();
 }
 
