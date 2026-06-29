@@ -1,21 +1,19 @@
-// cloud_db.js - Supabase 版本
+// cloud_db.js - Supabase 版本（全方法版）
 (function() {
   var SUPABASE_URL = 'https://eivqbbxyllsorbvgqsju.supabase.co';
   var SUPABASE_KEY = 'sb_publishable_nFdOG5Cnmb8B9uZ1qqB9zA_bVM8H44r';
+  var TABLE = 'village_data';
+  var ROW_ID = 'init';
   
   // 从 Supabase 读取数据并写入 localStorage
   function loadFromSupabase(callback) {
-    fetch(SUPABASE_URL + '/rest/v1/village_data?id=eq.init&select=data', {
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY
-      }
+    fetch(SUPABASE_URL + '/rest/v1/' + TABLE + '?id=eq.' + ROW_ID + '&select=data', {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
     })
     .then(function(r) { return r.json(); })
     .then(function(rows) {
       if (rows && rows.length > 0) {
         var data = rows[0].data;
-        // 写入 localStorage
         Object.keys(data).forEach(function(key) {
           try { localStorage.setItem('village_' + key, JSON.stringify(data[key])); } catch(e) {}
         });
@@ -36,7 +34,7 @@
       try { data[key] = JSON.parse(localStorage.getItem('village_' + key) || '[]'); } catch(e) { data[key] = []; }
     });
     
-    fetch(SUPABASE_URL + '/rest/v1/village_data?id=eq.init', {
+    fetch(SUPABASE_URL + '/rest/v1/' + TABLE + '?id=eq.' + ROW_ID, {
       method: 'PATCH',
       headers: {
         'apikey': SUPABASE_KEY,
@@ -57,14 +55,50 @@
   }
   
   window.CloudDB = {
-    init: function(callback) {
-      loadFromSupabase(callback);
+    // ===== 注册页用的 push(data, description) =====
+    // 追加新数据到云端，data格式: { registrations: [...] } 或 { products: [...] }
+    push: function(data, description) {
+      return new Promise(function(resolve, reject) {
+        // 1. 先写本地 localStorage
+        Object.keys(data).forEach(function(key) {
+          try { localStorage.setItem('village_' + key, JSON.stringify(data[key])); } catch(e) {}
+        });
+        
+        // 2. 同步到 Supabase（云端=所有设备共享）
+        loadFromSupabase(function() {
+          saveToSupabase(function(success) {
+            if (success) {
+              console.log('[CloudDB] push 成功:', description || '');
+              resolve();
+            } else {
+              // 云端保存失败，但本地已有数据
+              console.log('[CloudDB] push 云端失败，数据已在本地');
+              reject(new Error('云端保存失败'));
+            }
+          });
+        });
+      });
     },
-    save: function(callback) {
-      saveToSupabase(callback);
+    
+    // ===== admin.html 用的 loadFromPublic() =====
+    // 从 Supabase 拉取全量数据写入 localStorage，供管理后台读取
+    loadFromPublic: function(callback) {
+      // 如果传了 callback 且是函数，按 old API 调用
+      // 如果没传或传的不是函数，返回 Promise
+      if (typeof callback === 'function') {
+        loadFromSupabase(callback);
+        return;
+      }
+      return new Promise(function(resolve, reject) {
+        loadFromSupabase(function() {
+          resolve();
+        });
+      });
     },
-    load: function(callback) {
-      loadFromSupabase(callback);
-    }
+    
+    // ===== 旧版兼容方法 =====
+    init: function(callback) { loadFromSupabase(callback); },
+    save: function(callback) { saveToSupabase(callback); },
+    load: function(callback) { loadFromSupabase(callback); }
   };
 })();
