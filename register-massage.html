@@ -588,7 +588,16 @@ function initSampleData() {
 }
 
 // 用户
-let currentUser = Storage.get('user', null)
+// 获取当前登录账号（新账号体系）
+function getCurrentUser() {
+  var accounts = Storage.get('accounts', []);
+  for (var i = 0; i < accounts.length; i++) {
+    if (accounts[i]._current) return accounts[i];
+  }
+  // 兼容旧版：读 user
+  return Storage.get('user', null);
+}
+let currentUser = getCurrentUser();
 
 function login(nickName, avatarUrl) {
   currentUser = { id: genId(), nickName, avatarUrl, time: Date.now() }
@@ -604,7 +613,7 @@ function logout() {
     function submit() {
       const name = document.getElementById('name').value.trim(), phone = document.getElementById('phone').value.trim()
       if (!name || !phone) { toast('请填写必填项'); return }
-      var account = Storage.get('user', null);
+      var account = getCurrentUser();
       var newReg = { id: genId(), role: '按摩师', name: name, phone: phone, skill: document.getElementById('skill').value, years: document.getElementById('years').value, photo: window._massagePhoto || '', regAddress: document.getElementById('regAddress').value.trim(), curAddress: document.getElementById('curAddress').value.trim(), accountId: account ? account.id : '', accountName: account ? account.account : '', status: '待审核', time: Date.now() };
       // 1. 先写入本地（即时反馈）
       var regs = Storage.get('registrations', []);
