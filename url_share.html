@@ -12,13 +12,15 @@
     .header-btn { background:rgba(255,255,255,0.2); border:none; color:white; padding:6px 12px; border-radius:6px; font-size:12px; cursor:pointer; }
     .container { padding:60px 12px 20px; max-width:600px; margin:0 auto; }
     .card { background:white; border-radius:12px; padding:16px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
-    .card-title { font-size:15px; font-weight:600; margin-bottom:12px; color:#2E7D32; }
-    .field { margin-bottom:8px; }
-    .field-label { font-size:12px; color:#999; }
-    .field-value { font-size:14px; color:#333; margin-top:2px; }
-    .btn { padding:10px 16px; border:none; border-radius:8px; font-size:14px; cursor:pointer; flex:1; }
+    .card-title { font-size:15px; font-weight:600; margin-bottom:12px; color:#2E7D32; display:flex; align-items:center; gap:8px; }
+    .field { margin-bottom:10px; }
+    .field-label { font-size:12px; color:#999; margin-bottom:2px; }
+    .field-value { font-size:14px; color:#333; word-break:break-all; }
+    .btn { padding:10px 16px; border:none; border-radius:8px; font-size:14px; cursor:pointer; flex:1; font-weight:500; }
     .btn-approve { background:#4CAF50; color:white; }
+    .btn-approve:hover { background:#388E3C; }
     .btn-reject { background:#f44336; color:white; }
+    .btn-reject:hover { background:#D32F2F; }
     .btn-group { display:flex; gap:8px; margin-top:16px; }
     .status { display:inline-block; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:500; }
     .status-pending { background:#FFF3E0; color:#E65100; }
@@ -26,6 +28,10 @@
     .status-rejected { background:#FFEBEE; color:#C62828; }
     .empty { text-align:center; padding:40px; color:#999; }
     .loading { text-align:center; padding:40px; color:#666; }
+    .success-msg { background:#E8F5E9; color:#2E7D32; padding:12px; border-radius:8px; margin-bottom:12px; text-align:center; }
+    .tabs { display:flex; gap:0; margin-bottom:12px; background:white; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+    .tab { flex:1; padding:10px; text-align:center; font-size:13px; cursor:pointer; border-bottom:3px solid transparent; }
+    .tab.active { border-bottom-color:#2E7D32; color:#2E7D32; font-weight:600; }
   </style>
 </head>
 <body>
@@ -35,11 +41,18 @@
   </div>
   
   <div class="container" id="mainContainer">
-    <div class="loading" id="loading">加载中...</div>
+    <div class="tabs">
+      <div class="tab active" id="tabPending" onclick="switchTab('pending')">待审核</div>
+      <div class="tab" id="tabApproved" onclick="switchTab('approved')">已通过</div>
+      <div class="tab" id="tabRejected" onclick="switchTab('rejected')">已拒绝</div>
+    </div>
+    <div id="listContainer"></div>
   </div>
   
   <script src="storage.js"></script>
   <script>
+    var currentTab = 'pending';
+    
     // 解析 URL 中的注册数据
     function parseUrlData() {
       var hash = location.hash.substring(1);
@@ -48,12 +61,7 @@
         var json = decodeURIComponent(atob(hash));
         return JSON.parse(json);
       } catch(e) {
-        // 尝试直接解析（兼容旧格式）
-        try {
-          return JSON.parse(decodeURIComponent(hash));
-        } catch(e2) {
-          return null;
-        }
+        return null;
       }
     }
     
@@ -72,9 +80,18 @@
       return data;
     }
     
-    // 渲染注册列表
+    // 切换 Tab
+    function switchTab(tab) {
+      currentTab = tab;
+      ['pending', 'approved', 'rejected'].forEach(function(t) {
+        document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('active', t === tab);
+      });
+      renderList();
+    }
+    
+    // 渲染列表
     function renderList() {
-      var container = document.getElementById('mainContainer');
+      var container = document.getElementById('listContainer');
       var registrations = Storage.get('registrations', []);
       
       if (!Array.isArray(registrations) || registrations.length === 0) {
@@ -82,8 +99,20 @@
         return;
       }
       
+      var filtered = registrations.filter(function(reg) {
+        if (currentTab === 'pending') return reg.status === '待审核';
+        if (currentTab === 'approved') return reg.status === '已通过';
+        if (currentTab === 'rejected') return reg.status === '已拒绝';
+        return true;
+      });
+      
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty">暂无' + (currentTab === 'pending' ? '待审核' : currentTab === 'approved' ? '已通过' : '已拒绝') + '的申请</div>';
+        return;
+      }
+      
       var html = '';
-      registrations.forEach(function(reg, idx) {
+      filtered.forEach(function(reg, idx) {
         var statusClass = '';
         var statusText = '';
         if (reg.status === '已通过') { statusClass = 'status-approved'; statusText = '✅ 已通过'; }
@@ -92,14 +121,29 @@
         
         html += '<div class="card">';
         html += '<div class="card-title">' + (reg.role || '未知角色') + ' <span class="status ' + statusClass + '">' + statusText + '</span></div>';
-        html += '<div class="field"><div class="field-label">姓名</div><div class="field-value">' + (reg.name || '未填') + '</div></div>';
-        html += '<div class="field"><div class="field-label">电话</div><div class="field-value">' + (reg.phone || '未填') + '</div></div>';
-        html += '<div class="field"><div class="field-label">账号</div><div class="field-value">' + (reg.account || '未填') + '</div></div>';
+        
+        // 动态渲染所有字段
+        var fields = ['name', 'phone', 'account', 'address', 'experience', 'skills', 'description', 'village'];
+        fields.forEach(function(field) {
+          if (reg[field]) {
+            var label = field === 'name' ? '姓名' :
+                         field === 'phone' ? '电话' :
+                         field === 'account' ? '账号' :
+                         field === 'address' ? '地址' :
+                         field === 'experience' ? '经验' :
+                         field === 'skills' ? '技能' :
+                         field === 'description' ? '描述' :
+                         field === 'village' ? '村庄' : field;
+            html += '<div class="field"><div class="field-label">' + label + '</div><div class="field-value">' + reg[field] + '</div></div>';
+          }
+        });
+        
+        html += '<div class="field"><div class="field-label">提交时间</div><div class="field-value">' + new Date(reg.createdAt || Date.now()).toLocaleString() + '</div></div>';
         
         if (reg.status === '待审核') {
           html += '<div class="btn-group">';
-          html += '<button class="btn btn-approve" onclick="approve(' + idx + ')">✅ 通过</button>';
-          html += '<button class="btn btn-reject" onclick="reject(' + idx + ')">❌ 拒绝</button>';
+          html += '<button class="btn btn-approve" onclick="approve(\'' + reg.id + '\')">✅ 通过</button>';
+          html += '<button class="btn btn-reject" onclick="reject(\'' + reg.id + '\')">❌ 拒绝</button>';
           html += '</div>';
         }
         
@@ -110,31 +154,63 @@
     }
     
     // 审核通过
-    function approve(idx) {
+    function approve(id) {
       var registrations = Storage.get('registrations', []);
-      if (!registrations[idx]) return;
+      var reg = null;
       
-      registrations[idx].status = '已通过';
-      registrations[idx].approvedAt = Date.now();
+      for (var i = 0; i < registrations.length; i++) {
+        if (registrations[i].id === id) {
+          reg = registrations[i];
+          registrations[i].status = '已通过';
+          registrations[i].approvedAt = Date.now();
+          break;
+        }
+      }
+      
+      if (!reg) { toast('未找到该申请'); return; }
+      
       Storage.set('registrations', registrations);
       
-      toast('审核通过');
+      // 同步到 cloud_data.js（如果可用）
+      syncToCloud();
+      
+      toast('✅ 审核通过');
       renderList();
     }
     
     // 审核拒绝
-    function reject(idx) {
+    function reject(id) {
       var reason = prompt('拒绝原因（可选）：');
       var registrations = Storage.get('registrations', []);
-      if (!registrations[idx]) return;
       
-      registrations[idx].status = '已拒绝';
-      registrations[idx].rejectReason = reason || '不符合要求';
-      registrations[idx].rejectedAt = Date.now();
+      for (var i = 0; i < registrations.length; i++) {
+        if (registrations[i].id === id) {
+          registrations[i].status = '已拒绝';
+          registrations[i].rejectReason = reason || '不符合要求';
+          registrations[i].rejectedAt = Date.now();
+          break;
+        }
+      }
+      
       Storage.set('registrations', registrations);
       
-      toast('已拒绝');
+      toast('❌ 已拒绝');
       renderList();
+    }
+    
+    // 同步到云端（cloud_data.js）
+    function syncToCloud() {
+      // 检查是否在 PC 浏览器（能访问 GitHub API）
+      var isPC = !/MicroMessenger/i.test(navigator.userAgent) && !/Mobile/i.test(navigator.userAgent);
+      
+      if (!isPC) {
+        toast('请在 PC 浏览器中打开此页面，以便同步到云端');
+        return;
+      }
+      
+      // 这里需要调用 GitHub API 更新 cloud_data.js
+      // 由于需要 token，这里只做提示
+      toast('请点击"同步到云端"按钮，将审核结果同步到所有设备');
     }
     
     // 清空本地数据
@@ -152,11 +228,10 @@
       if (urlData) {
         saveRegistration(urlData);
         // 清除 URL 数据（避免刷新重复保存）
-        location.hash = '';
+        history.replaceState(null, null, location.pathname);
       }
       
       renderList();
-      document.getElementById('loading').style.display = 'none';
     }
     
     // toast 提示
