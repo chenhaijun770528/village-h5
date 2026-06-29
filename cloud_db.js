@@ -32,14 +32,33 @@
     });
   }
   
-  // 从 Supabase 加载 → 写入 localStorage
+  // 合并云端数据和本地数据（以 id 为唯一键，保留两端数据）
+  function mergeById(localArr, cloudArr) {
+    if (!Array.isArray(localArr)) localArr = [];
+    if (!Array.isArray(cloudArr)) cloudArr = [];
+    var map = {};
+    // 先放本地数据
+    localArr.forEach(function(item) { if (item && item.id) map[item.id] = item; });
+    // 云端数据覆盖（云端有更新）
+    cloudArr.forEach(function(item) { if (item && item.id) map[item.id] = item; });
+    return Object.keys(map).map(function(k) { return map[k]; });
+  }
+  
+  // 从 Supabase 加载 → 合并写入 localStorage（不是覆盖）
   function loadFromSupabase(callback) {
     fetchData().then(function(data) {
       if (data) {
         Object.keys(data).forEach(function(key) {
-          try { localStorage.setItem('village_' + key, JSON.stringify(data[key])); } catch(e) {}
+          try {
+            var localRaw = localStorage.getItem('village_' + key);
+            var localArr = localRaw ? JSON.parse(localRaw) : [];
+            var cloudArr = data[key] || [];
+            // 用合并模式：本地+云端，id去重，云端优先
+            var merged = mergeById(localArr, cloudArr);
+            localStorage.setItem('village_' + key, JSON.stringify(merged));
+          } catch(e) {}
         });
-        console.log('[CloudDB] 已从 Supabase 加载数据');
+        console.log('[CloudDB] 已从 Supabase 合并数据');
       }
       if (callback) callback();
     }).catch(function(err) {
