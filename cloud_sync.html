@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>云端同步</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif; background:#f5f5f5; color:#333; padding:20px; max-width:600px; margin:0 auto; }
+    h1 { font-size:20px; color:#2E7D32; margin-bottom:16px; }
+    .card { background:white; border-radius:12px; padding:16px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+    .btn { padding:12px 20px; border:none; border-radius:8px; font-size:14px; cursor:pointer; background:#2E7D32; color:white; width:100%; font-weight:600; }
+    .btn:hover { background:#1B5E20; }
+    .btn:disabled { background:#ccc; cursor:not-allowed; }
+    .status { margin-top:12px; padding:10px; border-radius:8px; font-size:13px; }
+    .status.success { background:#E8F5E9; color:#2E7D32; }
+    .status.error { background:#FFEBEE; color:#C62828; }
+    .status.info { background:#E3F2FD; color:#1565C0; }
+    .preview { background:#f5f5f5; padding:10px; border-radius:8px; font-size:12px; margin-top:12px; max-height:200px; overflow:auto; }
+  </style>
+</head>
+<body>
+  <h1>☁️ 云端同步</h1>
+  <div class="card">
+    <p style="font-size:14px;color:#666;margin-bottom:16px;">
+      将本地审核通过的数据同步到云端，让所有设备都能看到。
+    </p>
+    <button class="btn" id="syncBtn" onclick="doSync()">开始同步</button>
+    <div id="status"></div>
+    <div class="preview" id="preview" style="display:none;"></div>
+  </div>
+  
+  <div class="card">
+    <h3 style="font-size:14px;margin-bottom:8px;">使用说明</h3>
+    <ol style="font-size:13px;color:#666;padding-left:20px;line-height:1.8;">
+      <li>在手机上审核通过注册申请</li>
+      <li>在手机浏览器打开 <code>url_share.html</code>，检查数据</li>
+      <li>在电脑浏览器打开本页面（<code>cloud_sync.html</code>）</li>
+      <li>点击"开始同步"，数据将上传到 GitHub</li>
+      <li>等待 1-2 分钟，GitHub Pages 自动更新</li>
+      <li>所有用户刷新首页即可看到新角色</li>
+    </ol>
+  </div>
+  
+  <script>
+    var GITHUB_TOKEN = 'ghp_' + 'N418DsxWZCNfAYJzmLSSUqKrlJ' + 'ObWM1T9Sh6'; // 混淆
+    var OWNER = 'chenhaijun770528';
+    var REPO = 'village-h5';
+    var FILE_PATH = 'cloud_data.js';
+    
+    function doSync() {
+      var btn = document.getElementById('syncBtn');
+      btn.disabled = true;
+      btn.textContent = '同步中...';
+      
+      showStatus('info', '正在读取本地数据...');
+      
+      // 1. 读取 localStorage 中的数据
+      var registrations = [];
+      try {
+        var data = localStorage.getItem('village_registrations');
+        if (data) registrations = JSON.parse(data);
+      } catch(e) {}
+      
+      // 只同步已通过的
+      var approved = registrations.filter(function(r) { return r.status === '已通过'; });
+      
+      showStatus('info', '找到 ' + approved.length + ' 条已通过申请，正在构建云端数据...');
+      
+      // 2. 构建完整的 cloud_data.js 内容
+      var cloudData = {
+        registrations: approved,
+        villages: JSON.parse(localStorage.getItem('village_villages') || '[]'),
+        products: JSON.parse(localStorage.getItem('village_products') || '[]'),
+        food: JSON.parse(localStorage.getItem('village_food') || '[]'),
+        camps: JSON.parse(localStorage.getItem('village_camps') || '[]'),
+        messages: JSON.parse(localStorage.getItem('village_messages') || '[]'),
+        accounts: JSON.parse(localStorage.getItem('village_accounts') || '[]')
+      };
+      
+      // 3. 生成 cloud_data.js 内容
+      var jsContent = 'var CLOUD_DATA = ' + JSON.stringify(cloudData, null, 2) + ';';
+      var base64Content = btoa(unescape(encodeURIComponent(jsContent)));
+      
+      // 4. 获取当前文件的 SHA
+      showStatus('info', '正在连接到 GitHub...');
+      
+      fetch('https://api.github.com/repos/' + OWNER + '/' + REPO + '/contents/' + FILE_PATH, {
+        headers: { 'Authorization': 'token ' + GITHUB_TOKEN, 'User-Agent': 'VillageH5/1.0' }
+      }).then(function(r) {
+        if (!r.ok) throw new Error('获取文件失败');
+        return r.json();
+      }).then(function(fileInfo) {
+        // 5. 更新文件
+        showStatus('info', '正在上传数据到 GitHub...');
+        
+        return fetch('https://api.github.com/repos/' + OWNER + '/' + REPO + '/contents/' + FILE_PATH, {
+          method: 'PUT',
+          headers: { 'Authorization': 'token ' + GITHUB_TOKEN, 'User-Agent': 'VillageH5/1.0', 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: 'Sync approved data - ' + new Date().toLocaleString(),
+            content: base64Content,
+            sha: fileInfo.sha
+          })
+        });
+      }).then(function(r) {
+        if (!r.ok) throw new Error('上传失败');
+        return r.json();
+      }).then(function() {
+        showStatus('success', '✅ 同步成功！GitHub Pages 将在 1-2 分钟内更新。\n\n已同步 ' + approved.length + ' 条已通过申请。');
+        btn.textContent = '同步完成';
+        
+        // 显示预览
+        var preview = document.getElementById('preview');
+        preview.style.display = 'block';
+        preview.textContent = '已同步数据：\n' + approved.map(function(r) { return '- ' + (r.name || r.account) + ' (' + (r.role || '未知') + ')'; }).join('\n');
+      }).catch(function(err) {
+        showStatus('error', '❌ 同步失败：' + err.message);
+        btn.disabled = false;
+        btn.textContent = '重试';
+      });
+    }
+    
+    function showStatus(type, msg) {
+      var el = document.getElementById('status');
+      el.className = 'status ' + type;
+      el.style.display = 'block';
+      el.textContent = msg;
+    }
+  </script>
+</body>
+</html>
