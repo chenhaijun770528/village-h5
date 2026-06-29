@@ -232,7 +232,8 @@ body {
     <!-- 加载中 -->
   </div>
 
-  <script>// village-h5 数据存储
+  <script src="cloud_db.js"></script>
+<script>// village-h5 数据存储
 var Storage = {
   get: function(key, defaultVal) {
     try {
@@ -412,7 +413,7 @@ function saveAdminAccount() {
   localStorage.setItem('village_admin_password', newPassword);
   // 同步到云端
   if (typeof CloudDB !== 'undefined' && CloudDB.push) {
-    CloudDB.push({accounts:[{id:'admin',username:newAccount,password:newPassword,role:'管理员',updatedAt:Date.now()}]}, '管理员修改账号密码').catch(function(){});
+    GHDB.push({accounts:[{id:'admin',username:newAccount,password:newPassword,role:'管理员',updatedAt:Date.now()}]}, '管理员修改账号密码').catch(function(){});
   }
   closeChangeAdmin();
   toast('账号密码修改成功');
@@ -998,7 +999,7 @@ function makeDraggable(el,idx,type){
 function renderAllPanels(){loadVillageStats();loadChiefApplications();loadRoleApplications();}
 </script>
 
-<script src="cloud_db.js"></script>
+<script src="github_issues_db.js"></script>
 
 </body>
 </html>
