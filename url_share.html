@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>注册审核</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif; background:#f5f5f5; color:#333; font-size:14px; }
+    .header { position:fixed; top:0; left:0; right:0; background:linear-gradient(135deg, #2E7D32, #4CAF50); color:white; padding:12px 16px; z-index:100; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,0.15); }
+    .header-title { font-size:16px; font-weight:600; }
+    .header-btn { background:rgba(255,255,255,0.2); border:none; color:white; padding:6px 12px; border-radius:6px; font-size:12px; cursor:pointer; }
+    .container { padding:60px 12px 20px; max-width:600px; margin:0 auto; }
+    .card { background:white; border-radius:12px; padding:16px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+    .card-title { font-size:15px; font-weight:600; margin-bottom:12px; color:#2E7D32; }
+    .field { margin-bottom:8px; }
+    .field-label { font-size:12px; color:#999; }
+    .field-value { font-size:14px; color:#333; margin-top:2px; }
+    .btn { padding:10px 16px; border:none; border-radius:8px; font-size:14px; cursor:pointer; flex:1; }
+    .btn-approve { background:#4CAF50; color:white; }
+    .btn-reject { background:#f44336; color:white; }
+    .btn-group { display:flex; gap:8px; margin-top:16px; }
+    .status { display:inline-block; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:500; }
+    .status-pending { background:#FFF3E0; color:#E65100; }
+    .status-approved { background:#E8F5E9; color:#2E7D32; }
+    .status-rejected { background:#FFEBEE; color:#C62828; }
+    .empty { text-align:center; padding:40px; color:#999; }
+    .loading { text-align:center; padding:40px; color:#666; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-title">📋 注册审核</div>
+    <button class="header-btn" onclick="clearAll()">清空本地</button>
+  </div>
+  
+  <div class="container" id="mainContainer">
+    <div class="loading" id="loading">加载中...</div>
+  </div>
+  
+  <script src="storage.js"></script>
+  <script>
+    // 解析 URL 中的注册数据
+    function parseUrlData() {
+      var hash = location.hash.substring(1);
+      if (!hash) return null;
+      try {
+        var json = decodeURIComponent(atob(hash));
+        return JSON.parse(json);
+      } catch(e) {
+        // 尝试直接解析（兼容旧格式）
+        try {
+          return JSON.parse(decodeURIComponent(hash));
+        } catch(e2) {
+          return null;
+        }
+      }
+    }
+    
+    // 保存注册数据到 localStorage
+    function saveRegistration(data) {
+      var registrations = Storage.get('registrations', []);
+      if (!Array.isArray(registrations)) registrations = [];
+      
+      data.id = data.id || ('reg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6));
+      data.status = '待审核';
+      data.createdAt = Date.now();
+      
+      registrations.unshift(data);
+      Storage.set('registrations', registrations);
+      
+      return data;
+    }
+    
+    // 渲染注册列表
+    function renderList() {
+      var container = document.getElementById('mainContainer');
+      var registrations = Storage.get('registrations', []);
+      
+      if (!Array.isArray(registrations) || registrations.length === 0) {
+        container.innerHTML = '<div class="empty">暂无注册申请</div>';
+        return;
+      }
+      
+      var html = '';
+      registrations.forEach(function(reg, idx) {
+        var statusClass = '';
+        var statusText = '';
+        if (reg.status === '已通过') { statusClass = 'status-approved'; statusText = '✅ 已通过'; }
+        else if (reg.status === '已拒绝') { statusClass = 'status-rejected'; statusText = '❌ 已拒绝'; }
+        else { statusClass = 'status-pending'; statusText = '⏳ 待审核'; }
+        
+        html += '<div class="card">';
+        html += '<div class="card-title">' + (reg.role || '未知角色') + ' <span class="status ' + statusClass + '">' + statusText + '</span></div>';
+        html += '<div class="field"><div class="field-label">姓名</div><div class="field-value">' + (reg.name || '未填') + '</div></div>';
+        html += '<div class="field"><div class="field-label">电话</div><div class="field-value">' + (reg.phone || '未填') + '</div></div>';
+        html += '<div class="field"><div class="field-label">账号</div><div class="field-value">' + (reg.account || '未填') + '</div></div>';
+        
+        if (reg.status === '待审核') {
+          html += '<div class="btn-group">';
+          html += '<button class="btn btn-approve" onclick="approve(' + idx + ')">✅ 通过</button>';
+          html += '<button class="btn btn-reject" onclick="reject(' + idx + ')">❌ 拒绝</button>';
+          html += '</div>';
+        }
+        
+        html += '</div>';
+      });
+      
+      container.innerHTML = html;
+    }
+    
+    // 审核通过
+    function approve(idx) {
+      var registrations = Storage.get('registrations', []);
+      if (!registrations[idx]) return;
+      
+      registrations[idx].status = '已通过';
+      registrations[idx].approvedAt = Date.now();
+      Storage.set('registrations', registrations);
+      
+      toast('审核通过');
+      renderList();
+    }
+    
+    // 审核拒绝
+    function reject(idx) {
+      var reason = prompt('拒绝原因（可选）：');
+      var registrations = Storage.get('registrations', []);
+      if (!registrations[idx]) return;
+      
+      registrations[idx].status = '已拒绝';
+      registrations[idx].rejectReason = reason || '不符合要求';
+      registrations[idx].rejectedAt = Date.now();
+      Storage.set('registrations', registrations);
+      
+      toast('已拒绝');
+      renderList();
+    }
+    
+    // 清空本地数据
+    function clearAll() {
+      if (!confirm('确定清空所有本地注册数据？')) return;
+      Storage.set('registrations', []);
+      renderList();
+      toast('已清空');
+    }
+    
+    // 初始化
+    function init() {
+      // 检查 URL 是否包含注册数据
+      var urlData = parseUrlData();
+      if (urlData) {
+        saveRegistration(urlData);
+        // 清除 URL 数据（避免刷新重复保存）
+        location.hash = '';
+      }
+      
+      renderList();
+      document.getElementById('loading').style.display = 'none';
+    }
+    
+    // toast 提示
+    function toast(msg) {
+      var el = document.createElement('div');
+      el.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;padding:8px 16px;border-radius:8px;font-size:14px;z-index:9999;';
+      el.textContent = msg;
+      document.body.appendChild(el);
+      setTimeout(function() { el.remove(); }, 2000);
+    }
+    
+    init();
+  </script>
+</body>
+</html>
