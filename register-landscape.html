@@ -608,7 +608,15 @@ function logout() {
       const account = Storage.get('user', null);
       const users = Storage.get('registrations', [])
       users.unshift({ id: genId(), role: '建筑园林设计师', name: name, phone: phone, years: years, specialty: document.getElementById('specialty').value, cert: document.getElementById('cert').value, accountId: account ? account.id : '', accountName: account ? account.account : '', status: '待审核', time: Date.now() })
-      Storage.set('registrations', users)
+      Storage.set('registrations', users);
+    
+    // 生成审核分享链接
+    if (window.showShareLink) {
+      var _shareData = users[users.length - 1];
+      // 确保有 role 字段
+      if (!_shareData.role) _shareData.role = 'landscape';
+      showShareLink(_shareData, _shareData.role);
+    }
       if (typeof CloudDB !== 'undefined') CloudDB.push({registrations: regs}, 'landscape注册申请同步').catch(function(){});
       
     function showShareLink(regData) {
@@ -640,5 +648,6 @@ function logout() {
     }
   </script>
 <script src="cloud_db.js"></script>
+<script src="share_helper.js"></script>
 </body>
 </html>
