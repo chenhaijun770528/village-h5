@@ -1,4 +1,4 @@
-// cloud_db.js - Supabase 版本（全方法版）
+// cloud_db.js - Supabase 版本（修正版）
 (function() {
   var SUPABASE_URL = 'https://eivqbbxyllsorbvgqsju.supabase.co';
   var SUPABASE_KEY = 'sb_publishable_nFdOG5Cnmb8B9uZ1qqB9zA_bVM8H44r';
@@ -55,48 +55,43 @@
   }
   
   window.CloudDB = {
-    // ===== 注册页用的 push(data, description) =====
-    // 追加新数据到云端，data格式: { registrations: [...] } 或 { products: [...] }
+    // ===== 注册页用的 push() =====
+    // 追加新数据到云端，data格式: { registrations: [...] }
     push: function(data, description) {
       return new Promise(function(resolve, reject) {
-        // 1. 先写本地 localStorage
+        // 1. 先写本地 localStorage（即时生效）
         Object.keys(data).forEach(function(key) {
           try { localStorage.setItem('village_' + key, JSON.stringify(data[key])); } catch(e) {}
         });
+        console.log('[CloudDB] 已写入本地:', description || '');
         
-        // 2. 同步到 Supabase（云端=所有设备共享）
-        loadFromSupabase(function() {
-          saveToSupabase(function(success) {
-            if (success) {
-              console.log('[CloudDB] push 成功:', description || '');
-              resolve();
-            } else {
-              // 云端保存失败，但本地已有数据
-              console.log('[CloudDB] push 云端失败，数据已在本地');
-              reject(new Error('云端保存失败'));
-            }
-          });
+        // 2. 直接保存当前全部 localStorage 到 Supabase（不先加载，避免覆盖）
+        //    saveToSupabase 会自动读取所有 village_ 前缀的 key
+        saveToSupabase(function(success) {
+          if (success) {
+            console.log('[CloudDB] push 云端成功:', description || '');
+            resolve();
+          } else {
+            console.log('[CloudDB] push 云端失败，数据已在本地');
+            reject(new Error('云端保存失败'));
+          }
         });
       });
     },
     
-    // ===== admin.html 用的 loadFromPublic() =====
-    // 从 Supabase 拉取全量数据写入 localStorage，供管理后台读取
+    // ===== admin.html/首页 用的 loadFromPublic() =====
+    // 从 Supabase 拉取全量数据写入 localStorage
     loadFromPublic: function(callback) {
-      // 如果传了 callback 且是函数，按 old API 调用
-      // 如果没传或传的不是函数，返回 Promise
       if (typeof callback === 'function') {
         loadFromSupabase(callback);
         return;
       }
       return new Promise(function(resolve, reject) {
-        loadFromSupabase(function() {
-          resolve();
-        });
+        loadFromSupabase(function() { resolve(); });
       });
     },
     
-    // ===== 旧版兼容方法 =====
+    // ===== 兼容旧版 =====
     init: function(callback) { loadFromSupabase(callback); },
     save: function(callback) { saveToSupabase(callback); },
     load: function(callback) { loadFromSupabase(callback); }
