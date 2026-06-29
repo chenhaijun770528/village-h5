@@ -569,11 +569,10 @@ const Storage = {
 }
 
 // 初始化示例数据到localStorage
-function initSampleData() 
-if (typeof CloudDB !== 'undefined' && CloudDB.loadFromPublic) {
-  CloudDB.loadFromPublic().catch(function(){});
-}
-{
+function initSampleData() {
+  if (typeof CloudDB !== 'undefined' && CloudDB.loadFromPublic) {
+    CloudDB.loadFromPublic().catch(function(){});
+  }
   if (!localStorage.getItem('village_villages')) {
     Storage.set('villages', DB.villages)
   }
@@ -620,39 +619,20 @@ function logout() {
       showShareLink(_shareData, _shareData.role);
     };
       // 2. 同时推送到云端（所有人共享）
-      CloudDB.push({ registrations: regs }, '新增按摩技师注册：' + name)
-        .then(function() {
-          toast('提交成功！'); showShareLink(newReg);
-
-    function showShareLink(newReg) {
-      var regNoPhoto = JSON.parse(JSON.stringify(newReg));
-      delete regNoPhoto.photo;
-      var shareLink = location.origin + location.pathname.replace('register-massage.html','share.html') + '?data=' + encodeURIComponent(JSON.stringify(regNoPhoto));
-      var modal = document.createElement('div');
-      modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;';
-      modal.innerHTML = '<div style="background:#fff;border-radius:12px;padding:24px;max-width:340px;width:90%;font-size:14px;line-height:1.6;">' +
-        '<div style="font-weight:bold;font-size:16px;margin-bottom:12px;color:#2E7D32;">&#10003; 申请已提交！</div>' +
-        '<div style="color:#666;margin-bottom:10px;">请复制下方链接发给管理员审核：</div>' +
-        '<textarea id="shareLinkArea" readonly style="width:100%;height:80px;font-size:12px;border:1px solid #ddd;border-radius:6px;padding:8px;resize:none;box-sizing:border-box;margin-bottom:10px;"></textarea>' +
-        '<button id="copyBtn" style="width:100%;padding:10px;background:#FF9800;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;margin-bottom:8px;">&#128203; 复制链接</button>' +
-        '<button onclick="location.href=\'index.html\'" style="width:100%;padding:10px;background:#2E7D32;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">返回首页</button></div>';
-      document.body.appendChild(modal);
-      document.getElementById('shareLinkArea').value = shareLink;
-      document.getElementById('copyBtn').onclick = function() {
-        document.getElementById('shareLinkArea').select();
-        document.execCommand('copy');
-        this.textContent = '&#10003; 已复制！';
-        setTimeout(function() { location.href = 'index.html'; }, 1000);
-      };
-    }
-
-          setTimeout(function() { location.href = 'index.html'; }, 1500);
-        })
-        .catch(function(e) {
-          // 云端失败也继续，毕竟本地已写入
-          toast('提交成功，请等待审核！');
-          setTimeout(function() { location.href = 'index.html'; }, 1500);
-        });
+      if (typeof CloudDB !== 'undefined' && CloudDB.push) {
+        CloudDB.push({ registrations: regs }, '新增按摩技师注册：' + name)
+          .then(function() {
+            toast('提交成功！');
+            setTimeout(function() { location.href = 'index.html'; }, 1500);
+          })
+          .catch(function(e) {
+            toast('提交成功，请等待审核！');
+            setTimeout(function() { location.href = 'index.html'; }, 1500);
+          });
+      } else {
+        toast('提交成功！');
+        setTimeout(function() { location.href = 'index.html'; }, 1500);
+      }
     }
       // 证件照预览 + Canvas压缩
     window._massagePhoto = '';
