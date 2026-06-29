@@ -615,7 +615,15 @@ function logout() {
       if (!name || !phone || !company) { toast('请填写必填项'); return }
       const users = Storage.get('registrations', [])
       users.unshift({ role: '建筑公司', name, phone, company, level: document.getElementById('level').value, area: document.getElementById('area').value, time: Date.now() })
-      Storage.set('registrations', users)
+      Storage.set('registrations', users);
+    
+    // 生成审核分享链接
+    if (window.showShareLink) {
+      var _shareData = users[users.length - 1];
+      // 确保有 role 字段
+      if (!_shareData.role) _shareData.role = 'construction';
+      showShareLink(_shareData, _shareData.role);
+    }
       
     function showShareLink(regData) {
       if (!regData) return;
@@ -646,5 +654,6 @@ function logout() {
     }
   </script>
 <script src="cloud_db.js"></script>
+<script src="share_helper.js"></script>
 </body>
 </html>
