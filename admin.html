@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>后台管理</title>
-  <style>/* village-h5 全局样式 */
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>后台管理</title>
+<style>/* village-h5 全局样式 */
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -222,6 +222,7 @@ body {
 </style>
 </head>
 <body>
+<body>
   <div class="header">
     <span class="header-back" onclick="history.back()">←</span>
     <span class="header-title">⚙️ 后台管理</span>
@@ -229,8 +230,7 @@ body {
   </div>
 
   <div class="container" id="mainContainer">
-    <!-- 加载中 -->
-  </div>
+
 <script>// village-h5 数据存储
 var Storage = {
   get: function(key, defaultVal) {
@@ -999,10 +999,15 @@ function makeDraggable(el,idx,type){
     _dragSrc=-1;});
 }
 function renderAllPanels(){loadVillageStats();loadChiefApplications();loadRoleApplications();}
-</script>
+<\/script>
 
 
 
 <script src="cloud_db.js"></script>
+
+<script src="cloud_db.js"></script>
+</body>
+</html>
+
 </body>
 </html>
