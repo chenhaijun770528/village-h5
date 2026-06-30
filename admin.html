@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>后台管理</title>
+<link rel="stylesheet" href="style.css">
 <style>/* village-h5 全局样式 */
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -221,22 +222,16 @@ body {
 .sort-tip{font-size:12px;color:#999;margin-bottom:8px;}
 </style>
 </head>
-</head>
 <body>
-<body>
-  <div class="header">
-    <span class="header-back" onclick="history.back()">←</span>
-    <span class="header-title">⚙️ 后台管理</span>
-    <span style="width:40px"></span>
-  </div>
-
-  <div class="container" id="mainContainer">
-    <!-- 加载中 -->
-  </div>
-<
-
-<script>// village-h5 数据存储
-var Storage = {
+<div class="header">
+  <span class="header-back" onclick="history.back()">&#8592;</span>
+  <span class="header-title">&#9881; 后台管理</span>
+  <span style="width:40px"></span>
+</div>
+<div class="container" id="mainContainer">
+  <div class="loading">加载中...</div>
+</div>
+<script>var Storage = {
   get: function(key, defaultVal) {
     try {
       var v = localStorage.getItem('village_' + key);
@@ -265,6 +260,39 @@ function toast(msg, duration) {
 }
 
 // 管理员账号（支持修改，存储在localStorage）
+
+var ADMIN_ACCOUNT = 'admin';
+var ADMIN_PASSWORD = 'admin123';
+var _cloudAdminAccount = null;
+var _cloudAdminPassword = null;
+var _initDone = false;
+
+// 当前状态
+var isLoggedIn = false;
+var currentTab = 'villages';
+
+
+var isLoggedIn = false;
+var currentTab = 'villages';
+var _initDone = false;
+
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+}
+
+
+function toast(msg, duration) {
+  duration = duration || 2000;
+  var existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  var el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function() { el.remove(); }, duration);
+}
+
+// 管理员账号（支持修改，存储在localStorage）
 var ADMIN_ACCOUNT = 'admin';
 var ADMIN_PASSWORD = 'admin123';
 var _cloudAdminAccount = null;
@@ -276,53 +304,8 @@ var isLoggedIn = false;
 var currentTab = 'villages';
 
 // 初始化
-function init() {
-  // 从云端获取管理员账号
-  var cloudAcc = null;
-  if (typeof CLOUD_DATA !== 'undefined' && CLOUD_DATA.accounts) {
-    CLOUD_DATA.accounts.forEach(function(a) {
-      if (a.role === '管理员') { cloudAcc = a; }
-    });
-  }
-  if (cloudAcc) {
-    _cloudAdminAccount = cloudAcc.username;
-    _cloudAdminPassword = cloudAcc.password;
-  }
 
-  // 检查是否已登录（从sessionStorage）
-  var savedLogin = sessionStorage.getItem('village_admin_logged');
-  if (savedLogin === 'true') {
-    isLoggedIn = true;
-  }
-  // 首次加载时同步云端数据
-  if (!_initDone && typeof CloudDB !== 'undefined' && CloudDB.loadFromPublic) {
-    _initDone = true;
-    CloudDB.loadFromPublic().then(function() {
-      if (typeof CLOUD_DATA !== 'undefined' && CLOUD_DATA.accounts) {
-        CLOUD_DATA.accounts.forEach(function(a) {
-          if (a.role === '管理员') {
-            _cloudAdminAccount = a.username;
-            _cloudAdminPassword = a.password;
-          }
-        });
-      }
-      if (typeof renderAllPanels === 'function') renderAllPanels();
-    }).catch(function() {});
-  }
-  loadUI();
-}
 
-function loadUI() {
-  var container = document.getElementById('mainContainer');
-
-  if (!isLoggedIn) {
-    showLogin();
-  } else {
-    showAdminPanel();
-  }
-}
-
-// 显示登录页
 function showLogin() {
   var container = document.getElementById('mainContainer');
   container.innerHTML =
@@ -341,6 +324,7 @@ function showLogin() {
     '<button onclick="resetAdminAccount()" style="width:100%;margin-top:8px;padding:8px;background:#fff3e0;color:#e65100;border:1px solid #ffcc80;border-radius:8px;font-size:12px;cursor:pointer;">忘记密码？重置为默认账号</button>' +
     '</div>';
 }
+
 
 function adminLogin() {
   var account = document.getElementById('adminAccount').value.trim();
@@ -366,68 +350,8 @@ function adminLogin() {
 }
 
 // 修改管理员账号密码
-function showChangeAdmin() {
-  var modal = document.createElement('div');
-  modal.id = 'changeAdminModal';
-  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
-  modal.innerHTML =
-    '<div style="background:white;border-radius:12px;padding:24px;width:90%;max-width:360px;">' +
-    '<div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:16px;">⚙️ 修改管理员账号</div>' +
-    '<div class="form-group"><label class="form-label">新账号</label><input class="form-input" id="newAdminAccount" value="' + ADMIN_ACCOUNT + '" placeholder="输入新账号"></div>' +
-    '<div class="form-group"><label class="form-label">新密码</label><input class="form-input" id="newAdminPassword" type="password" placeholder="输入新密码"></div>' +
-    '<div class="form-group"><label class="form-label">确认新密码</label><input class="form-input" id="confirmAdminPassword" type="password" placeholder="再次输入新密码"></div>' +
-    '<div style="display:flex;gap:8px;margin-top:16px;">' +
-    '<button onclick="saveAdminAccount()" style="flex:1;padding:10px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;">保存</button>' +
-    '<button onclick="closeChangeAdmin()" style="flex:1;padding:10px;background:#999;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;">取消</button>' +
-    '</div>' +
-    '</div>';
-  document.body.appendChild(modal);
-}
 
-function closeChangeAdmin() {
-  var modal = document.getElementById('changeAdminModal');
-  if (modal) modal.remove();
-}
 
-function resetAdminAccount() {
-  if (!confirm('确定重置为默认账号？\n账号：admin\n密码：admin123')) return;
-  localStorage.removeItem('village_admin_account');
-  localStorage.removeItem('village_admin_password');
-  location.reload();
-}
-
-function saveAdminAccount() {
-  var newAccount = document.getElementById('newAdminAccount').value.trim();
-  var newPassword = document.getElementById('newAdminPassword').value;
-  var confirmPassword = document.getElementById('confirmAdminPassword').value;
-
-  if (!newAccount) { toast('账号不能为空'); return; }
-  if (!newPassword) { toast('请输入新密码'); return; }
-  if (newPassword !== confirmPassword) { toast('两次密码不一致'); return; }
-  if (newPassword.length < 4) { toast('密码至少4位'); return; }
-
-  ADMIN_ACCOUNT = newAccount;
-  ADMIN_PASSWORD = newPassword;
-  _cloudAdminAccount = newAccount;
-  _cloudAdminPassword = newPassword;
-  localStorage.setItem('village_admin_account', newAccount);
-  localStorage.setItem('village_admin_password', newPassword);
-  // 同步到云端
-  if (typeof CloudDB !== 'undefined' && CloudDB.push) {
-    if (typeof CloudDB !== 'undefined' && CloudDB.save) CloudDB.save();
-  }
-  closeChangeAdmin();
-  toast('账号密码修改成功');
-}
-
-function adminLogout() {
-  if (!confirm('确定要退出登录吗？')) return;
-  isLoggedIn = false;
-  sessionStorage.removeItem('village_admin_logged');
-  showLogin();
-}
-
-// 显示管理面板
 function showAdminPanel() {
   var container = document.getElementById('mainContainer');
   container.innerHTML =
@@ -453,46 +377,28 @@ function showAdminPanel() {
 }
 
 // Tab切换
+
+
 function switchTab(tab) {
-  var tabs = ['Villages', 'ChiefApps', 'Announcement'];
-  for (var ti = 0; ti < tabs.length; ti++) {
-    var tabEl = document.getElementById('tab' + tabs[ti]);
-    if (tabEl) tabEl.classList.remove('active');
-  }
-  var activeTab = document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1, tab.length - (tab.endsWith('Apps') ? 4 : 0)) + (tab.endsWith('Apps') ? 'Apps' : ''));
-  // 简化
-  if (tab === 'villages') {
-    document.getElementById('tabVillages').classList.add('active');
-    document.getElementById('panelVillages').classList.remove('hidden');
-    document.getElementById('panelChiefApps').classList.add('hidden');
+  currentTab = tab;
+  ['villages','chiefs','roles'].forEach(function(t) {
+    var btn = document.getElementById('tab-'+t);
+    if(btn) btn.className = 'tab-btn' + (t===tab ? ' active' : '');
+  });
+  var tc = document.getElementById('tabContent');
+  if(!tc) return;
+  if(tab==='villages') {
+    tc.innerHTML = '<div class="loading">加载中...</div>';
     loadVillageStats();
-  } else if (tab === 'chiefApps') {
-    document.getElementById('tabChiefApps').classList.add('active');
-    document.getElementById('panelVillages').classList.add('hidden');
-    document.getElementById('panelChiefApps').classList.remove('hidden');
+  } else if(tab==='chiefs') {
+    tc.innerHTML = '<div class="loading">加载中...</div>';
     loadChiefApplications();
-  } else if (tab === 'roleApps') {
-    document.getElementById('tabRoleApps').classList.add('active');
-    document.getElementById('tabVillages').classList.remove('active');
-    document.getElementById('tabChiefApps').classList.remove('active');
-    document.getElementById('panelVillages').classList.add('hidden');
-    document.getElementById('panelChiefApps').classList.add('hidden');
-    document.getElementById('panelRoleApps').classList.remove('hidden');
+  } else if(tab==='roles') {
+    tc.innerHTML = '<div class="loading">加载中...</div>';
     loadRoleApplications();
-  } else if (tab === 'announcement') {
-    document.getElementById('tabAnnouncement').classList.add('active');
-    document.getElementById('tabVillages').classList.remove('active');
-    document.getElementById('tabChiefApps').classList.remove('active');
-    document.getElementById('tabRoleApps').classList.remove('active');
-    document.getElementById('panelVillages').classList.add('hidden');
-    document.getElementById('panelChiefApps').classList.add('hidden');
-    document.getElementById('panelRoleApps').classList.add('hidden');
-    document.getElementById('panelAnnouncement').classList.remove('hidden');
-    loadAnnouncementsAdmin();
   }
 }
 
-// ========== 村庄统计 ==========
 
 function loadVillageStats() {
   var panel = document.getElementById('panelVillages');
@@ -557,191 +463,16 @@ function loadVillageStats() {
 
 // ========== 村长注册审核 ==========
 
-function loadChiefApplications() {
-  var panel = document.getElementById('panelChiefApps');
 
-  // 【修复】读取正确的 storage key：township_applications（与register-township.html一致）
-  var apps = Storage.get('township_applications', []);
-  var pending = [];
-  for (var i = 0; i < apps.length; i++) {
-    // 【修复】状态值匹配：'待审核'（不是'waiting'）
-    if (apps[i].status === '待审核') {
-      pending.push(apps[i]);
-    }
-  pending.sort(function(a,b){ return (b.applyTime||b.createTime||0) - (a.applyTime||a.createTime||0); });
-  }
 
-  var approvedCount = 0;
-  var rejectedCount = 0;
-  for (var j = 0; j < apps.length; j++) {
-    if (apps[j].status === '已通过') approvedCount++;
-    else if (apps[j].status === '已拒绝') rejectedCount++;
-  }
 
-  panel.innerHTML =
-    '<div class="stats-grid" style="margin-bottom:16px;">' +
-    '<div class="stat-card"><div class="stat-value" style="color:#FF9800;">' + pending.length + '</div><div class="stat-label">待审核</div></div>' +
-    '<div class="stat-card"><div class="stat-value" style="color:#4CAF50;">' + approvedCount + '</div><div class="stat-label">已通过</div></div>' +
-    '<div class="stat-card"><div class="stat-value" style="color:#F44336;">' + rejectedCount + '</div><div class="stat-label">已拒绝</div></div>' +
-    '<div class="stat-card"><div class="stat-value">' + apps.length + '</div><div class="stat-label">申请总数</div></div>' +
-    '</div>' +
-    '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:4px;">👤 村长注册申请</div>';
-    '<button class="sort-mode-btn" onclick="setSortMode(\'chiefs\')" id="sortBtnChiefs">📌 拖拽排序</button>';
-    '<div class="sort-tip" id="sortTipChiefs" style="display:none">💡 拖住卡片可上下移动</div>';
 
-  if (pending.length === 0) {
-    panel.innerHTML += '<div class="empty-state"><span class="empty-icon">👤</span><div>暂无待审核的村长注册申请</div></div>';
-    return;
-  }
 
-  for (var pi = 0; pi < pending.length; pi++) {
-    var app = pending[pi];
-    // 【修复】字段映射：app.name=村主任姓名，app.village=村庄名称
-    panel.innerHTML += '<div class="app-card">' +
-      '<div class="app-card-name">👤 ' + (app.name || '未知') + '</div>' +
-      '<div class="app-card-info">村庄：' + (app.village || '未知') + ' | 手机号：' + (app.phone || '未知') + '</div>' +
-      '<div class="app-card-info">地区：' + (app.province || '') + ' ' + (app.city || '') + '</div>' +
-      '<div class="app-card-actions">' +
-      '<button class="btn-approve" onclick="approveChief(\'' + app.id + '\')">✅ 通过</button>' +
-      '<button class="btn-reject" onclick="rejectChief(\'' + app.id + '\')">❌ 拒绝</button>' +
-      '</div>' +
-      '</div>';
-  }
-}
 
-// 通过村长注册申请
-function approveChief(appId) {
-  if (!confirm('确定通过此村长注册申请？村庄信息将被写入村庄列表。')) return;
 
-  var apps = Storage.get('township_applications', []);
-  var app = null;
-  var appIdx = -1;
-  for (var i = 0; i < apps.length; i++) {
-    if (apps[i].id === appId) { app = apps[i]; appIdx = i; break; }
-  }
-  if (!app) { toast('申请不存在'); return; }
 
-  // 1. 更新申请状态
-  apps[appIdx].status = '已通过';
-  apps[appIdx].reviewTime = Date.now();
-  Storage.set('township_applications', apps);
 
-  // 2. 写入村庄列表
-  var villages = Storage.get('villages', []);
-  villages.push({
-    id: app.id,
-    name: app.village || '未命名村庄',
-    province: app.province || '',
-    city: app.city || '',
-    population: '',
-    totalArea: '',
-    farmlandArea: '',
-    description: '',
-    chief: { name: app.name, phone: app.phone },
-    images: [],
-    createTime: Date.now()
-  });
-  Storage.set('villages', villages);
 
-  // 3. 【新增】同步到 village_registrations（统一注册表）
-  if (app.accountId) {
-    var regs = Storage.get('registrations', []);
-    regs.unshift({
-      id: app.id,
-      accountId: app.accountId,
-      accountName: app.accountName || '',
-      role: '村主任',
-      name: app.name,
-      phone: app.phone,
-      village: app.village,
-      province: app.province || '',
-      city: app.city || '',
-      status: '已通过',
-      applyTime: app.applyTime || Date.now(),
-      reviewTime: Date.now()
-    });
-    Storage.set('registrations', regs);
-
-    // 4. 【新增】给用户账号开通村主任角色
-    var accounts = Storage.get('accounts', []);
-    for (var ai = 0; ai < accounts.length; ai++) {
-      if (accounts[ai].id === app.accountId) {
-        accounts[ai].currentRole = 'township';
-        accounts[ai].currentRoleId = app.id;
-        accounts[ai].currentRoleName = app.name;
-        break;
-      }
-    }
-    Storage.set('accounts', accounts);
-  }
-
-  toast('已通过！用户角色已开通，可直接登录使用');
-  if (typeof CloudDB !== 'undefined' && CloudDB.save) CloudDB.save();
-  loadChiefApplications();
-}
-
-// 拒绝村长注册申请
-function rejectChief(appId) {
-  if (!confirm('确定拒绝此申请？')) return;
-
-  var apps = Storage.get('township_applications', []);
-  for (var i = 0; i < apps.length; i++) {
-    if (apps[i].id === appId) {
-      apps[i].status = '已拒绝';
-      apps[i].updateTime = Date.now();
-      break;
-    }
-  }
-  Storage.set('township_applications', apps);
-  toast('已拒绝该申请');
-  if (typeof CloudDB !== 'undefined' && CloudDB.save) CloudDB.save();
-  loadChiefApplications();
-}
-
-// ========== 删除村庄 ==========
-function deleteVillage(villageId) {
-  if (!confirm('确定删除此村庄？该村庄下的所有关联数据也将被清除！')) return;
-  var villages = Storage.get('villages', []);
-  for (var i = 0; i < villages.length; i++) {
-    if (villages[i].id === villageId) { villages.splice(i, 1); break; }
-  }
-  Storage.set('villages', villages);
-  var products = Storage.get('products', []);
-  var newP = [];
-  for (var pi = 0; pi < products.length; pi++) { if (products[pi].villageId !== villageId) newP.push(products[pi]); }
-  Storage.set('products', newP);
-  var foods = Storage.get('foods', []);
-  var newF = [];
-  for (var fi = 0; fi < foods.length; fi++) { if (foods[fi].villageId !== villageId) newF.push(foods[fi]); }
-  Storage.set('foods', newF);
-  var camps = Storage.get('camps', []);
-  var newC = [];
-  for (var ci = 0; ci < camps.length; ci++) { if (camps[ci].villageId !== villageId) newC.push(camps[ci]); }
-  Storage.set('camps', newC);
-  // 清除该村主任用户账号的角色绑定
-  var accounts = Storage.get('accounts', []);
-  var tApps = Storage.get('township_applications', []);
-  for (var ti = 0; ti < tApps.length; ti++) {
-    if (tApps[ti].id === villageId) {
-      if (tApps[ti].accountId) {
-        for (var ai = 0; ai < accounts.length; ai++) {
-          if (accounts[ai].id === tApps[ti].accountId) {
-            delete accounts[ai].currentRole;
-            delete accounts[ai].currentRoleId;
-            delete accounts[ai].currentRoleName;
-            break;
-          }
-        }
-      }
-      break;
-    }
-  }
-  Storage.set('accounts', accounts);
-  toast('村庄及关联数据已删除，村主任角色已重置');
-  loadVillageStats();
-}
-
-// ========== 角色注册审核 ==========
 function loadRoleApplications() {
   var panel = document.getElementById('panelRoleApps');
   var regs = Storage.get('registrations', []);
@@ -812,6 +543,7 @@ function loadRoleApplications() {
   }
 }
 
+
 function approveRole(regId, idx) {
   if (!confirm('确定通过此注册申请？')) return;
   var regs = Storage.get('registrations', []);
@@ -852,34 +584,8 @@ function approveRole(regId, idx) {
 
 
 // 删除角色注册
-function deleteRole(regId, idx) {
-  if (!confirm('确定删除此角色注册记录？该操作不可恢复。')) return;
-  var regs = Storage.get('registrations', []);
-  var delIdx = -1;
-  for (var i = 0; i < regs.length; i++) {
-    if (regs[i].id === regId) { delIdx = i; break; }
-  }
-  if (delIdx < 0 && typeof idx !== 'undefined' && idx >= 0 && idx < regs.length) delIdx = idx;
-  if (delIdx < 0) { toast('未找到该记录'); return; }
-  var reg = regs[delIdx];
-  regs.splice(delIdx, 1);
-  Storage.set('registrations', regs);
-  if (reg && reg.accountId) {
-    var accounts = Storage.get('accounts', []);
-    for (var ai = 0; ai < accounts.length; ai++) {
-      if (accounts[ai].id === reg.accountId && (accounts[ai].currentRoleId === regId || accounts[ai].currentRoleId === regs[delIdx]&&regs[delIdx]&&regs[delIdx].id)) {
-        delete accounts[ai].currentRole;
-        delete accounts[ai].currentRoleId;
-        delete accounts[ai].currentRoleName;
-        break;
-      }
-    }
-    Storage.set('accounts', accounts);
-  }
-  toast('已删除角色注册记录');
-  if (typeof CloudDB !== 'undefined' && CloudDB.save) CloudDB.save();
-  loadRoleApplications();
-}function rejectRole(regId, idx) {
+
+function rejectRole(regId, idx) {
   if (!confirm('确定拒绝此注册申请？')) return;
   var regs = Storage.get('registrations', []);
   var rejIdx = -1;
@@ -898,113 +604,132 @@ function deleteRole(regId, idx) {
 }
 
 // ========== 公告管理 ==========
-function loadAnnouncementsAdmin() {
-  var panel = document.getElementById('panelAnnouncement');
-  var anns = Storage.get('announcements', []);
-  anns.sort(function(a, b) {
-    if (a.pinned && !b.pinned) return -1;
-    if (!a.pinned && b.pinned) return 1;
-    return (b.createTime || 0) - (a.createTime || 0);
-  });
-  var villages = Storage.get('villages', []);
 
-  var html = '<div style="margin-bottom:16px;">' +
-    '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:8px;">📢 发布新公告</div>' +
-    '<div class="form-group"><label class="form-label">公告标题</label><input class="form-input" id="annTitle" placeholder="请输入公告标题"></div>' +
-    '<div class="form-group"><label class="form-label">公告内容</label><textarea class="form-input" id="annContent" rows="3" placeholder="请输入公告内容"></textarea></div>' +
-    '<div class="form-group"><label class="form-label">发布村庄（留空则全站公告）</label><select class="form-input" id="annVillage"><option value="">🌐 全站公告</option>';
-  for (var vi = 0; vi < villages.length; vi++) {
-    html += '<option value="' + villages[vi].id + '">' + villages[vi].name + '</option>';
-  }
-  html += '</select></div>' +
-    '<button onclick="saveAnnouncementAdmin()" style="width:100%;padding:10px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;">💾 发布公告</button>' +
+
+function adminLogout() {
+  if (!confirm('确定要退出登录吗？')) return;
+  isLoggedIn = false;
+  sessionStorage.removeItem('village_admin_logged');
+  showLogin();
+}
+
+// 显示管理面板
+
+function showChangeAdmin() {
+  var modal = document.createElement('div');
+  modal.id = 'changeAdminModal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
+  modal.innerHTML =
+    '<div style="background:white;border-radius:12px;padding:24px;width:90%;max-width:360px;">' +
+    '<div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:16px;">⚙️ 修改管理员账号</div>' +
+    '<div class="form-group"><label class="form-label">新账号</label><input class="form-input" id="newAdminAccount" value="' + ADMIN_ACCOUNT + '" placeholder="输入新账号"></div>' +
+    '<div class="form-group"><label class="form-label">新密码</label><input class="form-input" id="newAdminPassword" type="password" placeholder="输入新密码"></div>' +
+    '<div class="form-group"><label class="form-label">确认新密码</label><input class="form-input" id="confirmAdminPassword" type="password" placeholder="再次输入新密码"></div>' +
+    '<div style="display:flex;gap:8px;margin-top:16px;">' +
+    '<button onclick="saveAdminAccount()" style="flex:1;padding:10px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;">保存</button>' +
+    '<button onclick="closeChangeAdmin()" style="flex:1;padding:10px;background:#999;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;">取消</button>' +
     '</div>' +
-    '<div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:8px;margin-top:16px;">📋 公告列表（' + anns.length + '条）</div>';
+    '</div>';
+  document.body.appendChild(modal);
+}
 
-  if (anns.length === 0) {
-    html += '<div class="empty-state"><span class="empty-icon">📢</span><div>暂无公告</div></div>';
-  } else {
-    for (var i = 0; i < anns.length; i++) {
-      var ann = anns[i];
-      var pinnedStyle = ann.pinned ? 'background:#FFF8E1;border:1px solid #FFD54F;' : 'background:white;';
-      var pinnedBadge = ann.pinned ? ' <span style="background:#FFD54F;color:#333;padding:1px 6px;border-radius:4px;font-size:11px;">置顶</span>' : '';
-      var date = ann.createTime ? new Date(ann.createTime).toLocaleString('zh-CN') : '';
-      var villageName = ann.villageId ? (function() {
-        for (var vj = 0; vj < villages.length; vj++) { if (villages[vj].id === ann.villageId) return villages[vj].name; }
-        return '未知';
-      })() : '🌐 全站';
-      var secHtml = (ann.content || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
-      html += '<div style="' + pinnedStyle + 'border-radius:8px;padding:12px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">' +
-        '<div style="font-weight:bold;color:#333;margin-bottom:4px;">' + pinnedBadge + ' ' + (ann.title || '') + '</div>' +
-        '<div style="color:#666;font-size:13px;margin-bottom:6px;line-height:1.4;">' + secHtml + '</div>' +
-        '<div style="font-size:11px;color:#999;margin-bottom:8px;">' + date + ' | ' + villageName + '</div>' +
-        '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
-        '<button onclick="togglePinAnn(\'' + ann.id + '\')" style="padding:4px 8px;background:#FFF8E1;color:#F57F17;border:1px solid #FFD54F;border-radius:4px;font-size:11px;cursor:pointer;">' + (ann.pinned ? '📌 取消置顶' : '📌 置顶') + '</button>' +
-        '<button onclick="deleteAnnouncement(\'' + ann.id + '\')" style="padding:4px 8px;background:#FFEBEE;color:#F44336;border:1px solid #EF9A9A;border-radius:4px;font-size:11px;cursor:pointer;">🗑️ 删除</button>' +
-        '</div></div>';
-    }
+
+function closeChangeAdmin() {
+  var modal = document.getElementById('changeAdminModal');
+  if (modal) modal.remove();
+}
+
+
+function resetAdminAccount() {
+  if (!confirm('确定重置为默认账号？\n账号：admin\n密码：admin123')) return;
+  localStorage.removeItem('village_admin_account');
+  localStorage.removeItem('village_admin_password');
+  location.reload();
+}
+
+
+function saveAdminAccount() {
+  var newAccount = document.getElementById('newAdminAccount').value.trim();
+  var newPassword = document.getElementById('newAdminPassword').value;
+  var confirmPassword = document.getElementById('confirmAdminPassword').value;
+
+  if (!newAccount) { toast('账号不能为空'); return; }
+  if (!newPassword) { toast('请输入新密码'); return; }
+  if (newPassword !== confirmPassword) { toast('两次密码不一致'); return; }
+  if (newPassword.length < 4) { toast('密码至少4位'); return; }
+
+  ADMIN_ACCOUNT = newAccount;
+  ADMIN_PASSWORD = newPassword;
+  _cloudAdminAccount = newAccount;
+  _cloudAdminPassword = newPassword;
+  localStorage.setItem('village_admin_account', newAccount);
+  localStorage.setItem('village_admin_password', newPassword);
+  // 同步到云端
+  if (typeof CloudDB !== 'undefined' && CloudDB.push) {
+    if (typeof CloudDB !== 'undefined' && CloudDB.save) CloudDB.save();
   }
-  panel.innerHTML = html;
+  closeChangeAdmin();
+  toast('账号密码修改成功');
 }
 
-function saveAnnouncementAdmin() {
-  var title = document.getElementById('annTitle').value.trim();
-  var content = document.getElementById('annContent').value.trim();
-  var villageId = document.getElementById('annVillage').value;
-  if (!title) { toast('请输入公告标题'); return; }
-  if (!content) { toast('请输入公告内容'); return; }
-  var anns = Storage.get('announcements', []);
-  anns.unshift({ id: genId(), title: title, content: content, villageId: villageId, createTime: Date.now(), pinned: false });
-  Storage.set('announcements', anns);
-  toast('公告发布成功');
-  loadAnnouncementsAdmin();
+
+
+function init() {
+  // 从云端获取管理员账号
+  var cloudAcc = null;
+  if (typeof CLOUD_DATA !== 'undefined' && CLOUD_DATA.accounts) {
+    CLOUD_DATA.accounts.forEach(function(a) {
+      if (a.role === '管理员') { cloudAcc = a; }
+    });
+  }
+  if (cloudAcc) {
+    _cloudAdminAccount = cloudAcc.username;
+    _cloudAdminPassword = cloudAcc.password;
+  }
+
+  // 检查是否已登录（从sessionStorage）
+  var savedLogin = sessionStorage.getItem('village_admin_logged');
+  if (savedLogin === 'true') {
+    isLoggedIn = true;
+  }
+  // 首次加载时同步云端数据
+  if (!_initDone && typeof CloudDB !== 'undefined' && CloudDB.loadFromPublic) {
+    _initDone = true;
+    CloudDB.loadFromPublic().then(function() {
+      if (typeof CLOUD_DATA !== 'undefined' && CLOUD_DATA.accounts) {
+        CLOUD_DATA.accounts.forEach(function(a) {
+          if (a.role === '管理员') {
+            _cloudAdminAccount = a.username;
+            _cloudAdminPassword = a.password;
+          }
+        });
+      }
+      if (typeof renderAllPanels === 'function') renderAllPanels();
+    }).catch(function() {});
+  }
+  loadUI();
 }
 
-function togglePinAnn(annId) {
-  var anns = Storage.get('announcements', []);
-  for (var i = 0; i < anns.length; i++) { if (anns[i].id === annId) { anns[i].pinned = !anns[i].pinned; break; } }
-  Storage.set('announcements', anns);
-  loadAnnouncementsAdmin();
+
+
+function loadUI() {
+  var container = document.getElementById('mainContainer');
+
+  if (!isLoggedIn) {
+    showLogin();
+  } else {
+    showAdminPanel();
+  }
 }
 
-function deleteAnnouncement(annId) {
-  if (!confirm('确定删除此公告？')) return;
-  var anns = Storage.get('announcements', []);
-  for (var i = 0; i < anns.length; i++) { if (anns[i].id === annId) { anns.splice(i, 1); break; } }
-  Storage.set('announcements', anns);
-  toast('已删除');
-  loadAnnouncementsAdmin();
-}
 
-// 页面加载完成后初始化
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
   init();
 }
-
-var _sortMode={villages:false,roles:false,chiefs:false};
-var _dragSrc=-1,_dragType='';
-function setSortMode(type){
-  _sortMode[type]=!_sortMode[type];
-  var show=document.getElementById('sortTip'+type.charAt(0).toUpperCase()+type.slice(1));
-  if(show) show.style.display=_sortMode[type]?'block':'none';
-  document.getElementById('sortBtn'+type.charAt(0).toUpperCase()+type.slice(1)).classList.toggle('active',_sortMode[type]);
-}
-function makeDraggable(el,idx,type){
-  el.setAttribute('draggable',true);
-  el.addEventListener('dragstart',function(e){_dragSrc=idx;_dragType=type;el.classList.add('dragging');e.dataTransfer.effectAllowed='move';});
-  el.addEventListener('dragend',function(){el.classList.remove('dragging');document.querySelectorAll('.drag-over').forEach(function(x){x.classList.remove('drag-over');});});
-  el.addEventListener('dragover',function(e){e.preventDefault();if(_dragSrc!==idx){el.classList.add('drag-over');}});
-  el.addEventListener('dragleave',function(){el.classList.remove('drag-over');});
-  el.addEventListener('drop',function(e){e.preventDefault();el.classList.remove('drag-over');if(_dragSrc===idx)return;
-    if(type==='villages'){var v=Storage.get('villages',[]);var t=v.splice(_dragSrc,1)[0];v.splice(idx,0,t);Storage.set('villages',v);}
-    else if(type==='chiefs'){var a=Storage.get('township_applications',[]);var ta=a.splice(_dragSrc,1)[0];a.splice(idx,0,ta);Storage.set('township_applications',a);}
-    _dragSrc=-1;});
-}
-function renderAllPanels(){loadVillageStats();loadChiefApplications();loadRoleApplications();}
 </script>
-
-<script src="cloud_db.js"></script>
+<script src="cloud_db.js"><\/script>
 </body>
 </html>
