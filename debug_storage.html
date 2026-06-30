@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>本地存储调试</title>
+<style>
+body{font-family:Arial;padding:20px;background:#f5f5f5}
+h2{color:#2E7D32}
+.data-item{margin:8px 0;padding:10px;background:white;border-radius:8px;border-left:4px solid #4CAF50}
+.data-item .key{font-weight:bold;color:#333}
+.data-item .val{color:#666;word-break:break-all;font-size:13px;margin-top:4px}
+.btn{display:inline-block;padding:10px 20px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer;margin:5px}
+.btn-red{background:#F44336}
+h3{color:#555;margin-top:20px}
+.ok{color:#2E7D32;font-weight:bold}
+.err{color:#F44336;font-weight:bold}
+</style>
+</head>
+<body>
+<h2>📦 localStorage 内容</h2>
+<div id="output">加载中...</div>
+
+<h3>快速操作</h3>
+<button class="btn" onclick="location.href='login.html'">去登录页</button>
+<button class="btn" onclick="location.href='profile.html'">去个人中心</button>
+<button class="btn btn-red" onclick="if(confirm('确定清空所有本地数据？')){localStorage.clear();location.reload();}">清空全部数据</button>
+
+<script>
+// 读取所有 localStorage
+var out = document.getElementById('output');
+var html = '';
+var count = 0;
+
+for (var key in localStorage) {
+  if (!localStorage.hasOwnProperty(key)) continue;
+  try {
+    var val = localStorage.getItem(key);
+    var obj = JSON.parse(val);
+    var preview = JSON.stringify(obj).substring(0, 200);
+    if (preview.length >= 200) preview += '...';
+    
+    // 判断数据类型
+    var type = Array.isArray(obj) ? '📋 数组' : '📄 对象';
+    var len = Array.isArray(obj) ? '（' + obj.length + '条）' : '';
+    
+    html += '<div class="data-item">';
+    html += '<div class="key">' + type + ' ' + len + ' <b>' + key + '</b></div>';
+    html += '<div class="val">' + preview + '</div>';
+    
+    // 如果是 accounts 或 user，单独显示重要字段
+    if (key.indexOf('account') >= 0 || key.indexOf('user') >= 0 || key.indexOf('registration') >= 0) {
+      if (Array.isArray(obj)) {
+        obj.forEach(function(item, idx) {
+          html += '<div style="margin:4px 0 4px 16px;padding:6px;background:#f0f0f0;border-radius:4px;font-size:12px">';
+          html += '[' + idx + '] id=' + (item.id||'无') + ' account=' + (item.account||'无') + ' phone=' + (item.phone||'无') + ' _current=' + (item._current||'无') + ' status=' + (item.status||'无') + ' role=' + (item.role||'无');
+          html += '</div>';
+        });
+      } else {
+        html += '<div style="margin:4px 0 0 16px;font-size:12px;color:#888">id=' + (obj.id||'无') + ' | account=' + (obj.account||'无') + ' | phone=' + (obj.phone||'无') + ' | _current=' + (obj._current||'无') + '</div>';
+      }
+    }
+    
+    html += '</div>';
+    count++;
+  } catch(e) {
+    html += '<div class="data-item"><div class="key">' + key + ' <span class="err">(非JSON)</span></div><div class="val" style="color:#999">' + localStorage.getItem(key) + '</div></div>';
+    count++;
+  }
+}
+
+if (count === 0) {
+  out.innerHTML = '<p class="err">localStorage 是空的</p>';
+} else {
+  out.innerHTML = '<p class="ok">共 ' + count + ' 个 key：</p>' + html;
+}
+
+// 检查关键数据
+var accounts = null;
+try { accounts = JSON.parse(localStorage.getItem('village_accounts') || localStorage.getItem('accounts') || '[]'); } catch(e) {}
+var currentUser = null;
+if (Array.isArray(accounts)) {
+  accounts.forEach(function(a) { if (a._current) currentUser = a; });
+}
+if (!currentUser) {
+  try { currentUser = JSON.parse(localStorage.getItem('village_user') || localStorage.getItem('user') || 'null'); } catch(e) {}
+}
+
+var regs = null;
+try { regs = JSON.parse(localStorage.getItem('village_registrations') || localStorage.getItem('registrations') || '[]'); } catch(e) {}
+
+document.title = '调试(' + count + '个key)';
+</script>
+
+<h3 style="margin-top:20px">🔍 关键状态检查</h3>
+<script>
+document.write('<p><b>当前账号：</b>' + (currentUser ? currentUser.account + ' (id=' + currentUser.id + ', _current=' + currentUser._current + ')' : '<span class="err">未登录（null）</span>') + '</p>');
+document.write('<p><b>注册记录数：</b>' + (Array.isArray(regs) ? regs.length + ' 条' : '<span class="err">无</span>') + '</p>');
+if (Array.isArray(regs) && regs.length > 0) {
+  document.write('<p><b>最新注册记录：</b></p>');
+  var r = regs[0];
+  document.write('<div style="background:#fff3cd;padding:10px;border-radius:6px;font-size:13px">');
+  document.write('id=' + r.id + ' | role=' + r.role + ' | name=' + r.name + ' | accountId=' + r.accountId + ' | accountName=' + r.accountName + ' | phone=' + r.phone + ' | status=' + r.status);
+  document.write('</div>');
+}
+</script>
+</body>
+</html>
