@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>设置 GitHub Token</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#f5f5f5;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.card{background:#fff;border-radius:16px;padding:32px 24px;max-width:400px;width:90%;box-shadow:0 4px 20px rgba(0,0,0,.1)}
+h2{color:#333;font-size:20px;margin-bottom:8px;text-align:center}
+.sub{color:#888;font-size:13px;text-align:center;margin-bottom:24px;line-height:1.6}
+.info{background:#e8f5e9;border-radius:10px;padding:14px;margin-bottom:20px;font-size:13px;color:#555;line-height:1.7}
+.info b{color:#2e7d32}
+.token-input{width:100%;padding:12px 14px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;outline:none;transition:border .2s;margin-bottom:14px}
+.token-input:focus{border-color:#4CAF50}
+.token-input.error{border-color:#F44336}
+.btn{width:100%;padding:14px;background:#2e7d32;color:#fff;border:none;border-radius:10px;font-size:16px;cursor:pointer;margin-bottom:12px;transition:background .2s}
+.btn:hover{background:#1B5E20}
+.btn:active{background:#388E3C}
+.btn:disabled{background:#a5d6a7;cursor:not-allowed}
+.status{text-align:center;font-size:13px;padding:10px;border-radius:8px;margin-top:12px;display:none}
+.status.ok{background:#e8f5e9;color:#2e7d32;display:block}
+.status.err{background:#ffebee;color:#c62828;display:block}
+.hint{color:#999;font-size:11px;text-align:center;margin-top:16px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>🔑 GitHub Token 设置</h2>
+  <p class="sub">用于多设备数据同步<br>Token 只保存在本设备，不上传</p>
+  
+  <div class="info">
+    <b>为什么需要 Token？</b><br>
+    数据保存在你的 GitHub 仓库里，<br>
+    需要 Token 才能写入。<br><br>
+    <b>Token 安全吗？</b><br>
+    Token 存在你本设备的浏览器中，<br>
+    不上传 GitHub，完全安全。
+  </div>
+  
+  <input type="password" id="tokenInput" class="token-input" placeholder="粘贴 GitHub Token" autocomplete="off">
+  
+  <button class="btn" id="saveBtn" onclick="saveToken()">保存 Token</button>
+
+  <div id="status" class="status"></div>
+  
+  <p class="hint">
+    Token 格式: ghp_xxxxxxxxxx<br>
+    在每个设备上设置一次即可
+  </p>
+</div>
+
+<script>
+function showStatus(msg, isOk) {
+  var el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status ' + (isOk ? 'ok' : 'err');
+  el.style.display = 'block';
+}
+
+function saveToken() {
+  var input = document.getElementById('tokenInput');
+  var token = input.value.trim();
+  if (!token) {
+    input.classList.add('error');
+    showStatus('请先粘贴 Token', false);
+    return;
+  }
+  if (token.length < 10) {
+    showStatus('Token 格式不正确', false);
+    return;
+  }
+  try {
+    localStorage.setItem('village_github_token', token);
+    showStatus('✅ Token 保存成功！可以去注册/登录了', true);
+    input.classList.remove('error');
+  } catch(e) {
+    showStatus('保存失败: ' + e.message, false);
+  }
+}
+
+function useDefault() {
+  document.getElementById('tokenInput').value = TOKEN;
+  document.getElementById('tokenInput').classList.remove('error');
+  saveToken();
+}
+
+// 检查是否已有 Token
+(function() {
+  try {
+    var existing = localStorage.getItem('village_github_token');
+    if (existing) {
+      document.getElementById('tokenInput').value = existing;
+      showStatus('✅ Token 已存在（' + existing.substring(0,8) + '...）', true);
+    }
+  } catch(e) {}
+})();
+</script>
+</body>
+</html>
