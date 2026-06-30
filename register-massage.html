@@ -619,6 +619,7 @@ function logout() {
       var regs = Storage.get('registrations', []);
       regs.unshift(newReg);
       Storage.set('registrations', regs);
+      alert('[调试] 已保存注册记录，accountId=' + newReg.accountId + '\nlocalStorage registrations 现在有多少条=' + regs.length);
     
     // 生成审核分享链接
     if (window.showShareLink) {
