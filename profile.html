@@ -368,8 +368,8 @@ function renderPage() {
 
       // 获取我的所有注册记录
       var regs = Storage.get('registrations', []);
-            alert('[调试] currentUser: ' + (currentUser ? currentUser.account + ' / id=' + currentUser.id : 'null') + '\nregistrations 总条数=' + regs.length);
-      console.log('[DEBUG] currentUser:', currentUser, 'regs:', regs);
+            // 已移除调试
+      // 已移除调试
 var myRegs = [];
       for (var i = 0; i < regs.length; i++) {
         if (regs[i].accountId === currentUser.id || regs[i].accountName === currentUser.account || (currentUser.phone && regs[i].phone === currentUser.phone)) {
