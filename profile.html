@@ -273,7 +273,8 @@
     加载中...
   </div>
 
-  <script>
+  <script src="cloud_frontend.js"></script>
+<script>
 // SAFETY NET: prevent ReferenceError
 var container = document.getElementById("mainContent");
 
@@ -2702,7 +2703,21 @@ window.auditCamps = function() {
     }
     // 页面初始化
     function init() {
+      // 先快速渲染本地数据（即时显示）
       renderPage();
+      // 发起云端同步，完成后重新渲染
+      syncFromCloud();
+    }
+    
+    function syncFromCloud() {
+      if (window._cloud) {
+        window._cloud.loadAll(function(ok) {
+          if (ok) {
+            currentUser = getCurrentUser();
+            if (currentUser) renderPage();
+          }
+        });
+      }
     }
     
     init();
