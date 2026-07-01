@@ -29,7 +29,7 @@
     }
     .header-title { font-size: 18px; font-weight: bold; }
     .header-back { font-size: 20px; cursor: pointer; padding: 4px 8px; }
-    .container { padding: 60px 16px 80px; max-width: 750px; margin: 0 auto; }
+    .container { padding: 84px 16px 80px; max-width: 750px; margin: 0 auto; }
 
     /* 用户信息卡 */
     .user-card {
@@ -256,7 +256,23 @@
       font-size: 14px;
       z-index: 9999;
     }
-  </style>
+  
+    .cloud-strip {
+      position: fixed;
+      top: 48px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      padding: 4px 0;
+      font-size: 12px;
+      z-index: 99;
+      transition: all 0.3s;
+      font-weight: bold;
+    }
+    .cloud-strip.on { background: #E8F5E9; color: #2E7D32; }
+    .cloud-strip.off { background: #FFF3E0; color: #E65100; }
+    .cloud-strip.hidden { display: none; }
+</style>
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
@@ -269,6 +285,7 @@
     <span style="width:40px"></span>
   </div>
 
+  <div id="cloudStrip" class="cloud-strip hidden">⏳ 同步中...</div>
   <div class="container" id="mainContent">
     加载中...
   </div>
@@ -2710,14 +2727,28 @@ window.auditCamps = function() {
     }
     
     function syncFromCloud() {
-      if (window._cloud) {
-        window._cloud.loadAll(function(ok) {
-          if (ok) {
-            currentUser = getCurrentUser();
-            if (currentUser) renderPage();
-          }
-        });
+      var strip = document.getElementById("cloudStrip");
+      if (!window._cloud) {
+        if (strip) { strip.className = "cloud-strip off"; strip.textContent = "☁️ 云端未连接"; strip.style.display = ""; }
+        return;
       }
+      if (strip) { strip.className = "cloud-strip off"; strip.textContent = "⏳ 连接云端..."; strip.style.display = ""; }
+      window._cloud.loadAll(function(ok) {
+        if (strip) {
+          if (ok) {
+            strip.className = "cloud-strip on";
+            strip.textContent = "☁️ 云端已连接，数据已同步";
+            setTimeout(function() { strip.style.display = "none"; }, 3000);
+          } else {
+            strip.className = "cloud-strip off";
+            strip.textContent = "☁️ 云端连接失败，使用本地数据";
+          }
+        }
+        if (ok) {
+          currentUser = getCurrentUser();
+          if (currentUser) renderPage();
+        }
+      });
     }
     
     init();
