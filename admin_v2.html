@@ -177,7 +177,9 @@ function renderAdmin() {
     else {
       html += '<div class="card">';
       villages.forEach(function(v) {
-        html += '<div class="announce-item"><div class="announce-title">' + esc(v.name || '?') + '</div><div class="announce-text">村长:' + esc(v.chiefName || '?') + ' | 电话:' + esc(v.phone || '?') + '</div></div>';
+        var vid = (v.id || v.name || '').replace(/'/g, "\\'");
+        html += '<div class="announce-item"><div class="announce-title">' + esc(v.name || '?') + '</div><div class="announce-text">村长:' + esc(v.chiefName || '?') + ' | 电话:' + esc(v.phone || '?') + '</div>';
+        html += '<button class="btn-no" style="margin-top:6px;padding:6px;font-size:12px;" onclick="deleteVillage(\'' + vid + '\')">🗑️ 删除村庄</button></div>';
       });
       html += '</div>';
     }
@@ -241,6 +243,10 @@ function renderCard(r) {
     html += '<button class="btn-no" style="flex:1;margin:0;" onclick="doReject(\'' + (r.id||'') + '\')">拒绝</button>';
     html += '</div>';
   }
+  // 任何状态都有"删除记录"按钮
+  html += '<div style="display:flex;gap:8px;margin-top:6px;">';
+  html += '<button class="btn-no" style="flex:1;margin:0;padding:6px;font-size:12px;" onclick="deleteRegistration(\'' + (r.id||'') + '\')">🗑️ 删除记录</button>';
+  html += '</div>';
   html += '</div>';
   return html;
 }
@@ -354,6 +360,47 @@ window.deleteAnnounce = function(id) {
     S.set('announcements', local);
   }
   renderAdmin();
+};
+
+window.deleteRegistration = function(id) {
+  if (!id) return;
+  if (!confirm('确定删除此角色记录？此操作不可恢复！')) return;
+  if (cloudData.registrations) {
+    cloudData.registrations = cloudData.registrations.filter(function(r) { return String(r.id) !== String(id); });
+    S.set('registrations', cloudData.registrations);
+    saveToCloud();
+  } else {
+    var local = S.get('registrations', []);
+    local = local.filter(function(r) { return String(r.id) !== String(id); });
+    S.set('registrations', local);
+  }
+  renderAdmin();
+  alert('已删除角色记录');
+};
+
+window.deleteVillage = function(idOrName) {
+  if (!confirm('确定删除此村庄？此操作不可恢复！')) return;
+  var success = false;
+  if (cloudData.villages) {
+    var newList = [];
+    for (var i = 0; i < cloudData.villages.length; i++) {
+      if (String(cloudData.villages[i].id || cloudData.villages[i].name) !== String(idOrName)) {
+        newList.push(cloudData.villages[i]);
+      } else {
+        success = true;
+      }
+    }
+    cloudData.villages = newList;
+    S.set('villages', cloudData.villages);
+    if (success) saveToCloud();
+  } else {
+    var local = S.get('villages', []);
+    local = local.filter(function(v) { return String(v.id || v.name) !== String(idOrName); });
+    S.set('villages', local);
+    success = true;
+  }
+  renderAdmin();
+  if (success) alert('已删除村庄');
 };
 
 window.showSettings = function() {
