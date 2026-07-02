@@ -623,12 +623,58 @@ function logout() {
       };
       regs.unshift(newReg);
       Storage.set('registrations', regs);
-      toast('注册成功！');
-      showShareLink(newReg);
-      setTimeout(function() { location.href = 'index.html'; }, 1500);
+
+      // 直接推送到云端（绕过微信对外部脚本的拦截）
+      pushToCloud({ registrations: regs });
+
+      // 成功弹窗
+      var modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:"PingFang SC","Microsoft YaHei",sans-serif;';
+      modal.innerHTML = '<div style="background:#fff;border-radius:12px;padding:24px;max-width:340px;width:90%;text-align:center;">' +
+        '<div style="font-size:48px;margin-bottom:12px;">✅</div>' +
+        '<div style="font-weight:bold;font-size:16px;margin-bottom:8px;color:#333;">申请已提交！</div>' +
+        '<div style="color:#666;font-size:13px;margin-bottom:16px;">请等待管理员审核通过</div>' +
+        '<div style="background:#f5f5f5;border-radius:8px;padding:12px;font-size:12px;color:#888;margin-bottom:16px;">可在"我的"页面查看审核进度</div>' +
+        '<button onclick="location.href=\'index.html\'" style="width:100%;padding:12px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer;">返回首页</button>' +
+        '</div>';
+      document.body.appendChild(modal);
     }
 
-    function showShareLink(regData) {
+    // 直接推送到 Supabase 云端（不依赖外部脚本，微信内置浏览器可用）
+    function pushToCloud(data) {
+      var URL = 'https://eivqbbxyllsorbvgqsju.supabase.co';
+      var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.DruJ-whOvHcA5fGrTaEvzRChB3sV4WRMf6cWR3Ru3fw';
+      var TABLE = 'village_data';
+      var ROW_ID = 'init';
+
+      // 先读取现有数据
+      fetch(URL + '/rest/v1/' + TABLE + '?id=eq.' + ROW_ID + '&select=data', {
+        headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Accept-Profile': 'public' }
+      }).then(function(r) { return r.json(); })
+        .then(function(arr) {
+          var existing = (arr && arr[0] && arr[0].data) ? arr[0].data : {};
+          // 合并数据
+          var keys = Object.keys(data);
+          keys.forEach(function(k) {
+            if (!existing[k]) existing[k] = [];
+            var ids = {};
+            existing[k].forEach(function(item) { if (item && item.id) ids[item.id] = item; });
+            (Array.isArray(data[k]) ? data[k] : [data[k]]).forEach(function(item) {
+              if (item && item.id) ids[item.id] = item;
+            });
+            existing[k] = Object.keys(ids).map(function(id) { return ids[id]; });
+          });
+          // 写回云端
+          return fetch(URL + '/rest/v1/' + TABLE, {
+            method: 'POST',
+            headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Accept-Profile': 'public', 'Prefer': 'resolution=merge-duplicates' },
+            body: JSON.stringify({ id: ROW_ID, data: existing })
+          });
+        }).catch(function(e) {
+          console.warn('云端同步失败（本地已保存）:', e.message);
+        });
+    }
+function showShareLink(regData) {
       if (!regData) return;
       var noPhoto = JSON.parse(JSON.stringify(regData));
       delete noPhoto.photo;
@@ -653,7 +699,5 @@ function logout() {
       };
     }
   </script>
-<script src="cloud_db.js"></script>
-<script src="share_helper.js"></script>
 </body>
 </html>
