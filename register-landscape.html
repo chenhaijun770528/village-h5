@@ -397,6 +397,7 @@ body {
   .func-item { padding: 12px 4px; }
   .func-text { font-size: 11px; }
 }</style>
+  <script src="cloud_db.js"></script>
 </head>
 <body>
   <div class="header"><span class="header-back" onclick="history.back()">←</span><span class="header-title">🌿 建筑园林设计师注册</span><span style="width:40px"></span></div>
@@ -570,9 +571,6 @@ const Storage = {
 
 // 初始化示例数据到localStorage
 function initSampleData() {
-  if (typeof CloudDB !== 'undefined' && CloudDB.loadFromPublic) {
-    CloudDB.loadFromPublic().catch(function(){});
-  }
   if (!localStorage.getItem('village_villages')) {
     Storage.set('villages', DB.villages)
   }
@@ -600,84 +598,31 @@ function logout() {
   currentUser = null
   localStorage.removeItem('village_user')
 }</script>
-  <script>
-    // 提交注册（直接发Supabase云端，跨设备共享）
-    function submit() {
+  <script>    function submit() {
       var name = document.getElementById('name').value.trim();
       var phone = document.getElementById('phone').value.trim();
-      var years = document.getElementById('years').value.trim();
-      if (!name || !phone || !years) { toast('请填写必填项'); return; }
-      var account = Storage.get('current_user', null);
-      var newReg = {
-        id: genId(),
-        role: '建筑园林设计师',
+      if (!name) { alert('请输入姓名'); return; }
+      if (!phone || !/^1\d{10}$/.test(phone)) { alert('请输入正确的手机号'); return; }
+      var btn = document.querySelector('button[onclick="submit()"]');
+      if (btn) { btn.disabled = true; btn.textContent = '提交中...'; }
+      var regData = {
+        id: 'r' + Date.now(),
+        role: '园林设计师',
         name: name,
         phone: phone,
-        years: years,
-        specialty: document.getElementById('specialty').value,
-        cert: document.getElementById('cert').value,
-        accountId: account ? account.id : '',
-        accountName: account ? account.account : '',
         status: '待审核',
-        time: Date.now()
+        createdAt: Date.now()
       };
-      try {
-        var regs = Storage.get('registrations', []);
-        regs.unshift(newReg);
-        Storage.set('registrations', regs);
-      } catch(e) {
-        alert('本地保存失败:' + e.message); return;
-      }
-      // 清空表单
-      document.querySelectorAll('input,textarea').forEach(function(el){ el.value = ''; });
-      // 云端同步（不阻塞，微信可能失败）
-      pushToCloud(newReg, function(ok) {
-        if (!ok) {
-          var w = document.createElement('div');
-          w.style = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999999;max-width:80%;text-align:center';
-          w.textContent = '☁️ 云端同步失败，请联系管理员';
-          document.body.appendChild(w);
-          setTimeout(function(){ w.remove(); }, 5000);
-        }
+      cloudAddRegistration(regData).then(function() {
+        alert('申请已提交，等待管理员审核！');
+        document.getElementById('regForm').reset();
+        if (btn) { btn.disabled = false; btn.textContent = '提交'; }
+        setTimeout(function() { location.href = 'index.html'; }, 1500);
+      }).catch(function(err) {
+        alert('提交失败: ' + (err.msg || JSON.stringify(err)));
+        if (btn) { btn.disabled = false; btn.textContent = '提交'; }
       });
-      // 成功弹窗
-      var modal = document.createElement('div');
-      modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:"PingFang SC","Microsoft YaHei",sans-serif';
-      modal.innerHTML = '<div style="background:#fff;border-radius:12px;padding:28px;max-width:340px;width:90%;text-align:center">' +
-        '<div style="font-size:52px;margin-bottom:14px">✅</div>' +
-        '<div style="font-weight:bold;font-size:17px;margin-bottom:10px;color:#333">申请已提交！</div>' +
-        '<div style="color:#666;font-size:13px;line-height:1.6;margin-bottom:16px">管理员审核通过后可在"我的"页面查看</div>' +
-        '<button onclick="document.body.removeChild(document.getElementById(\'smodal\'));location.href=\'index.html\'" style="width:100%;padding:13px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer;font-weight:bold">返回首页</button>' +
-        '</div>';
-      modal.id = 'smodal';
-      document.body.appendChild(modal);
     }
-
-    // 推送注册数据到云端（Supabase直接请求，跨设备共享）
-    function pushToCloud(newItem, callback) {
-      var URL = 'https://eivqbbxyllsorbvgqsju.supabase.co';
-      var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.DruJ-whOvHcA5fGrTaEvzRChB3sV4WRMf6cWR3Ru3fw';
-      var ROW_ID = 'init';
-      fetch(URL + '/rest/v1/village_data?id=eq.' + ROW_ID + '&select=data', {
-        headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Accept-Profile': 'public' }
-      }).then(function(r) { return r.json(); })
-        .then(function(arr) {
-          var cloudData = (arr && arr[0] && arr[0].data) ? arr[0].data : {};
-          if (!cloudData.registrations) cloudData.registrations = [];
-          var ids = {};
-          cloudData.registrations.forEach(function(item) { if (item && item.id) ids[item.id] = item; });
-          if (newItem && newItem.id) ids[newItem.id] = newItem;
-          cloudData.registrations = Object.keys(ids).map(function(id) { return ids[id]; });
-          return fetch(URL + '/rest/v1/village_data', {
-            method: 'POST',
-            headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Accept-Profile': 'public', 'Prefer': 'resolution=merge-duplicates' },
-            body: JSON.stringify({ id: ROW_ID, data: cloudData })
-          });
-        }).then(function(r2) {
-          if (r2.ok) { console.log('云端同步成功'); if (callback) callback(true); }
-          else { throw new Error(''+r2.status); }
-        }).catch(function(e) {
-          console.warn('云端同步失败:', e.message);
-          if (callback) callback(false, e.message);
-        });
-    }
+  </script>
+</body>
+</html>
