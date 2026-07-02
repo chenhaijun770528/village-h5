@@ -196,80 +196,36 @@
     }
 
     function submitTourist() {
-      var currentAccount = Storage.get('village_user', null);
-      if (!currentAccount) {
-        toast('请先登录');
-        setTimeout(function() { location.href = 'login.html'; }, 1500);
-        return;
-      }
-
       var name = document.getElementById('name').value.trim();
       var phone = document.getElementById('phone').value.trim();
-
-      if (!name) { toast('请输入姓名'); return; }
-      if (!phone || !/^1\d{10}$/.test(phone)) { toast('请输入正确的手机号'); return; }
-
-      // 游客自动通过
-      var data = {
-        id: genId(),
-        accountId: currentAccount.id,
-        accountName: currentAccount.account,
+      if (!name) { alert('请输入姓名'); return; }
+      if (!phone || !/^1\d{10}$/.test(phone)) { alert('请输入正确的手机号'); return; }
+      var btn = document.querySelector('button[onclick="submitTourist()"]');
+      if (btn) { btn.disabled = true; btn.textContent = '提交中...'; }
+      var regData = {
+        id: 'r' + Date.now(),
         role: '游客',
         name: name,
         phone: phone,
-        gender: document.getElementById('gender').value,
-        purpose: document.getElementById('purpose').value,
-        travelDate: document.getElementById('travelDate').value,
-        days: document.getElementById('days').value,
-        accommodation: document.getElementById('accommodation').value,
-        notes: document.getElementById('notes').value.trim(),
-        status: '已通过',
-        applyTime: Date.now(),
-        reviewTime: Date.now()
+        gender: (document.getElementById('gender') || {value:''}).value,
+        purpose: (document.getElementById('purpose') || {value:''}).value,
+        travelDate: (document.getElementById('travelDate') || {value:''}).value,
+        days: (document.getElementById('days') || {value:''}).value,
+        accommodation: (document.getElementById('accommodation') || {value:''}).value,
+        notes: (document.getElementById('notes') || {value:''}).value.trim(),
+        status: '待审核',
+        createdAt: Date.now()
       };
-
-      var regs = Storage.get('registrations', []);
-      regs.unshift(data);
-      Storage.set('registrations', regs);
-    
-    // 生成审核分享链接
-    if (window.showShareLink) {
-      var _shareData = regs[regs.length - 1];
-      // 确保有 role 字段
-      if (!_shareData.role) _shareData.role = 'tourist';
-      showShareLink(_shareData, _shareData.role);
-    };
-      if (typeof CloudDB !== 'undefined') CloudDB.push({registrations: regs}, '提交tourist注册申请').catch(function(){});
-
-      // 立即开通游客角色
-      currentAccount.currentRole = 'tourist';
-      currentAccount.currentRoleId = data.id;
-      currentAccount.currentRoleName = name;
-      Storage.set('village_user', currentAccount);
-
-      // 更新账号列表
-      var accounts = Storage.get('village_accounts', []);
-      for (var i = 0; i < accounts.length; i++) {
-        if (accounts[i].id === currentAccount.id) {
-          accounts[i].currentRole = 'tourist';
-          accounts[i].currentRoleId = data.id;
-          accounts[i].currentRoleName = name;
-          break;
-        }
-      }
-      Storage.set('village_accounts', accounts);
-
-      
-    function showShareLink(regData) {
-      if (!regData) return;
-      var noPhoto = JSON.parse(JSON.stringify(regData));
-      delete noPhoto.photo;
-      var basePath = location.pathname.replace(/\/[^/]+$/, '/');
-      var shareLink = location.origin + basePath + 'share.html?data=' + encodeURIComponent(JSON.stringify(noPhoto));
-      var modal = document.createElement('div');
-      modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:"PingFang SC","Microsoft YaHei",sans-serif;';
-      modal.innerHTML = '<div style="background:#fff;border-radius:12px;padding:24px;max-width:340px;width:90%;">' +
-        '<div style="font-weight:bold;font-size:16px;margin-bottom:12px;color:#2E7D32;">&#10003; 注册成功！</div>' +
+      cloudAddRegistration(regData).then(function() {
+        alert('申请已提交！');
+        document.querySelector('.form-card').reset();
+        if (btn) { btn.disabled = false; btn.textContent = '注册游客身份'; }
+        setTimeout(function() { location.href = 'index.html'; }, 1500);
+      }).catch(function(err) {
+        alert('提交失败: ' + (err.msg || JSON.stringify(err)));
+        if (btn) { btn.disabled = false; btn.textContent = '注册游客身份'; }
+      });
+    }ld;font-size:16px;margin-bottom:12px;color:#2E7D32;">&#10003; 注册成功！</div>' +
         '<div style="color:#666;font-size:13px;margin-bottom:10px;">请复制下方链接发给管理员（如需审核）：</div>' +
         '<textarea id="shareLinkArea" readonly style="width:100%;height:80px;font-size:12px;border:1px solid #ddd;border-radius:6px;padding:8px;resize:none;box-sizing:border-box;margin-bottom:10px;"></textarea>' +
         '<button id="copyBtn" style="width:100%;padding:10px;background:#FF9800;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;margin-bottom:8px;">&#128203; 复制链接</button>' +
