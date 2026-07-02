@@ -397,6 +397,7 @@ body {
   .func-item { padding: 12px 4px; }
   .func-text { font-size: 11px; }
 }</style>
+  <script src="cloud_db.js"></script>
 </head>
 <body>
   <div class="header"><span class="header-back" onclick="history.back()">←</span><span class="header-title">🚗 顺风车司机注册</span><span style="width:40px"></span></div>
@@ -569,9 +570,6 @@ const Storage = {
 
 // 初始化示例数据到localStorage
 function initSampleData() {
-  if (typeof CloudDB !== 'undefined' && CloudDB.loadFromPublic) {
-    CloudDB.loadFromPublic().catch(function(){});
-  }
   if (!localStorage.getItem('village_villages')) {
     Storage.set('villages', DB.villages)
   }
@@ -599,52 +597,31 @@ function logout() {
   currentUser = null
   localStorage.removeItem('village_user')
 }</script>
-  <script>
-    function submit() {
-      const name = document.getElementById('name').value.trim(), phone = document.getElementById('phone').value.trim(), plate = document.getElementById('plate').value.trim()
-      if (!name || !phone || !plate) { toast('请填写必填项'); return }
-      const users = Storage.get('registrations', [])
-      users.unshift({ role: '顺风车司机', name, phone, plate, route: document.getElementById('route').value, time: Date.now() })
-      Storage.set('registrations', users);
-    
-    // 生成审核分享链接
-    if (window.showShareLink) {
-      var _shareData = users[users.length - 1];
-      // 确保有 role 字段
-      if (!_shareData.role) _shareData.role = 'carpool';
-      showShareLink(_shareData, _shareData.role);
-    }
-      if (typeof CloudDB !== 'undefined') CloudDB.push({registrations: regs}, 'carpool注册申请同步').catch(function(){});
-      
-    function showShareLink(regData) {
-      if (!regData) return;
-      var noPhoto = JSON.parse(JSON.stringify(regData));
-      delete noPhoto.photo;
-      var basePath = location.pathname.replace(//[^/]+$/, '/');
-      var shareLink = location.origin + basePath + 'share.html?data=' + encodeURIComponent(JSON.stringify(noPhoto));
-      var modal = document.createElement('div');
-      modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:"PingFang SC","Microsoft YaHei",sans-serif;';
-      modal.innerHTML = '<div style="background:#fff;border-radius:12px;padding:24px;max-width:340px;width:90%;">' +
-        '<div style="font-weight:bold;font-size:16px;margin-bottom:12px;color:#2E7D32;">&#10003; 申请已提交！</div>' +
-        '<div style="color:#666;font-size:13px;margin-bottom:10px;">请复制下方链接发给管理员审核：</div>' +
-        '<textarea id="shareLinkArea" readonly style="width:100%;height:80px;font-size:12px;border:1px solid #ddd;border-radius:6px;padding:8px;resize:none;box-sizing:border-box;margin-bottom:10px;"></textarea>' +
-        '<button id="copyBtn" style="width:100%;padding:10px;background:#FF9800;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;margin-bottom:8px;">&#128203; 复制链接</button>' +
-        '<button onclick="location.href=\'index.html\'" style="width:100%;padding:10px;background:#2E7D32;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">返回首页</button>' +
-        '</div>';
-      document.body.appendChild(modal);
-      document.getElementById('shareLinkArea').value = shareLink;
-      document.getElementById('copyBtn').onclick = function() {
-        document.getElementById('shareLinkArea').select();
-        document.execCommand('copy');
-        this.textContent = '&#10003; 已复制！';
-        setTimeout(function() { location.href = 'index.html'; }, 1000);
+  <script>    function submit() {
+      var name = document.getElementById('name').value.trim();
+      var phone = document.getElementById('phone').value.trim();
+      if (!name) { alert('请输入姓名'); return; }
+      if (!phone || !/^1\d{10}$/.test(phone)) { alert('请输入正确的手机号'); return; }
+      var btn = document.querySelector('button[onclick="submit()"]');
+      if (btn) { btn.disabled = true; btn.textContent = '提交中...'; }
+      var regData = {
+        id: 'r' + Date.now(),
+        role: '拼车',
+        name: name,
+        phone: phone,
+        status: '待审核',
+        createdAt: Date.now()
       };
-    }
-
-      toast('注册成功！'); showShareLink(users[0]); setTimeout(() => location.href = 'index.html', 1500)
+      cloudAddRegistration(regData).then(function() {
+        alert('申请已提交，等待管理员审核！');
+        document.getElementById('regForm').reset();
+        if (btn) { btn.disabled = false; btn.textContent = '提交'; }
+        setTimeout(function() { location.href = 'index.html'; }, 1500);
+      }).catch(function(err) {
+        alert('提交失败: ' + (err.msg || JSON.stringify(err)));
+        if (btn) { btn.disabled = false; btn.textContent = '提交'; }
+      });
     }
   </script>
-<script src="cloud_db.js"></script>
-<script src="share_helper.js"></script>
 </body>
 </html>
