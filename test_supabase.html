@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>测试云端</title></head>
+<body style="font-family:sans-serif;padding:20px">
+<h2>云端连接测试</h2>
+<div id="r" style="margin-top:16px;padding:12px;background:#eee;border-radius:8px;white-space:pre-wrap;font-size:13px"></div>
+<script>
+var URL = 'https://eivqbbxyllsorbvgqsju.supabase.co';
+var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.DruJ-whOvHcA5fGrTaEvzRChB3sV4WRMf6cWR3Ru3fw';
+var el = document.getElementById('r');
+
+function log(m) { el.textContent += m + '\n'; }
+
+function testFetch() {
+  log('1. 测试 fetch GET...');
+  fetch(URL + '/rest/v1/village_data?id=eq.init&select=data', {
+    headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Accept-Profile': 'public' }
+  }).then(function(r) {
+    log('   fetch状态: ' + r.status);
+    return r.json();
+  }).then(function(d) {
+    log('   数据长度: ' + (d && d.length));
+    if (d && d[0] && d[0].data) {
+      var keys = Object.keys(d[0].data);
+      log('   云端有 ' + keys.length + ' 个字段: ' + keys.join(', '));
+      log('   ✅ fetch 可以访问Supabase');
+    } else {
+      log('   云端暂无数据（正常）');
+      log('   ✅ fetch 可以访问Supabase');
+    }
+    testXHR();
+  }).catch(function(e) {
+    log('   ❌ fetch失败: ' + e.message);
+    testXHR();
+  });
+}
+
+function testXHR() {
+  log('2. 测试 XHR GET...');
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', URL + '/rest/v1/village_data?id=eq.init&select=data', true);
+  xhr.setRequestHeader('apikey', KEY);
+  xhr.setRequestHeader('Authorization', 'Bearer ' + KEY);
+  xhr.setRequestHeader('Accept-Profile', 'public');
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4) {
+      log('   XHR状态: ' + xhr.status);
+      try { var d = JSON.parse(xhr.responseText); log('   XHR数据: ' + (d && d.length) + '条'); } catch(e) { log('   XHR解析: ' + e.message); }
+      testWrite();
+    }
+  };
+  xhr.timeout = 8000;
+  xhr.ontimeout = function() { log('   XHR超时'); testWrite(); };
+  xhr.onerror = function() { log('   XHR网络错误'); testWrite(); };
+  xhr.send();
+}
+
+function testWrite() {
+  log('3. 测试 fetch POST (写入一条测试数据)...');
+  var testData = { id: 'init', data: { _test: '测试-' + Date.now() } };
+  fetch(URL + '/rest/v1/village_data', {
+    method: 'POST',
+    headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Accept-Profile': 'public', 'Prefer': 'resolution=merge-duplicates' },
+    body: JSON.stringify(testData)
+  }).then(function(r) {
+    log('   POST状态: ' + r.status + (r.status === 201 || r.status === 200 ? ' ✅ 可写入!' : ' ❌ 写入失败'));
+    log('4. 全部测试完成');
+  }).catch(function(e) {
+    log('   POST失败: ' + e.message + ' ❌');
+  });
+}
+
+testFetch();
+</script>
+</body></html>
