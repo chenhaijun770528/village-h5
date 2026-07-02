@@ -621,73 +621,63 @@ function logout() {
         status: '待审核',
         time: Date.now()
       };
-
-      // 保存到本地（带错误处理）
       try {
         var regs = Storage.get('registrations', []);
         regs.unshift(newReg);
         Storage.set('registrations', regs);
       } catch(e) {
-        alert('本地保存失败:' + e.message);
-        return;
+        alert('本地保存失败:' + e.message); return;
       }
-
-      // 立即刷新列表显示
-      renderRegList();
-
-      // 直接推送到云端（不依赖外部脚本）
-      pushToCloud({ registrations: [newReg] });
-
       // 清空表单
       document.querySelectorAll('input,textarea').forEach(function(el){ el.value = ''; });
-
+      // 云端同步（不阻塞，微信可能失败）
+      pushToCloud(newReg, function(ok) {
+        if (!ok) {
+          var w = document.createElement('div');
+          w.style = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999999;max-width:80%;text-align:center';
+          w.textContent = '☁️ 云端同步失败，请联系管理员';
+          document.body.appendChild(w);
+          setTimeout(function(){ w.remove(); }, 5000);
+        }
+      });
       // 成功弹窗
       var modal = document.createElement('div');
-      modal.id = 'submitSuccessModal';
-      modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:"PingFang SC","Microsoft YaHei",sans-serif;';
-      modal.innerHTML = '<div style="background:#fff;border-radius:12px;padding:28px;max-width:340px;width:90%;text-align:center;">' +
-        '<div style="font-size:52px;margin-bottom:14px;">✅</div>' +
-        '<div style="font-weight:bold;font-size:17px;margin-bottom:10px;color:#333;">申请已提交！</div>' +
-        '<div style="color:#666;font-size:13px;line-height:1.6;margin-bottom:16px;">管理员审核通过后<br>可在"我的"页面查看结果</div>' +
-        '<div style="background:#e8f5e9;border-radius:8px;padding:10px;font-size:12px;color:#2E7D32;margin-bottom:20px;">📶 数据已同步至云端</div>' +
-        '<button onclick="document.getElementById(\'submitSuccessModal\').remove();location.href=\'index.html\'" style="width:100%;padding:13px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer;font-weight:bold;">返回首页</button>' +
+      modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:"PingFang SC","Microsoft YaHei",sans-serif';
+      modal.innerHTML = '<div style="background:#fff;border-radius:12px;padding:28px;max-width:340px;width:90%;text-align:center">' +
+        '<div style="font-size:52px;margin-bottom:14px">✅</div>' +
+        '<div style="font-weight:bold;font-size:17px;margin-bottom:10px;color:#333">申请已提交！</div>' +
+        '<div style="color:#666;font-size:13px;line-height:1.6;margin-bottom:16px">管理员审核通过后可在"我的"页面查看</div>' +
+        '<button onclick="document.body.removeChild(document.getElementById(\'smodal\'));location.href=\'index.html\'" style="width:100%;padding:13px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer;font-weight:bold">返回首页</button>' +
         '</div>';
+      modal.id = 'smodal';
       document.body.appendChild(modal);
     }
 
-    // 直接推送到 Supabase 云端（不依赖外部脚本，微信内置浏览器可用）
-    function pushToCloud(arr) {
+    // 推送注册数据到云端（Supabase直接请求，跨设备共享）
+    function pushToCloud(newItem, callback) {
       var URL = 'https://eivqbbxyllsorbvgqsju.supabase.co';
       var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.DruJ-whOvHcA5fGrTaEvzRChB3sV4WRMf6cWR3Ru3fw';
-      var TABLE = 'village_data';
-      var ROW_ID = 'cloud';
-
-      // 先读取现有云端数据
-      fetch(URL + '/rest/v1/' + TABLE + '?id=eq.' + ROW_ID + '&select=data', {
+      var ROW_ID = 'init';
+      fetch(URL + '/rest/v1/village_data?id=eq.' + ROW_ID + '&select=data', {
         headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Accept-Profile': 'public' }
-      }).then(function(rp) { return rp.json(); })
-        .then(function(existing) {
-          var cloudData = (existing && existing[0] && existing[0].data) ? existing[0].data : {};
+      }).then(function(r) { return r.json(); })
+        .then(function(arr) {
+          var cloudData = (arr && arr[0] && arr[0].data) ? arr[0].data : {};
           if (!cloudData.registrations) cloudData.registrations = [];
-          // 合并：去重后追加新数据
           var ids = {};
           cloudData.registrations.forEach(function(item) { if (item && item.id) ids[item.id] = item; });
-          (Array.isArray(arr) ? arr : [arr]).forEach(function(item) {
-            if (item && item.id) ids[item.id] = item;
-          });
+          if (newItem && newItem.id) ids[newItem.id] = newItem;
           cloudData.registrations = Object.keys(ids).map(function(id) { return ids[id]; });
-          // 写回云端
-          return fetch(URL + '/rest/v1/' + TABLE, {
+          return fetch(URL + '/rest/v1/village_data', {
             method: 'POST',
             headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Accept-Profile': 'public', 'Prefer': 'resolution=merge-duplicates' },
             body: JSON.stringify({ id: ROW_ID, data: cloudData })
           });
-        }).then(function(rp2) {
-          if (rp2.ok) console.log('云端同步成功');
-          else console.warn('云端同步失败:', rp2.status);
+        }).then(function(r2) {
+          if (r2.ok) { console.log('云端同步成功'); if (callback) callback(true); }
+          else { throw new Error(''+r2.status); }
         }).catch(function(e) {
-          console.warn('云端同步失败（本地已保存）:', e.message);
+          console.warn('云端同步失败:', e.message);
+          if (callback) callback(false, e.message);
         });
     }
-// 直接推送到 Supabase 云端（不依赖外部脚本，微信内置浏览器可用）
-    
