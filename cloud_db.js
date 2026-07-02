@@ -1,142 +1,155 @@
-// cloud_db.js - Supabase 云数据库版（localStorage优先，云端后台同步）
-// service_role key 有完全读写权限
-(function() {
-  var SUPABASE_URL = 'https://eivqbbxyllsorbvgqsju.supabase.co';
-  var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MjcxMjMwOSwiZXhwIjoyMDk4Mjg4MzA5fQ.druJ-whOvHcA5fGrTaEvzRChB3sV4WRMf6cWR3Ru3fw';
-  var TABLE = 'village_data';
-  var ROW_ID = 'init';
-  var SCHEMA = 'public';
+// cloud_db.js - 统一的 Supabase 云端数据模块
+// 所有页面通过这个模块读写云端数据
 
-  var _cloudSyncing = false;
-  var _localPending = false;
+var SUPABASE_URL = 'https://eivqbbxyllsorbvgqsju.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY';
+var ROW_ID = 'init';
 
-  function makeHeaders(extra) {
-    var h = {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Accept-Profile': SCHEMA,
-      'Content-Profile': SCHEMA
+function cloudReq(method, path, body) {
+  return new Promise(function(resolve, reject) {
+    var xhr = new XMLHttpRequest();
+    xhr.open(method, SUPABASE_URL + '/rest/v1/' + path, true);
+    xhr.setRequestHeader('apikey', SUPABASE_KEY);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_KEY);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('Prefer', 'return=representation');
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4) {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try { resolve(JSON.parse(xhr.responseText)); } 
+          catch(e) { resolve(xhr.responseText); }
+        } else {
+          reject({ status: xhr.status, msg: xhr.responseText });
+        }
+      }
     };
-    if (extra) Object.keys(extra).forEach(function(k) { h[k] = extra[k]; });
-    return h;
-  }
+    xhr.onerror = function() { reject({ status: -1, msg: '网络错误' }); };
+    if (body) xhr.send(JSON.stringify(body));
+    else xhr.send();
+  });
+}
 
-  function fetchJSON(url, opts) {
-    return fetch(url, opts).then(function(r) {
-      if (!r.ok) return r.text().then(function(t) { throw new Error('HTTP ' + r.status + ': ' + t.substring(0, 100)); });
-      return r.json().catch(function() { return null; });
-    }).catch(function(e) { throw e; });
-  }
+// 加载云端全部数据
+function cloudLoad() {
+  return cloudReq('GET', 'village_data?id=eq.' + ROW_ID + '&select=data');
+}
 
-  // 保存全部数据到云端（后台执行，不阻塞）
-  function syncToCloud(callback) {
-    if (_cloudSyncing) { _localPending = true; if (callback) callback(false, 'busy'); return; }
-    _cloudSyncing = true;
-    var allData = {};
-    var keys = ['accounts', 'registrations', 'villages', 'products', 'food', 'camps', 'messages'];
-    keys.forEach(function(key) {
-      try { allData[key] = JSON.parse(localStorage.getItem('village_' + key) || '[]'); }
-      catch(e) { allData[key] = []; }
+// 保存全部数据（完整替换）
+function cloudSave(allData) {
+  return cloudReq('PATCH', 'village_data?id=eq.' + ROW_ID, { data: allData });
+}
+
+// 获取所有注册申请
+function cloudGetRegistrations() {
+  return cloudLoad().then(function(rows) {
+    if (rows && rows.length > 0 && rows[0].data && rows[0].data.registrations) {
+      return rows[0].data.registrations;
+    }
+    return [];
+  });
+}
+
+// 添加一条注册申请
+function cloudAddRegistration(reg) {
+  return cloudLoad().then(function(rows) {
+    var allData = { food:[],camps:[],accounts:[],messages:[],products:[],villages:[],announcements:[],registrations:[] };
+    if (rows && rows.length > 0) allData = Object.assign(allData, rows[0].data);
+    if (!allData.registrations) allData.registrations = [];
+    allData.registrations.push(reg);
+    return cloudSave(allData);
+  });
+}
+
+// 更新一条注册申请的状态
+function cloudUpdateRegistration(regId, updates) {
+  return cloudLoad().then(function(rows) {
+    var allData = { food:[],camps:[],accounts:[],messages:[],products:[],villages:[],announcements:[],registrations:[] };
+    if (rows && rows.length > 0) allData = Object.assign(allData, rows[0].data);
+    if (!allData.registrations) allData.registrations = [];
+    allData.registrations = allData.registrations.map(function(r) {
+      if (r.id === regId) return Object.assign({}, r, updates);
+      return r;
     });
-    fetchJSON(SUPABASE_URL + '/rest/v1/' + TABLE + '?id=eq.' + ROW_ID + '&select=data', {
-      headers: makeHeaders({ 'Accept': 'application/json' })
-    }).then(function(arr) {
-      var sha = arr && arr[0] && arr[0].data ? arr[0] : null;
-      var body = JSON.stringify({ id: ROW_ID, data: allData });
-      return fetch(SUPABASE_URL + '/rest/v1/' + TABLE, {
-        method: 'POST',
-        headers: makeHeaders({ 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' }),
-        body: body
-      }).then(function(r) {
-        if (r.ok) { console.log('[CloudDB] 云端同步成功'); if (callback) callback(true); }
-        else { console.warn('[CloudDB] 云端同步失败:', r.status); if (callback) callback(false); }
-        _cloudSyncing = false;
-        if (_localPending) { _localPending = false; syncToCloud(); }
-      });
-    }).catch(function(e) {
-      console.warn('[CloudDB] 云端同步失败:', e.message);
-      if (callback) callback(false, e.message);
-      _cloudSyncing = false;
+    return cloudSave(allData);
+  });
+}
+
+// 将注册申请转为正式账号
+function cloudApproveRegistration(regId) {
+  return cloudLoad().then(function(rows) {
+    var allData = { food:[],camps:[],accounts:[],messages:[],products:[],villages:[],announcements:[],registrations:[] };
+    if (rows && rows.length > 0) allData = Object.assign(allData, rows[0].data);
+    if (!allData.registrations) return Promise.reject('no registrations');
+    
+    var reg = allData.registrations.find(function(r) { return r.id === regId; });
+    if (!reg) return Promise.reject('not found');
+    
+    // 更新状态
+    allData.registrations = allData.registrations.map(function(r) {
+      if (r.id === regId) return Object.assign({}, r, { status: '已通过', approvedAt: Date.now() });
+      return r;
     });
-  }
-
-  window.CloudDB = {
-    // 从云端拉取 → 合并写入 localStorage（云端优先，本地新增保留）
-    loadFromPublic: function(callback, timeoutMs) {
-      var self = this;
-      timeoutMs = timeoutMs || 3000;
-      var timedOut = false;
-      var timer = setTimeout(function() {
-        timedOut = true;
-        console.warn('[CloudDB] 云端拉取超时(' + timeoutMs + 'ms)，使用本地数据');
-        if (callback) callback(false); // false = 超时/失败，但仍有本地数据
-      }, timeoutMs);
-
-      fetchJSON(SUPABASE_URL + '/rest/v1/' + TABLE + '?id=eq.' + ROW_ID + '&select=data', {
-        headers: makeHeaders({ 'Accept': 'application/json' })
-      }).then(function(arr) {
-        if (timedOut) return;
-        clearTimeout(timer);
-        var cloudData = arr && arr[0] && arr[0].data ? arr[0].data : null;
-        if (!cloudData) { if (callback) callback(true); return; }
-        console.log('[CloudDB] 拉取云端数据, keys:', Object.keys(cloudData).join(', '));
-        var keys = ['accounts', 'registrations', 'villages', 'products', 'food', 'camps', 'messages'];
-        keys.forEach(function(key) {
-          try {
-            var localRaw = localStorage.getItem('village_' + key);
-            var localArr = localRaw ? JSON.parse(localRaw) : [];
-            var cloudArr = cloudData[key] || [];
-            var seen = {};
-            cloudArr.forEach(function(item) { if (item && item.id) seen[item.id] = true; });
-            var merged = cloudArr.slice();
-            localArr.forEach(function(item) { if (item && item.id && !seen[item.id]) merged.push(item); });
-            localStorage.setItem('village_' + key, JSON.stringify(merged));
-          } catch(e) {}
+    
+    // 根据角色类型写入对应集合
+    var role = reg.role || '';
+    if (role.indexOf('村主任') >= 0 || role.indexOf('村长') >= 0) {
+      // 写入 villages
+      if (!allData.villages) allData.villages = [];
+      var exists = allData.villages.some(function(v) { return v.name === reg.villageName; });
+      if (!exists) {
+        allData.villages.push({
+          id: 'v' + Date.now(),
+          name: reg.villageName || reg.village || '新村庄',
+          city: reg.city || '',
+          province: reg.province || '',
+          chief: { name: reg.name || '', phone: reg.phone || '' },
+          description: reg.description || '',
+          images: reg.images || [],
+          status: '已认证',
+          createdAt: Date.now()
         });
-        if (callback) callback(true);
-      }).catch(function(e) {
-        if (timedOut) return;
-        clearTimeout(timer);
-        console.warn('[CloudDB] 拉取云端数据失败:', e.message);
-        if (callback) callback(false);
-      });
-      // 返回一个 Promise（兼容旧代码）
-      return { then: function(ok, fail) { /* 已在上面的回调处理 */ } };
-    },
+      }
+    } else if (role.indexOf('游客') >= 0) {
+      // 游客直接通过
+    } else {
+      // 其他角色写入 accounts
+      if (!allData.accounts) allData.accounts = [];
+      var existsAcc = allData.accounts.some(function(a) { return a.phone === reg.phone; });
+      if (!existsAcc) {
+        allData.accounts.push({
+          id: 'u' + Date.now(),
+          name: reg.name || '',
+          phone: reg.phone || '',
+          role: reg.role || '',
+          status: '已通过',
+          createdAt: Date.now()
+        });
+      }
+    }
+    
+    return cloudSave(allData);
+  });
+}
 
-    // 推送数据（本地优先，后台云端同步，永远不阻塞）
-    push: function(data, description) {
-      var self = this;
-      // 1. 立即保存到本地 localStorage（同步）
-      var keys = Object.keys(data);
-      keys.forEach(function(key) {
-        try {
-          var existing = JSON.parse(localStorage.getItem('village_' + key) || '[]');
-          var incoming = Array.isArray(data[key]) ? data[key] : [data[key]];
-          var ids = {};
-          existing.forEach(function(item) { if (item.id) ids[item.id] = item; });
-          incoming.forEach(function(item) { if (item.id) ids[item.id] = item; });
-          var merged = Object.keys(ids).map(function(k) { return ids[k]; });
-          localStorage.setItem('village_' + key, JSON.stringify(merged));
-        } catch(e) {}
-      });
-      console.log('[CloudDB] 已本地保存:' + keys.join(',') + ' ' + (description || ''));
-      // 2. 后台异步同步到云端（不等待）
-      syncToCloud(function(ok, err) {
-        if (ok) console.log('[CloudDB] 云端同步成功:', description);
-        else console.log('[CloudDB] 云端同步失败（本地已保存）:', description, err);
-      });
-      // 3. 立即返回成功（不等待云端）
-      return Promise.resolve();
-    },
+// 删除一条注册申请
+function cloudRejectRegistration(regId) {
+  return cloudUpdateRegistration(regId, { status: '已拒绝' });
+}
 
-    // 主动触发云端全量同步
-    save: function(callback) {
-      syncToCloud(callback);
-    },
+// 获取村庄列表
+function cloudGetVillages() {
+  return cloudLoad().then(function(rows) {
+    if (rows && rows.length > 0 && rows[0].data && rows[0].data.villages) {
+      return rows[0].data.villages;
+    }
+    return [];
+  });
+}
 
-    // 兼容旧接口
-    init: function(callback) { this.loadFromPublic(callback, 5000); },
-    load: function(callback) { this.loadFromPublic(callback, 5000); }
-  };
-})();
+// 写一行测试数据（初始化用）
+function cloudInit() {
+  return cloudReq('GET', 'village_data?id=eq.' + ROW_ID + '&select=id').then(function(rows) {
+    if (rows && rows.length > 0) return rows;
+    return cloudReq('POST', 'village_data', { id: ROW_ID, data: { food:[],camps:[],accounts:[],messages:[],products:[],villages:[],announcements:[],registrations:[] } });
+  });
+}
