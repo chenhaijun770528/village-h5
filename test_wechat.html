@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>云端测试</title>
+<style>
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f5;padding:20px;text-align:center}
+h2{margin-top:40px;color:#333}
+#r{margin:20px auto;padding:20px;background:#fff;border-radius:12px;max-width:400px;width:90%;font-size:15px;text-align:left;line-height:1.8}
+.big{font-size:72px;text-align:center;margin-top:20px}
+.ok{color:#2E7D32}
+.no{color:#F44336;background:#fff3f3}
+.tip{font-size:12px;color:#888;margin-top:10px;text-align:center}
+</style>
+</head>
+<body>
+<h2>☁️ 微信云端连通性测试</h2>
+<div id="r">正在测试...</div>
+<div id="icon" class="big"></div>
+<div id="msg" class="tip"></div>
+<script>
+var URL = 'https://eivqbbxyllsorbvgqsju.supabase.co';
+var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.DruJ-whOvHcA5fGrTaEvzRChB3sV4WRMf6cWR3Ru3fw';
+var el = document.getElementById('r');
+var icon = document.getElementById('icon');
+var msg = document.getElementById('msg');
+
+function log(t) { el.innerHTML += t + '<br>'; }
+
+log('1. 尝试GET请求...');
+var t1 = Date.now();
+fetch(URL + '/rest/v1/village_data?id=eq.init&select=data', {
+  headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Accept-Profile': 'public' }
+}).then(function(r) {
+  var ms = Date.now() - t1;
+  log('<b>状态码: ' + r.status + '</b> (' + ms + 'ms)');
+  if (r.status === 200) {
+    return r.json().then(function(d) {
+      log('✅ <b>微信可以访问云端！</b>');
+      log('数据条数: ' + (d && d.length));
+      icon.innerHTML = '✅';
+      icon.className = 'big ok';
+      msg.innerHTML = '建筑园林设计师注册审核功能可用';
+      // 写入一条测试数据
+      log('<br>2. 尝试写入测试数据...');
+      return fetch(URL + '/rest/v1/village_data', {
+        method: 'POST',
+        headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json', 'Accept-Profile': 'public', 'Prefer': 'resolution=merge-duplicates' },
+        body: JSON.stringify({ id: 'init', data: { _test: '微信测试-' + Date.now() } })
+      });
+    });
+  } else {
+    icon.innerHTML = '❌';
+    icon.className = 'big no';
+    msg.innerHTML = '状态码' + r.status + ': 云端连接失败';
+    log('❌ <b>云端连接失败</b>');
+    return Promise.reject(r.status);
+  }
+}).then(function(r2) {
+  if (r2) log('写入结果: ' + r2.status + (r2.ok ? ' ✅ 写入成功！' : ' ❌ 写入失败'));
+}).catch(function(e) {
+  icon.innerHTML = '❌';
+  icon.className = 'big no';
+  msg.innerHTML = '请求失败: ' + (e && e.message ? e.message : String(e));
+  log('❌ <b>请求失败:</b> ' + (e && e.message ? e.message : String(e)));
+  log('<br><b>这说明微信无法访问Supabase云端');
+  log('需要用其他方案传递审核数据</b>');
+});
+</script>
+</body>
+</html>
