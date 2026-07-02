@@ -1078,5 +1078,50 @@ if (document.readyState === 'loading') {
 }
 
 </script>
+<script>
+// 从云端加载村庄数据
+(function() {
+  var SUPABASE_URL = "https://eivqbbxyllsorbvgqsju.supabase.co";
+  var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY";
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", SUPABASE_URL + "/rest/v1/village_data?id=eq.init&select=data", true);
+  xhr.setRequestHeader("apikey", SUPABASE_KEY);
+  xhr.setRequestHeader("Authorization", "Bearer " + SUPABASE_KEY);
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+      try {
+        var rows = JSON.parse(xhr.responseText);
+        if (rows && rows.length > 0 && rows[0].data && rows[0].data.villages) {
+          var cloudVillages = rows[0].data.villages;
+          // 合并到本地DB
+          if (window.DB) {
+            cloudVillages.forEach(function(cv) {
+              var exists = DB.villages.some(function(v) { return v.name === cv.name; });
+              if (!exists) DB.villages.push(cv);
+            });
+          }
+          // 替换本地存储
+          try { localStorage.setItem("village_villages", JSON.stringify(cloudVillages)); } catch(e) {}
+          // 如果有render函数，重新渲染
+          if (window.render && typeof render === "function") render();
+          // 显示云端状态
+          var strip = document.getElementById("cloudStrip");
+          if (strip) { strip.textContent = "☁️ 云端已连接"; strip.style.color = "#4CAF50"; }
+        }
+      } catch(e) {}
+    }
+  };
+  xhr.onerror = function() {};
+  xhr.send();
+
+  // 云端状态提示条
+  var strip = document.createElement("div");
+  strip.id = "cloudStrip";
+  strip.textContent = "⏳ 连接云端...";
+  strip.style.cssText = "position:fixed;top:48px;left:0;right:0;text-align:center;padding:4px;font-size:12px;background:#e3f2fd;color:#1565c0;z-index:99;";
+  document.body.appendChild(strip);
+  setTimeout(function() { var s = document.getElementById("cloudStrip"); if (s && s.textContent.indexOf("⏳") >= 0) { s.textContent = "☁️ 仅本地数据"; s.style.color = "#999"; } }, 5000);
+})();
+</script>
 </body>
 </html>
