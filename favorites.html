@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <script src="cloud_db.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>我的收藏</title>
@@ -620,12 +621,12 @@ function logout() {
       f = f.filter(x => x.id !== id)
       Storage.set('favorites', f)
       toast('已取消收藏')
-      init()
+      if(window.CloudDB){CloudDB.ready.then(init);}else{init();}
     }
 
     function goDetail(id) { location.href = 'village-detail.html?id=' + id }
     function goPage(url) { location.href = url }
-    init()
+    if(window.CloudDB){CloudDB.ready.then(init);}else{init();}
   </script>
 </body>
 </html>
