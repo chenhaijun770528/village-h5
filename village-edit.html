@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <script src="cloud_db.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>编辑村庄信息</title>
@@ -836,11 +837,7 @@ function saveVillage() {
 }
 
 // 页面加载完成后初始化
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
-}
+if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', function(){ if(window.CloudDB){CloudDB.ready.then(init);}else{init();} }); } else { if(window.CloudDB){CloudDB.ready.then(init);}else{init();} }
 </script>
 </body>
 </html>
