@@ -307,16 +307,17 @@ var container = document.getElementById("mainContent");
 
 
   // === 淇锛氫粠"宸查€氳繃"娉ㄥ唽璁板綍鍚屾瑙掕壊鍒拌处鍙?===
+  // === ROLE SYNC: recover role from approved registration ===
   if (!currentUser.currentRole || currentUser.currentRole === 'none') {
     var _regs = Storage.get('registrations', []);
     var _roleMap = {
-      '鏉戜富浠?:'township','鏉戞皯':'villager','娓稿':'tourist',
-      '瓒呭競鑰佹澘':'market','寤虹瓚鍏徃':'construction','鑰佸笀':'teacher',
-      '澶у鐢?:'student','寰嬪笀':'lawyer','璐ц繍鍙告満':'truck','椤洪杞?:'carpool',
-      '鎸夋懇甯?:'massage','鎸夋懇鎶€甯?:'massage','寤虹瓚鍥灄甯?:'landscape'
+      '村主任':'township','村民':'villager','游客':'tourist',
+      '超市老板':'market','建筑公司':'construction','老师':'teacher',
+      '大学生':'student','律师':'lawyer','货运司机':'truck','顺风车':'carpool',
+      '按摩师':'massage','按摩技师':'massage','建筑园林师':'landscape'
     };
     for (var _i = 0; _i < _regs.length; _i++) {
-      if (_regs[_i].accountId === currentUser.id && _regs[_i].status === '宸查€氳繃') {
+      if (_regs[_i].accountId === currentUser.id && _regs[_i].status === '已通过') {
         var _rid = _roleMap[_regs[_i].role] || 'tourist';
         currentUser.currentRole = _rid;
         Storage.set('user', currentUser);
@@ -325,12 +326,11 @@ var container = document.getElementById("mainContent");
           if (_accs[_j].id === currentUser.id) { _accs[_j].currentRole = _rid; break; }
         }
         Storage.set('accounts', _accs);
-        console.log('[瑙掕壊鍚屾] 浠庡凡閫氳繃娉ㄥ唽鎭㈠瑙掕壊:', _rid);
         break;
       }
     }
   }
-    var ROLES_MAP = {
+var ROLES_MAP = {
       'township': { icon: '👔', name: '村主任', color: '#2E7D32' },
       'villager': { icon: '🏠', name: '村民', color: '#4CAF50' },
       'tourist': { icon: '🎒', name: '游客', color: '#2196F3' },
