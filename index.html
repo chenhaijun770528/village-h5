@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <script src="cloud_db.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>村庄开发</title>
@@ -987,7 +988,7 @@ initSampleData();
       ta.remove()
     }
 
-    init()
+    if(window.CloudDB){CloudDB.ready.then(init);}else{init();}
   
     // 加载公告
     function loadAnnouncements() {
