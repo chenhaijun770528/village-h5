@@ -75,12 +75,28 @@
     return out;
   }
 
+  // 拉取云端数据时，采用「合并·本地优先」策略：
+  // 云端数据只作为补充并入本地，绝不整体覆盖本地（避免把本地刚注册/修改的记录冲掉）。
+  // 同一 id 的记录本地优先；本地没有的云端记录会被补进来。
   function applyData(d) {
     _cloudData = d || {};
     if (!d) return;
     for (var i = 0; i < SYNC_KEYS.length; i++) {
       var k = SYNC_KEYS[i];
-      if (d[k] !== undefined && d[k] !== null) Storage.set(k, d[k]);
+      if (d[k] === undefined || d[k] === null) continue;
+      var local = Storage.get(k, null);
+      var merged;
+      if (Array.isArray(local) || Array.isArray(d[k])) {
+        // 云端先入(map)，本地后入(map) => 本地优先（local wins），同时补入本地缺失的云端记录
+        merged = mergeArrays(d[k], local);
+      } else if (local && typeof local === 'object' && d[k] && typeof d[k] === 'object') {
+        merged = {};
+        for (var ck in d[k]) if (d[k].hasOwnProperty(ck)) merged[ck] = d[k][ck];
+        for (var lk in local) if (local.hasOwnProperty(lk)) merged[lk] = local[lk]; // 本地优先
+      } else {
+        merged = (local !== undefined && local !== null) ? local : d[k]; // 本地优先
+      }
+      Storage.set(k, merged);
     }
     _loaded = true;
   }
