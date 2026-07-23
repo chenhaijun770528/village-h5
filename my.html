@@ -305,6 +305,31 @@ var container = document.getElementById("mainContent");
       console.log('[兼容] currentRole 已从对象转为字符串:', newRole);
     }
 
+
+  // === 淇锛氫粠"宸查€氳繃"娉ㄥ唽璁板綍鍚屾瑙掕壊鍒拌处鍙?===
+  if (!currentUser.currentRole || currentUser.currentRole === 'none') {
+    var _regs = Storage.get('registrations', []);
+    var _roleMap = {
+      '鏉戜富浠?:'township','鏉戞皯':'villager','娓稿':'tourist',
+      '瓒呭競鑰佹澘':'market','寤虹瓚鍏徃':'construction','鑰佸笀':'teacher',
+      '澶у鐢?:'student','寰嬪笀':'lawyer','璐ц繍鍙告満':'truck','椤洪杞?:'carpool',
+      '鎸夋懇甯?:'massage','鎸夋懇鎶€甯?:'massage','寤虹瓚鍥灄甯?:'landscape'
+    };
+    for (var _i = 0; _i < _regs.length; _i++) {
+      if (_regs[_i].accountId === currentUser.id && _regs[_i].status === '宸查€氳繃') {
+        var _rid = _roleMap[_regs[_i].role] || 'tourist';
+        currentUser.currentRole = _rid;
+        Storage.set('user', currentUser);
+        var _accs = Storage.get('accounts', []);
+        for (var _j = 0; _j < _accs.length; _j++) {
+          if (_accs[_j].id === currentUser.id) { _accs[_j].currentRole = _rid; break; }
+        }
+        Storage.set('accounts', _accs);
+        console.log('[瑙掕壊鍚屾] 浠庡凡閫氳繃娉ㄥ唽鎭㈠瑙掕壊:', _rid);
+        break;
+      }
+    }
+  }
     var ROLES_MAP = {
       'township': { icon: '👔', name: '村主任', color: '#2E7D32' },
       'villager': { icon: '🏠', name: '村民', color: '#4CAF50' },
