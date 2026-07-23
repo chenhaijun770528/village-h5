@@ -2,6 +2,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <script src="cloud_db.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>按摩技师</title>
@@ -208,7 +209,7 @@ function saveEdit() {
   
   toast("修改成功");
   closeEdit();
-  init();
+  if(window.CloudDB){CloudDB.ready.then(init);}else{init();};
 }
 
 function init() {
@@ -268,7 +269,7 @@ function init() {
   list.innerHTML = html;
 }
 
-init();
+if(window.CloudDB){CloudDB.ready.then(init);}else{init();};
 </script>
 </body>
 </html>
