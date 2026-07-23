@@ -20,6 +20,32 @@
   var _loadPromise = null;
   var _needPush = false;
 
+  // ---- 云端状态角标（右下角，不干扰页面） ----
+  var _badge = null;
+  var _badgeState = { text: '☁', color: 'rgba(0,0,0,0.55)' };
+  function ensureBadge() {
+    if (_badge && _badge.parentNode) return _badge;
+    if (!document.body) {
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ensureBadge);
+      else setTimeout(ensureBadge, 50);
+      return null;
+    }
+    _badge = document.createElement('div');
+    _badge.id = 'cloud_status_badge';
+    _badge.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:2147483647;font:12px/1.4 -apple-system,sans-serif;padding:4px 9px;border-radius:11px;background:rgba(0,0,0,0.55);color:#fff;pointer-events:none;opacity:.7;box-shadow:0 1px 4px rgba(0,0,0,.3);letter-spacing:.5px;';
+    document.body.appendChild(_badge);
+    applyBadge();
+    return _badge;
+  }
+  function applyBadge() {
+    if (_badge) { _badge.textContent = _badgeState.text; _badge.style.background = _badgeState.color; }
+  }
+  function setBadge(text, color) {
+    _badgeState = { text: text, color: color || 'rgba(0,0,0,0.55)' };
+    var b = ensureBadge();
+    if (b) applyBadge();
+  }
+
   function apiUrl() {
     return SUPABASE_URL + '/rest/v1/' + TABLE + '?id=eq.' + ROW_ID + '&select=data';
   }
@@ -61,6 +87,12 @@
 
   function load() {
     if (_loadPromise) return _loadPromise;
+    setBadge('☁ 连接中…', 'rgba(0,0,0,0.55)');
+    if (typeof fetch !== 'function') {
+      _loaded = true;
+      setBadge('☁ 离线', 'rgba(140,140,140,0.85)');
+      return Promise.resolve();
+    }
     _loadPromise = fetch(apiUrl(), { headers: headers() }).then(function (r) {
       if (!r.ok) throw new Error('supabase ' + r.status);
       return r.json();
@@ -71,11 +103,13 @@
         _needPush = true;
         applyData({});
       }
+      setBadge('☁ 已同步', 'rgba(46,125,50,0.9)');
       return rows;
     }).catch(function (e) {
       console.warn('[cloud] load failed (keep local):', e);
       _loaded = true;
       _cloudData = {};
+      setBadge('☁ 离线', 'rgba(140,140,140,0.85)');
     }).then(function () {
       if (_needPush) { _needPush = false; save(); }
     });
@@ -85,6 +119,7 @@
   function save() {
     if (_saving) return;
     _saving = true;
+    setBadge('☁ 保存中…', 'rgba(0,0,0,0.55)');
     var local = collect();
     var merged = {};
     for (var i = 0; i < SYNC_KEYS.length; i++) {
@@ -103,9 +138,11 @@
     }).then(function () {
       _cloudData = merged;
       _saving = false;
+      setBadge('☁ 已同步', 'rgba(46,125,50,0.9)');
     }).catch(function (e) {
       console.warn('[cloud] save failed (WeChat may block Supabase; retry on next change):', e);
       _saving = false;
+      setBadge('☁ 离线', 'rgba(140,140,140,0.85)');
     });
   }
 
