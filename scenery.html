@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <script src="cloud_db.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>风景展示</title>
@@ -595,7 +596,7 @@ function logout() {
 }</script>
   <script>
     window._sceneryCat = 'all';
-    function switchSceneryCat(cat) { window._sceneryCat = cat; init(); }
+    function switchSceneryCat(cat) { window._sceneryCat = cat; if(window.CloudDB){CloudDB.ready.then(init);}else{init();}; }
 
     function init() {
       const params = new URLSearchParams(location.search)
@@ -651,7 +652,7 @@ function logout() {
       document.body.appendChild(el)
     }
 
-    init()
+    if(window.CloudDB){CloudDB.ready.then(init);}else{init();}
   </script>
 </body>
 </html>
