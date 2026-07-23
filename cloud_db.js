@@ -10,7 +10,7 @@
     'accounts', 'announcements', 'camp_applications', 'camps',
     'favorites', 'food_applications', 'foods', 'history', 'messages',
     'orders', 'product_applications', 'products', 'registrations',
-    'township_applications', 'villages'
+    'reviews', 'township_applications', 'villages'
   ];
 
   var _loaded = false;
@@ -114,11 +114,18 @@
     _saveTimer = setTimeout(save, 1500);
   }
 
-  var _origSet = Storage.set;
-  Storage.set = function (k, v) {
-    _origSet(k, v);
-    if (_loaded && SYNC_KEYS.indexOf(k) >= 0) scheduleSave();
-  };
+  function hookStorage() {
+    if (typeof Storage === 'undefined' || !Storage.set) {
+      setTimeout(hookStorage, 50);
+      return;
+    }
+    var _origSet = Storage.set;
+    Storage.set = function (k, v) {
+      _origSet(k, v);
+      if (_loaded && SYNC_KEYS.indexOf(k) >= 0) scheduleSave();
+    };
+  }
+  hookStorage();
 
   window.CloudDB = {
     load: load,
