@@ -220,7 +220,7 @@ function init() {
   var therapists = [];
   
   for (var i = 0; i < regs.length; i++) {
-    if (regs[i].role === "按摩师" && regs[i].status === "已通过") {
+    if ((regs[i].role === "按摩师" || regs[i].role === "按摩技师") && regs[i].status === "已通过") {
       therapists.push({ data: regs[i], index: i });
     }
   }
@@ -273,3 +273,4 @@ if(window.CloudDB){CloudDB.ready.then(init);}else{init();};
 </script>
 </body>
 </html>
+
