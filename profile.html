@@ -564,7 +564,7 @@ function renderPage() {
       // ===== 按摩技师资料编辑 =====
       var myMassageReg = null;
       for (var mri = 0; mri < regs.length; mri++) {
-        if (regs[mri].accountId === currentUser.id && regs[mri].role === '按摩师' && regs[mri].status === '已通过') {
+        if (regs[mri].accountId === currentUser.id && (regs[mri].role === '按摩师' || regs[mri].role === '按摩技师') && regs[mri].status === '已通过') {
           myMassageReg = regs[mri];
           break;
         }
@@ -974,7 +974,7 @@ function renderPage() {
       var regs = Storage.get('registrations', []);
       var myReg = null, myIdx = -1;
       for (var i = 0; i < regs.length; i++) {
-        if (regs[i].accountId === currentUser.id && regs[i].role === '按摩师' && regs[i].status === '已通过') {
+        if (regs[i].accountId === currentUser.id && (regs[i].role === '按摩师' || regs[i].role === '按摩技师') && regs[i].status === '已通过') {
           myReg = regs[i]; myIdx = i; break;
         }
       }
@@ -2722,6 +2722,7 @@ window.auditCamps = function() {
   </div>
   </body>
 </html>
+
 
 
 
