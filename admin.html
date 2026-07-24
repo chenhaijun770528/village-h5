@@ -274,7 +274,7 @@ function init() {
   var savedLogin = sessionStorage.getItem('village_admin_logged');
   if (savedLogin === 'true') { isLoggedIn = true; }
   loadUI();
-  // 直接从 Supabase 读取云端数据（Supabase 允许跨域请求）
+  // 直接从 Supabase 读取云端数据
   var _u='https://eivqbbxyllsorbvgqsju.supabase.co';
   var _k='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY';
   fetch(_u+'/rest/v1/village_data?id=eq.init&select=data',{headers:{apikey:_k,'Cache-Control':'no-cache'}})
@@ -289,6 +289,7 @@ function init() {
         if(d.foods)Storage.set('foods',d.foods);
         if(d.camps)Storage.set('camps',d.camps);
         console.log('[Admin] 云端数据已同步，注册:',(d.registrations||[]).length,'条');
+        if(isLoggedIn&&document.getElementById('panelRoleApps')){loadRoleApplications();}
       }
     })
     .catch(function(e){console.warn('[Admin] 云端读取失败:',e.message)});
