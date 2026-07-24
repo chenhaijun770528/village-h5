@@ -231,7 +231,10 @@
 
       var regs = Storage.get('registrations', []);
       regs.unshift(data);
-      Storage.set('registrations', regs);
+Storage.set('registrations', regs);
+}).then(function() {
+  // 数据已写入 localStorage，CloudDB 会在后台自动同步到云端
+});
 
       // 立即开通游客角色
       currentAccount.currentRole = 'tourist';
