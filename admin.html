@@ -189,7 +189,7 @@ body {
 .app-card-actions .btn-approve { background: #4CAF50; color: white; flex: 1; }
 .app-card-actions .btn-reject { background: #F44336; color: white; flex: 1; }
 
-/* 空���态 */
+/* 空����态 */
 .empty-state { text-align: center; padding: 40px 20px; color: #999; }
 .empty-icon { font-size: 48px; display: block; margin-bottom: 12px; }
 
@@ -277,14 +277,10 @@ function init() {
   if (savedLogin === 'true') {
     isLoggedIn = true;
   }
-  // 从云端 Supabase 拉取数据，超时3秒兜底，保证页面能渲染
-  loadCloudAdminData().then(function() {
-    loadUI();
-  });
-  // 无论成功失败，3秒后都强制渲染（防止云端请求超时卡死页面）
-  setTimeout(function() {
-    loadUI();
-  }, 3000);
+  // 先立即渲染登录页，保证页面可用
+  loadUI();
+  // 后台从云端拉取数据填充 localStorage（不阻塞渲染）
+  loadCloudAdminData();
 }
 
 function loadUI() {
@@ -587,7 +583,7 @@ function approveChief(appId) {
   }
   if (!app) { toast('申请不存在'); return; }
 
-  // 1. 更新申请状态
+  // 1. 更新申请��态
   apps[appIdx].status = '已通过';
   apps[appIdx].reviewTime = Date.now();
   Storage.set('township_applications', apps);
@@ -742,7 +738,7 @@ function loadRoleApplications() {
       '<div class="app-card-actions">' +
       '<button class="btn-approve" onclick="approveRole(\'' + reg.id + '\')">✅ 通过</button>' +
       '<button class="btn-reject" onclick="rejectRole(\'' + reg.id + '\')">❌ 拒绝</button>' +
-      '<button class="btn-delete" onclick="deleteRole(\'' + reg.id + '\')">🗑️ 删除</button>' +
+      '<button class="btn-delete" onclick="deleteRole(\'' + reg.id + '\')">🗑️ ��除</button>' +
       '</div>' +
       '</div>';
   }
