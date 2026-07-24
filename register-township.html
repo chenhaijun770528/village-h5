@@ -142,7 +142,32 @@ function submit() {
   var apps = Storage.get('township_applications', []);
   apps.unshift(application);
   Storage.set('township_applications', apps);
-    if (typeof CloudDB !== 'undefined') CloudDB.push({township_applications: apps}, '村主任注册申请同步').catch(function(){});
+
+    // 直接写入 Supabase
+    (function() {
+      var _u = 'https://eivqbbxyllsorbvgqsju.supabase.co';
+      var _k = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY';
+      fetch(_u + '/rest/v1/village_data?id=eq.init&select=data', {
+        headers: { 'apikey': _k, 'Content-Type': 'application/json' }
+      }).then(function(r) { return r.json(); }).then(function(rows) {
+        var cloudData = (rows && rows[0] && rows[0].data) ? rows[0].data : {};
+        cloudData.township_applications = apps;
+        var body = JSON.stringify({ data: cloudData });
+        if (rows && rows[0]) {
+          return fetch(_u + '/rest/v1/village_data?id=eq.init', {
+            method: 'PATCH',
+            headers: { 'apikey': _k, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+            body: body
+          });
+        } else {
+          return fetch(_u + '/rest/v1/village_data', {
+            method: 'POST',
+            headers: { 'apikey': _k, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+            body: body
+          });
+        }
+      }).catch(function(e) { console.warn('村主任云端同步失败:', e); });
+    })();
 
   // 同时更新当前账号的 currentRole（含村庄信息）
   currentAccount.currentRole = {
