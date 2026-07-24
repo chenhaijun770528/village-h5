@@ -1,7 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <script src="cloud_db.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>注册账号 - 村庄平台</title>
@@ -220,11 +219,7 @@
 
       accounts.unshift(newAccount);
 Storage.set('accounts', accounts);
-}).then(function() {
-  // 数据已写入 localStorage，CloudDB 会在后台自动同步到云端
-});
-
-      toast('注册成功！请登录');
+}toast('注册成功！请登录');
       setTimeout(function() { location.href = 'login.html'; }, 1500);
     }
 
