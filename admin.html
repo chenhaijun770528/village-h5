@@ -189,7 +189,7 @@ body {
 .app-card-actions .btn-approve { background: #4CAF50; color: white; flex: 1; }
 .app-card-actions .btn-reject { background: #F44336; color: white; flex: 1; }
 
-/* 空状态 */
+/* 空��态 */
 .empty-state { text-align: center; padding: 40px 20px; color: #999; }
 .empty-icon { font-size: 48px; display: block; margin-bottom: 12px; }
 
@@ -277,7 +277,12 @@ function init() {
   if (savedLogin === 'true') {
     isLoggedIn = true;
   }
-  loadUI();
+  // 从云端 Supabase 拉取数据到 localStorage，再渲染
+  loadCloudAdminData().then(function() {
+    loadUI();
+  }).catch(function() {
+    loadUI();
+  });
 }
 
 function loadUI() {
@@ -724,7 +729,7 @@ function loadRoleApplications() {
     panel.innerHTML += '<div class="empty-state"><span class="empty-icon">📋</span><div>暂无待审核的注册申请</div></div>';
     return;
   }
-  var roleIcons = {'村民':'🌾','村主任':'🏠','游客':'🎒','农产品商家':'🥬','建筑队':'🏗️','老师':'👩‍🏫','大学生':'🎓','律师事务所':'⚖️','律师':'👔','货车司机':'🚛','拼车':'🚗','按摩师':'💆'};
+  var roleIcons = {'村民':'🌾','村主任':'🏠','游客':'🎒','农产品商家':'🥬','建筑队':'🏗️','老师':'👩‍🏫','大学生':'🎓','律师事务所':'⚖️','律师':'����','货车司机':'🚛','拼车':'🚗','按摩师':'💆'};
   for (var pi = 0; pi < pending.length; pi++) {
     var reg = pending[pi];
     var icon = roleIcons[reg.role] || '👤';
@@ -936,6 +941,27 @@ function makeDraggable(el,idx,type){
     _dragSrc=-1;renderAllPanels();});
 }
 function renderAllPanels(){loadVillageStats();loadChiefApplications();loadRoleApplications();}
+
+<script>
+// ===== 从云端 Supabase 加载数据 =====
+function loadCloudAdminData() {
+  var SUPABASE_URL = 'https://eivqbbxyllsorbvgqsju.supabase.co';
+  var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY';
+  return fetch(SUPABASE_URL + '/rest/v1/village_data?id=eq.init&select=*', {
+    headers: { 'apikey': ANON_KEY }
+  })
+  .then(function(resp) { return resp.json(); })
+  .then(function(rows) {
+    if (rows && rows[0] && rows[0].data) {
+      var cloudData = rows[0].data;
+      var keys = ['accounts','registrations','products','orders','foods','camps','favorites','history','reviews','announcements','camp_applications','food_applications','technician_applications'];
+      keys.forEach(function(key) {
+        if (cloudData[key] !== undefined) {
+          Storage.set(key, cloudData[key]);
+        }
+      });
+      console.log('[Cloud] admin 数据同步完成', Object.keys(cloudData));
+    }
+  });
+}
 </script>
-</body>
-</html>
