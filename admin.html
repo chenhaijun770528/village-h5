@@ -820,7 +820,7 @@ function rejectRole(regId) {
 
 // ========== 公告管理 ==========
 function loadAnnouncementsAdmin() {
- var annPanel = document.getElementById('panelAnnouncement');
+ var panel = document.getElementById('panelAnnouncement');
  var anns = Storage.get('announcements', []);
  anns.sort(function(a, b) {
  if (a.pinned && !b.pinned) return -1;
@@ -869,7 +869,7 @@ function loadAnnouncementsAdmin() {
  '</div></div>';
  }
  }
- annPanel.innerHTML = html;
+ panel.innerHTML = html;
 }
 
 function saveAnnouncementAdmin() {
@@ -945,6 +945,17 @@ function renderAllPanels(){
  }
 }
 init();
+
+// 等待cloud_db.js加载完成，弱网手机也会重试连接
+function bootstrap() {
+ if (window.CloudDB && window.CloudDB.ready) {
+   window.CloudDB.ready.then(function() { init(); });
+ } else {
+   setTimeout(bootstrap, 200);
+ }
+}
+bootstrap();
+
 </script>
 </body>
 </html>
