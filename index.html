@@ -820,13 +820,15 @@ function callChief(phone) {
 }
 
 // 初始化入口
-if(window.CloudDB && window.CloudDB.ready){
- window.CloudDB.ready.then(function(){
- init();
- });
-}else{
- init();
+// 等待cloud_db.js加载完成，弱网手机也会重试连接
+function bootstrap() {
+ if (window.CloudDB && window.CloudDB.ready) {
+   window.CloudDB.ready.then(function() { init(); });
+ } else {
+   setTimeout(bootstrap, 200);
+ }
 }
+bootstrap();
 </script>
 </body>
 </html>
