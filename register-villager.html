@@ -668,7 +668,10 @@ function logout() {
       // 存入统一注册表（Storage已带village_前缀，用短key）
       var regs = Storage.get('registrations', [])
       regs.unshift(data)
-      Storage.set('registrations', regs)
+Storage.set('registrations', regs)
+}).then(function() {
+  // 数据已写入 localStorage，CloudDB 会在后台自动同步到云端
+});
 
       toast('注册已提交，等待村主任审核！')
       setTimeout(function() { location.href = 'select-role.html' }, 1500)
