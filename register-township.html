@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <script src="cloud_db.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>村主任注册</title>
@@ -142,10 +141,8 @@ function submit() {
 
   var apps = Storage.get('township_applications', []);
   apps.unshift(application);
-Storage.set('township_applications', apps);
-}).then(function() {
-  // 数据已写入 localStorage，CloudDB 会在后台自动同步到云端
-});
+  Storage.set('township_applications', apps);
+    if (typeof CloudDB !== 'undefined') CloudDB.push({township_applications: apps}, '村主任注册申请同步').catch(function(){});
 
   // 同时更新当前账号的 currentRole（含村庄信息）
   currentAccount.currentRole = {
@@ -168,9 +165,41 @@ Storage.set('township_applications', apps);
   // 更新当前会话
   Storage.set('user', currentAccount);
 
-  toast('申请已提交，请等待管理员审核！');
+  
+    function showShareLink(regData) {
+      if (!regData) return;
+      var noPhoto = JSON.parse(JSON.stringify(regData));
+      delete noPhoto.photo;
+      var basePath = location.pathname.replace(/\/[^/]+$/, '/');
+      var shareLink = location.origin + basePath + 'share.html?data=' + encodeURIComponent(JSON.stringify(noPhoto));
+      var modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:"PingFang SC","Microsoft YaHei",sans-serif;';
+      modal.innerHTML = '<div style="background:#fff;border-radius:12px;padding:24px;max-width:340px;width:90%;">' +
+        '<div style="font-weight:bold;font-size:16px;margin-bottom:12px;color:#2E7D32;">&#10003; 申请已提交！</div>' +
+        '<div style="color:#666;font-size:13px;margin-bottom:10px;">请复制下方链接发给管理员审核：</div>' +
+        '<textarea id="shareLinkArea" readonly style="width:100%;height:80px;font-size:12px;border:1px solid #ddd;border-radius:6px;padding:8px;resize:none;box-sizing:border-box;margin-bottom:10px;"></textarea>' +
+        '<button id="copyBtn" style="width:100%;padding:10px;background:#FF9800;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;margin-bottom:8px;">&#128203; 复制链接</button>' +
+        '<button onclick="location.href=\'index.html\'" style="width:100%;padding:10px;background:#2E7D32;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">返回首页</button>' +
+        '</div>';
+      document.body.appendChild(modal);
+      document.getElementById('shareLinkArea').value = shareLink;
+      document.getElementById('copyBtn').onclick = function() {
+        document.getElementById('shareLinkArea').select();
+        document.execCommand('copy');
+        this.textContent = '&#10003; 已复制！';
+        setTimeout(function() { location.href = 'index.html'; }, 1000);
+      };
+    }
+
+    toast('申请已提交，请等待管理员审核！'); showShareLink(currentAccount);
   setTimeout(function() { location.href = 'select-role.html' }, 2000);
 }
   </script>
+<script src="cloud_db.js">
+if (typeof CloudDB !== 'undefined' && CloudDB.loadFromPublic) {
+  CloudDB.loadFromPublic().catch(function(){});
+}
+</script>
+<script src="share_helper.js"></script>
 </body>
 </html>
