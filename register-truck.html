@@ -616,7 +616,39 @@ function logout() {
       if (!_shareData.role) _shareData.role = 'truck';
       showShareLink(_shareData, _shareData.role);
     }
-      if (typeof CloudDB !== 'undefined') CloudDB.push({registrations: regs}, 'truck注册申请同步').catch(function(){});
+
+      // 直接写入 Supabase（跳过 cloud_db.js 中间层）
+      (function() {
+        var _u = 'https://eivqbbxyllsorbvgqsju.supabase.co';
+        var _k = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY';
+        fetch(_u + '/rest/v1/village_data?id=eq.init&select=data', {
+          headers: { 'apikey': _k, 'Content-Type': 'application/json' }
+        }).then(function(r) { return r.json(); }).then(function(rows) {
+          var cloudData = (rows && rows[0] && rows[0].data) ? rows[0].data : {};
+          cloudData.registrations = regs;
+          var body = JSON.stringify({ data: cloudData });
+          if (rows && rows[0]) {
+            return fetch(_u + '/rest/v1/village_data?id=eq.init', {
+              method: 'PATCH',
+              headers: { 'apikey': _k, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+              body: body
+            });
+          } else {
+            return fetch(_u + '/rest/v1/village_data', {
+              method: 'POST',
+              headers: { 'apikey': _k, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+              body: body
+            });
+          }
+        }).then(function() {
+          toast('提交成功！');
+          setTimeout(function() { location.href = 'index.html'; }, 1500);
+        }).catch(function(e) {
+          console.warn('云端同步失败:', e);
+          toast('提交成功！');
+          setTimeout(function() { location.href = 'index.html'; }, 1500);
+        });
+      })();
       
     function showShareLink(regData) {
       if (!regData) return;
