@@ -142,7 +142,10 @@ function submit() {
 
   var apps = Storage.get('township_applications', []);
   apps.unshift(application);
-  Storage.set('township_applications', apps);
+Storage.set('township_applications', apps);
+}).then(function() {
+  // 数据已写入 localStorage，CloudDB 会在后台自动同步到云端
+});
 
   // 同时更新当前账号的 currentRole（含村庄信息）
   currentAccount.currentRole = {
