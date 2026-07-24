@@ -219,7 +219,10 @@
       };
 
       accounts.unshift(newAccount);
-      Storage.set('accounts', accounts);
+Storage.set('accounts', accounts);
+}).then(function() {
+  // 数据已写入 localStorage，CloudDB 会在后台自动同步到云端
+});
 
       toast('注册成功！请登录');
       setTimeout(function() { location.href = 'login.html'; }, 1500);
