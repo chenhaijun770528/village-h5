@@ -614,7 +614,7 @@ function logout() {
       const name = document.getElementById('name').value.trim(), phone = document.getElementById('phone').value.trim()
       if (!name || !phone) { toast('请填写必填项'); return }
       var account = getCurrentUser();
-      var newReg = { id: genId(), role: '按摩师', name: name, phone: phone, skill: document.getElementById('skill').value, years: document.getElementById('years').value, photo: window._massagePhoto || '', regAddress: document.getElementById('regAddress').value.trim(), curAddress: document.getElementById('curAddress').value.trim(), accountId: account ? account.id : '', accountName: account ? account.account : '', status: '待审核', time: Date.now() };
+      var newReg = { id: genId(), role: '按摩技师', name: name, phone: phone, skill: document.getElementById('skill').value, years: document.getElementById('years').value, photo: window._massagePhoto || '', regAddress: document.getElementById('regAddress').value.trim(), curAddress: document.getElementById('curAddress').value.trim(), accountId: account ? account.id : '', accountName: account ? account.account : '', status: '待审核', time: Date.now() };
       // 1. 先写入本地（即时反馈）
       var regs = Storage.get('registrations', []);
       regs.unshift(newReg);
@@ -623,9 +623,9 @@ function logout() {
     
     // 生成审核分享链接
     if (window.showShareLink) {
-      var _shareData = regs[regs.length - 1];
+      var _shareData = regs[0];
       // 确保有 role 字段
-      if (!_shareData.role) _shareData.role = 'massage';
+      // role 已经在 newReg 中设置，无需 fallback
       showShareLink(_shareData, _shareData.role);
     };
       // 2. 直接写入 Supabase（跳过 cloud_db.js 中间层）
