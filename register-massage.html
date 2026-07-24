@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <script src="cloud_db.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>按摩技师注册</title>
@@ -409,7 +408,7 @@ body {
         <div class="form-group"><label class="form-label">手机号 *</label><input class="form-input" id="phone" type="tel" placeholder="手机号" maxlength="11"></div>
         <div class="form-group"><label class="form-label">擅长项目</label><input class="form-input" id="skill" placeholder="如：足疗、推拿、艾灸"></div>
         <div class="form-group"><label class="form-label">从业年限</label><input class="form-input" id="years" placeholder="如：5年"></div>
-        <div class="form-group"><label class="form-label">头像图片</label><input type="file" accept="image/*" id="photoFile" onchange="previewPhoto()" style="display:none"><div id="photoPreview" style="margin-top:8px;"></div><button type="button" onclick="document.getElementById('photoFile').click()" style="padding:8px 16px;background:#f5f5f5;border:1px dashed #ccc;border-radius:8px;font-size:13px;cursor:pointer;color:#666;">📷 上传照片</button></div>        <div class="form-group"><label class="form-label">注册地</label><input class="form-input" id="regAddress" placeholder="户籍所在地，如：江苏省苏州市"></div>        <div class="form-group"><label class="form-label">目前所在地</label><input class="form-input" id="curAddress" placeholder="当前居住/工作地，如：上海市浦东新区"></div>
+        <div class="form-group"><label class="form-label">证件照</label><input type="file" accept="image/*" id="photoFile" onchange="previewPhoto()" style="display:none"><div id="photoPreview" style="margin-top:8px;"></div><button type="button" onclick="document.getElementById('photoFile').click()" style="padding:8px 16px;background:#f5f5f5;border:1px dashed #ccc;border-radius:8px;font-size:13px;cursor:pointer;color:#666;">📷 上传证件照</button></div>        <div class="form-group"><label class="form-label">注册地</label><input class="form-input" id="regAddress" placeholder="户籍所在地，如：江苏省苏州市"></div>        <div class="form-group"><label class="form-label">目前所在地</label><input class="form-input" id="curAddress" placeholder="当前居住/工作地，如：上海市浦东新区"></div>
       </div>
       <button class="btn-primary" onclick="submit()">提交注册</button>
     </div>
@@ -571,6 +570,9 @@ const Storage = {
 
 // 初始化示例数据到localStorage
 function initSampleData() {
+  if (typeof CloudDB !== 'undefined' && CloudDB.loadFromPublic) {
+    CloudDB.loadFromPublic().catch(function(){});
+  }
   if (!localStorage.getItem('village_villages')) {
     Storage.set('villages', DB.villages)
   }
@@ -586,7 +588,16 @@ function initSampleData() {
 }
 
 // 用户
-let currentUser = Storage.get('user', null)
+// 获取当前登录账号（新账号体系）
+function getCurrentUser() {
+  var accounts = Storage.get('accounts', []);
+  for (var i = 0; i < accounts.length; i++) {
+    if (accounts[i]._current) return accounts[i];
+  }
+  // 兼容旧版：读 user
+  return Storage.get('user', null);
+}
+let currentUser = getCurrentUser();
 
 function login(nickName, avatarUrl) {
   currentUser = { id: genId(), nickName, avatarUrl, time: Date.now() }
@@ -602,16 +613,51 @@ function logout() {
     function submit() {
       const name = document.getElementById('name').value.trim(), phone = document.getElementById('phone').value.trim()
       if (!name || !phone) { toast('请填写必填项'); return }
-      var account = Storage.get('user', null);
-      var newReg = { id: genId(), role: '按摩技师', name: name, phone: phone, skill: document.getElementById('skill').value, years: document.getElementById('years').value, photo: window._massagePhoto || '', regAddress: document.getElementById('regAddress').value.trim(), curAddress: document.getElementById('curAddress').value.trim(), accountId: account ? account.id : '', accountName: account ? account.account : '', status: '待审核', time: Date.now() };
-      // 等 CloudDB.ready 后再写入，确保 Storage 钩子已挂载
-      CloudDB.ready.then(function() {
-        var regs = Storage.get('registrations', []);
-        regs.unshift(newReg);
-        Storage.set('registrations', regs);
-        toast('提交成功，请等待审核！'); setTimeout(function(){ location.href = 'index.html'; }, 1500);
+      var account = getCurrentUser();
+      var newReg = { id: genId(), role: '按摩师', name: name, phone: phone, skill: document.getElementById('skill').value, years: document.getElementById('years').value, photo: window._massagePhoto || '', regAddress: document.getElementById('regAddress').value.trim(), curAddress: document.getElementById('curAddress').value.trim(), accountId: account ? account.id : '', accountName: account ? account.account : '', status: '待审核', time: Date.now() };
+      // 1. 先写入本地（即时反馈）
+      var regs = Storage.get('registrations', []);
+      regs.unshift(newReg);
+      Storage.set('registrations', regs);
+      alert('[调试] 已保存注册记录，accountId=' + newReg.accountId + '\nlocalStorage registrations 现在有多少条=' + regs.length);
+    
+    // 生成审核分享链接
+    if (window.showShareLink) {
+      var _shareData = regs[regs.length - 1];
+      // 确保有 role 字段
+      if (!_shareData.role) _shareData.role = 'massage';
+      showShareLink(_shareData, _shareData.role);
+    };
+      // 2. 直接写入 Supabase（跳过 cloud_db.js 中间层）
+      var _u = 'https://eivqbbxyllsorbvgqsju.supabase.co';
+      var _k = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY';
+      fetch(_u + '/rest/v1/village_data?id=eq.init&select=data', {
+        headers: { 'apikey': _k, 'Content-Type': 'application/json' }
+      }).then(function(r) { return r.json(); }).then(function(rows) {
+        var cloudData = (rows && rows[0] && rows[0].data) ? rows[0].data : {};
+        cloudData.registrations = regs;
+        var body = JSON.stringify({ data: cloudData });
+        if (rows && rows[0]) {
+          return fetch(_u + '/rest/v1/village_data?id=eq.init', {
+            method: 'PATCH',
+            headers: { 'apikey': _k, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+            body: body
+          });
+        } else {
+          return fetch(_u + '/rest/v1/village_data', {
+            method: 'POST',
+            headers: { 'apikey': _k, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+            body: body
+          });
+        }
+      }).then(function() {
+        toast('提交成功！');
+        setTimeout(function() { location.href = 'index.html'; }, 1500);
+      }).catch(function(e) {
+        console.warn('云端同步失败（本地已保存）:', e);
+        toast('提交成功！');
+        setTimeout(function() { location.href = 'index.html'; }, 1500);
       });
-
     }
       // 证件照预览 + Canvas压缩
     window._massagePhoto = '';
@@ -636,5 +682,7 @@ function logout() {
       reader.readAsDataURL(file);
     }
 </script>
+<script src="cloud_db.js"></script>
+<script src="share_helper.js"></script>
 </body>
 </html>
