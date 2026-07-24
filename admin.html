@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>后台管理</title>
   <style>/* village-h5 全局样式 */
@@ -188,7 +188,7 @@ body {
 .app-card-actions .btn-approve { background: #4CAF50; color: white; flex: 1; }
 .app-card-actions .btn-reject { background: #F44336; color: white; flex: 1; }
 
-/* 空����态 */
+/* 空状态 */
 .empty-state { text-align: center; padding: 40px 20px; color: #999; }
 .empty-icon { font-size: 48px; display: block; margin-bottom: 12px; }
 
@@ -274,6 +274,24 @@ function init() {
   var savedLogin = sessionStorage.getItem('village_admin_logged');
   if (savedLogin === 'true') { isLoggedIn = true; }
   loadUI();
+  // 直接从 Supabase 读取云端数据（Supabase 允许跨域请求）
+  var _u='https://eivqbbxyllsorbvgqsju.supabase.co';
+  var _k='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY';
+  fetch(_u+'/rest/v1/village_data?id=eq.init&select=data',{headers:{apikey:_k,'Cache-Control':'no-cache'}})
+    .then(function(r){return r.json()})
+    .then(function(rows){
+      if(rows&&rows[0]&&rows[0].data){
+        var d=rows[0].data;
+        if(d.registrations)Storage.set('registrations',d.registrations);
+        if(d.accounts)Storage.set('accounts',d.accounts);
+        if(d.products)Storage.set('products',d.products);
+        if(d.announcements)Storage.set('announcements',d.announcements);
+        if(d.foods)Storage.set('foods',d.foods);
+        if(d.camps)Storage.set('camps',d.camps);
+        console.log('[Admin] 云端数据已同步，注册:',(d.registrations||[]).length,'条');
+      }
+    })
+    .catch(function(e){console.warn('[Admin] 云端读取失败:',e.message)});
 }
 
 function loadUI() {
@@ -335,7 +353,7 @@ function showChangeAdmin() {
     '<div style="background:white;border-radius:12px;padding:24px;width:90%;max-width:360px;">' +
     '<div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:16px;">⚙️ 修改管理员账号</div>' +
     '<div class="form-group"><label class="form-label">新账号</label><input class="form-input" id="newAdminAccount" value="' + ADMIN_ACCOUNT + '" placeholder="输入新账号"></div>' +
-    '<div class="form-group"><label class="form-label">新��码</label><input class="form-input" id="newAdminPassword" type="password" placeholder="输入新密码"></div>' +
+    '<div class="form-group"><label class="form-label">新密码</label><input class="form-input" id="newAdminPassword" type="password" placeholder="输入新密码"></div>' +
     '<div class="form-group"><label class="form-label">确认新密码</label><input class="form-input" id="confirmAdminPassword" type="password" placeholder="再次输入新密码"></div>' +
     '<div style="display:flex;gap:8px;margin-top:16px;">' +
     '<button onclick="saveAdminAccount()" style="flex:1;padding:10px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;">保存</button>' +
@@ -576,7 +594,7 @@ function approveChief(appId) {
   }
   if (!app) { toast('申请不存在'); return; }
 
-  // 1. 更新申请��态
+  // 1. 更新申请状态
   apps[appIdx].status = '已通过';
   apps[appIdx].reviewTime = Date.now();
   Storage.set('township_applications', apps);
@@ -720,7 +738,7 @@ function loadRoleApplications() {
     panel.innerHTML += '<div class="empty-state"><span class="empty-icon">📋</span><div>暂无待审核的注册申请</div></div>';
     return;
   }
-  var roleIcons = {'村民':'🌾','村主任':'🏠','游客':'🎒','农产品商家':'🥬','建筑队':'🏗️','老师':'👩‍🏫','大学生':'🎓','律师事务所':'⚖️','律师':'����','货车司机':'🚛','拼车':'🚗','按摩师':'💆'};
+  var roleIcons = {'村民':'🌾','村主任':'🏠','游客':'🎒','农产品商家':'🥬','建筑队':'🏗️','老师':'👩‍🏫','大学生':'🎓','律师事务所':'⚖️','律师':'👔','货车司机':'🚛','拼车':'🚗','按摩师':'💆'};
   for (var pi = 0; pi < pending.length; pi++) {
     var reg = pending[pi];
     var icon = roleIcons[reg.role] || '👤';
@@ -731,7 +749,7 @@ function loadRoleApplications() {
       '<div class="app-card-actions">' +
       '<button class="btn-approve" onclick="approveRole(\'' + reg.id + '\')">✅ 通过</button>' +
       '<button class="btn-reject" onclick="rejectRole(\'' + reg.id + '\')">❌ 拒绝</button>' +
-      '<button class="btn-delete" onclick="deleteRole(\'' + reg.id + '\')">🗑️ ��除</button>' +
+      '<button class="btn-delete" onclick="deleteRole(\'' + reg.id + '\')">🗑️ 删除</button>' +
       '</div>' +
       '</div>';
   }
@@ -789,7 +807,7 @@ function approveRole(regId) {
 
 // 删除角色注册
 function deleteRole(regId) {
-  if (!confirm('确定删除此角色注册记录？该操作不��恢复。')) return;
+  if (!confirm('确定删除此角色注册记录？该操作不可恢复。')) return;
   var regs = Storage.get('registrations', []);
   var reg = null;
   for (var i = 0; i < regs.length; i++) {
@@ -909,7 +927,11 @@ function deleteAnnouncement(annId) {
 }
 
 // 页面加载完成后初始化
-if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', function(){ if(window.CloudDB){CloudDB.ready.then(init);}else{init();} }); } else { if(window.CloudDB){CloudDB.ready.then(init);}else{init();} }
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 
 var _sortMode={villages:false,roles:false,chiefs:false};
 var _dragSrc=-1,_dragType='';
@@ -932,8 +954,6 @@ function makeDraggable(el,idx,type){
     _dragSrc=-1;renderAllPanels();});
 }
 function renderAllPanels(){loadVillageStats();loadChiefApplications();loadRoleApplications();}
-
-<script>
-// ===== 从云端 Supabase 加载数据 =====
-
 </script>
+</body>
+</html>
