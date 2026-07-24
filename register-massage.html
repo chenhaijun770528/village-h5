@@ -603,7 +603,7 @@ function logout() {
       const name = document.getElementById('name').value.trim(), phone = document.getElementById('phone').value.trim()
       if (!name || !phone) { toast('请填写必填项'); return }
       var account = Storage.get('user', null);
-      var newReg = { id: genId(), role: '按摩技师', name: name: name, phone: phone, skill: document.getElementById('skill').value, years: document.getElementById('years').value, photo: window._massagePhoto || '', regAddress: document.getElementById('regAddress').value.trim(), curAddress: document.getElementById('curAddress').value.trim(), accountId: account ? account.id : '', accountName: account ? account.account : '', status: '待审核', time: Date.now() };
+      var newReg = { id: genId(), role: '按摩技师', name: name, phone: phone, skill: document.getElementById('skill').value, years: document.getElementById('years').value, photo: window._massagePhoto || '', regAddress: document.getElementById('regAddress').value.trim(), curAddress: document.getElementById('curAddress').value.trim(), accountId: account ? account.id : '', accountName: account ? account.account : '', status: '待审核', time: Date.now() };
       // 等 CloudDB.ready 后再写入，确保 Storage 钩子已挂载
       CloudDB.ready.then(function() {
         var regs = Storage.get('registrations', []);
