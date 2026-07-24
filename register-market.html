@@ -612,7 +612,10 @@ function logout() {
       if (!name || !phone || !shop) { toast('请填写必填项'); return }
       const users = Storage.get('registrations', [])
       users.unshift({ role: '超市老板', name, phone, shop, address: document.getElementById('address').value, biz: document.getElementById('biz').value, time: Date.now() })
-      Storage.set('registrations', users)
+Storage.set('registrations', users)
+}).then(function() {
+  // 数据已写入 localStorage，CloudDB 会在后台自动同步到云端
+});
       toast('注册成功！'); setTimeout(() => location.href = 'index.html', 1500)
     }
   </script>
