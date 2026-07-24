@@ -288,11 +288,11 @@ function init() {
         if(d.announcements)Storage.set('announcements',d.announcements);
         if(d.foods)Storage.set('foods',d.foods);
         if(d.camps)Storage.set('camps',d.camps);
-        console.log('[Admin] 云端数据已同步，注册:',(d.registrations||[]).length,'条');
+        console.log('[Admin] 云端数据已同步，注册:'+(d.registrations||[]).length+'条');
         if(isLoggedIn&&document.getElementById('panelRoleApps')){loadRoleApplications();}
       }
     })
-    .catch(function(e){console.warn('[Admin] 云端读取失败:',e.message)});
+    .catch(function(e){console.warn('[Admin] 云端读取失败:'+e.message)});
 }
 
 function loadUI() {
