@@ -14,43 +14,18 @@
   ];
 
   var _loaded = false;
-  var _saving = false;
-  var _saveTimer = null;
   var _cloudData = null;
-  var _loadPromise = null;
-  var _needPush = false;
-
-  // ---- 云端状态角标（右下角，不干扰页面） ----
-  var _badge = null;
-  var _badgeState = { text: '☁', color: 'rgba(0,0,0,0.55)' };
-  function ensureBadge() {
-    if (_badge && _badge.parentNode) return _badge;
-    if (!document.body) {
-      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ensureBadge);
-      else setTimeout(ensureBadge, 50);
-      return null;
-    }
-    _badge = document.createElement('div');
-    _badge.id = 'cloud_status_badge';
-    _badge.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:2147483647;font:12px/1.4 -apple-system,sans-serif;padding:4px 9px;border-radius:11px;background:rgba(0,0,0,0.55);color:#fff;pointer-events:none;opacity:.7;box-shadow:0 1px 4px rgba(0,0,0,.3);letter-spacing:.5px;';
-    document.body.appendChild(_badge);
-    applyBadge();
-    return _badge;
-  }
-  function applyBadge() {
-    if (_badge) { _badge.textContent = _badgeState.text; _badge.style.background = _badgeState.color; }
-  }
-  function setBadge(text, color) {
-    _badgeState = { text: text, color: color || 'rgba(0,0,0,0.55)' };
-    var b = ensureBadge();
-    if (b) applyBadge();
-  }
 
   function apiUrl() {
     return SUPABASE_URL + '/rest/v1/' + TABLE + '?id=eq.' + ROW_ID + '&select=data';
   }
+
   function headers() {
-    return { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY, 'Content-Type': 'application/json' };
+    return {
+      'apikey': ANON_KEY,
+      'Authorization': 'Bearer ' + ANON_KEY,
+      'Content-Type': 'application/json'
+    };
   }
 
   function collect() {
@@ -60,6 +35,77 @@
     }
     d._updated = Date.now();
     return d;
+  }
+
+  function applyData(d) {
+    _cloudData = d || {};
+    if (!d) return;
+    for (var i = 0; i < SYNC_KEYS.length; i++) {
+      var k = SYNC_KEYS[i];
+      if (d[k] !== undefined && d[k] !== null) {
+        var local = Storage.get(k, null);
+        if (local === null || local === undefined) {
+          Storage.set(k, d[k]);
+        }
+      }
+    }
+    _loaded = true;
+  }
+
+  function load() {
+    if (typeof fetch !== 'function') {
+      _loaded = true;
+      return Promise.resolve();
+    }
+
+    return fetch(apiUrl(), { headers: headers() })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (rows) {
+        if (rows && rows[0] && rows[0].data) {
+          applyData(rows[0].data);
+        } else {
+          applyData({});
+        }
+        console.log('[cloud] 加载成功');
+        return rows;
+      })
+      .catch(function (e) {
+        console.warn('[cloud] 加载失败，使用本地数据:', e);
+        _loaded = true;
+        _cloudData = {};
+      });
+  }
+
+  function save() {
+    if (typeof fetch !== 'function') return;
+
+    var local = collect();
+    var merged = {};
+    for (var i = 0; i < SYNC_KEYS.length; i++) {
+      var k = SYNC_KEYS[i];
+      merged[k] = mergeArrays(_cloudData ? _cloudData[k] : null, local[k]);
+    }
+    merged._updated = Date.now();
+
+    fetch(apiUrl(), {
+      method: 'PATCH',
+      headers: headers(),
+      body: JSON.stringify({ data: merged })
+    })
+    .then(function (r) {
+      if (!r.ok) throw new Error('save ' + r.status);
+      return r.json();
+    })
+    .then(function () {
+      _cloudData = merged;
+      console.log('[cloud] 保存成功');
+    })
+    .catch(function (e) {
+      console.warn('[cloud] 保存失败:', e);
+    });
   }
 
   function mergeArrays(a, b) {
@@ -75,109 +121,20 @@
     return out;
   }
 
-  // 拉取云端数据时，采用「合并·本地优先」策略：
-  // 云端数据只作为补充并入本地，绝不整体覆盖本地（避免把本地刚注册/修改的记录冲掉）。
-  // 同一 id 的记录本地优先；本地没有的云端记录会被补进来。
-  function applyData(d) {
-    _cloudData = d || {};
-    if (!d) return;
-    for (var i = 0; i < SYNC_KEYS.length; i++) {
-      var k = SYNC_KEYS[i];
-      if (d[k] === undefined || d[k] === null) continue;
-      var local = Storage.get(k, null);
-      var merged;
-      if (Array.isArray(local) || Array.isArray(d[k])) {
-        // 云端先入(map)，本地后入(map) => 本地优先（local wins），同时补入本地缺失的云端记录
-        merged = mergeArrays(d[k], local);
-      } else if (local && typeof local === 'object' && d[k] && typeof d[k] === 'object') {
-        merged = {};
-        for (var ck in d[k]) if (d[k].hasOwnProperty(ck)) merged[ck] = d[k][ck];
-        for (var lk in local) if (local.hasOwnProperty(lk)) merged[lk] = local[lk]; // 本地优先
-      } else {
-        merged = (local !== undefined && local !== null) ? local : d[k]; // 本地优先
-      }
-      Storage.set(k, merged);
-    }
-    _loaded = true;
-  }
-
-  function load() {
-    if (_loadPromise) return _loadPromise;
-    setBadge('☁ 连接中…', 'rgba(0,0,0,0.55)');
-    if (typeof fetch !== 'function') {
-      _loaded = true;
-      setBadge('☁ 离线', 'rgba(140,140,140,0.85)');
-      return Promise.resolve();
-    }
-    _loadPromise = fetch(apiUrl(), { headers: headers() }).then(function (r) {
-      if (!r.ok) throw new Error('supabase ' + r.status);
-      return r.json();
-    }).then(function (rows) {
-      if (rows && rows[0] && rows[0].data) {
-        applyData(rows[0].data);
-      } else {
-        _needPush = true;
-        applyData({});
-      }
-      setBadge('☁ 已同步', 'rgba(46,125,50,0.9)');
-      return rows;
-    }).catch(function (e) {
-      console.warn('[cloud] load failed (keep local):', e);
-      _loaded = true;
-      _cloudData = {};
-      setBadge('☁ 离线', 'rgba(140,140,140,0.85)');
-    }).then(function () {
-      if (_needPush) { _needPush = false; save(); }
-    });
-    return _loadPromise;
-  }
-
-  function save() {
-    if (_saving) return;
-    _saving = true;
-    setBadge('☁ 保存中…', 'rgba(0,0,0,0.55)');
-    var local = collect();
-    var merged = {};
-    for (var i = 0; i < SYNC_KEYS.length; i++) {
-      var k = SYNC_KEYS[i];
-      merged[k] = mergeArrays(_cloudData ? _cloudData[k] : null, local[k]);
-    }
-    merged._updated = Date.now();
-
-    fetch(apiUrl(), {
-      method: 'PATCH',
-      headers: headers(),
-      body: JSON.stringify({ data: merged })
-    }).then(function (r) {
-      if (!r.ok) throw new Error('save ' + r.status);
-      return r.json();
-    }).then(function () {
-      _cloudData = merged;
-      _saving = false;
-      setBadge('☁ 已同步', 'rgba(46,125,50,0.9)');
-    }).catch(function (e) {
-      console.warn('[cloud] save failed (WeChat may block Supabase; retry on next change):', e);
-      _saving = false;
-      setBadge('☁ 离线', 'rgba(140,140,140,0.85)');
-    });
-  }
-
-  function scheduleSave() {
-    if (_saveTimer) clearTimeout(_saveTimer);
-    _saveTimer = setTimeout(save, 1500);
-  }
-
   function hookStorage() {
     if (typeof Storage === 'undefined' || !Storage.set) {
-      setTimeout(hookStorage, 50);
+      setTimeout(hookStorage, 100);
       return;
     }
     var _origSet = Storage.set;
     Storage.set = function (k, v) {
       _origSet(k, v);
-      if (_loaded && SYNC_KEYS.indexOf(k) >= 0) scheduleSave();
+      if (_loaded && SYNC_KEYS.indexOf(k) >= 0) {
+        save();
+      }
     };
   }
+
   hookStorage();
 
   window.CloudDB = {
