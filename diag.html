@@ -2,59 +2,194 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>诊断页面</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>数据流诊断</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#f5f5f5;padding:20px}
-h1{background:#2E7D32;color:#fff;padding:15px;border-radius:8px;text-align:center;margin-bottom:20px}
-.info{background:#fff;padding:15px;border-radius:8px;margin-bottom:10px;font-size:14px;line-height:1.8}
-.label{color:#888;font-size:12px;margin-top:8px}
-.value{color:#2E7D32;font-weight:bold;font-size:16px;margin-top:4px}
-.ok{color:#4CAF50}.err{color:#F44336}.warn{color:#FF9800}
-button{padding:12px 24px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-size:16px;margin:5px;cursor:pointer}
-button:active{background:#1B5E20}
-.villages{background:#fff;padding:12px;margin:8px 0;border-radius:8px;border-left:4px solid #2E7D32}
-.vname{font-weight:bold;font-size:16px}.vinfo{font-size:12px;color:#666;margin-top:4px}
+body{font-family:monospace;padding:20px;background:#1a1a1a;color:#0f0;font-size:12px}
+.section{background:#000;border:1px solid #0f0;padding:15px;margin:15px 0}
+h2{color:#0f0;border-bottom:1px solid #0f0;padding-bottom:10px}
+.row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #333}
+.label{color:#888}
+.value{color:#0f0;word-break:break-all}
+.ok{color:#0f0}
+.error{color:#f00}
+.warn{color:#ff0}
+.btn{background:#0f0;color:#000;border:none;padding:10px 20px;cursor:pointer;margin:5px;font-family:monospace}
+.btn:hover{background:#0a0}
+pre{background:#111;padding:10px;overflow-x:auto;max-height:300px;overflow-y:auto}
 </style>
 </head>
 <body>
-<h1>🔧 数据诊断</h1>
-<div id="results"></div>
+<h1>数据流诊断工具</h1>
+
+<div class="section">
+<h2>1. 本地 localStorage 数据</h2>
+<div id="localData"></div>
+<button class="btn" onclick="showLocalData()">刷新本地数据</button>
+</div>
+
+<div class="section">
+<h2>2. 云端 Supabase 数据</h2>
+<div id="cloudData"></div>
+<button class="btn" onclick="fetchCloudData()">拉取云端数据</button>
+</div>
+
+<div class="section">
+<h2>3. 数据对比</h2>
+<div id="diff"></div>
+<button class="btn" onclick="compareData()">对比本地 vs 云端</button>
+</div>
+
+<div class="section">
+<h2>4. 操作</h2>
+<button class="btn" onclick="uploadLocal()">上传本地到云端</button>
+<button class="btn" onclick="downloadCloud()">下载云端到本地</button>
+<button class="btn" style="background:#f00;color:#fff" onclick="clearLocal()">清空本地数据</button>
+</div>
+
+<div class="section">
+<h2>5. 日志</h2>
+<pre id="log"></pre>
+</div>
+
 <script>
-var r = document.getElementById('results');
-function add(title, val, cls) {
-  var d = document.createElement('div');
-  d.className = 'info';
-  d.innerHTML = '<div class="label">'+title+'</div><div class="value '+(cls||'')+'">'+val+'</div>';
-  r.appendChild(d);
+var S = 'https://eivqbbxyllsorbvgqsju.supabase.co';
+var K = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY';
+var KEYS = ['accounts','registrations','villages','products','foods','camps','announcements'];
+
+function log(msg) {
+ var el = document.getElementById('log');
+ var time = new Date().toLocaleTimeString();
+ el.textContent = '[' + time + '] ' + msg + '\n' + el.textContent;
+ console.log(msg);
 }
-function addVillage(v) {
-  var d = document.createElement('div');
-  d.className = 'villages';
-  d.innerHTML = '<div class="vname">'+v.name+'</div><div class="vinfo">'+v.province+' '+v.city+' | 村长:'+(v.chief&&v.chief.name||'?')+'</div>';
-  r.appendChild(d);
+
+function showLocalData() {
+ var el = document.getElementById('localData');
+ var html = '';
+ KEYS.forEach(function(k) {
+ var v = localStorage.getItem('village_' + k) || localStorage.getItem(k);
+ var count = 0;
+ if (v) {
+ try { count = JSON.parse(v).length || 0; } catch(e) { count = -1; }
+ }
+ html += '<div class="row"><span class="label">' + k + '</span><span class="value">' + (v ? count + ' 条' : '无') + '</span></div>';
+ });
+ el.innerHTML = html;
+ log('已读取本地数据');
 }
-try {
-  var raw = localStorage.getItem('village_villages');
-  add('village_villages (localStorage)', raw ? '存在，'+JSON.parse(raw).length+'个村庄' : '不存在', raw ? 'ok' : 'err');
-  if (raw) {
-    var arr = JSON.parse(raw);
-    add('村庄列表', arr.length+'个');
-    arr.forEach(function(v){ addVillage(v); });
-  }
-} catch(e) {
-  add('错误', e.message, 'err');
+
+function fetchCloudData() {
+ log('正在拉取云端数据...');
+ fetch(S + '/rest/v1/village_data?id=eq.init&select=data', {
+ headers: { 'apikey': K, 'Authorization': 'Bearer ' + K }
+ })
+ .then(function(r) { return r.json(); })
+ .then(function(rows) {
+ if (rows && rows[0] && rows[0].data) {
+ var data = rows[0].data;
+ var el = document.getElementById('cloudData');
+ var html = '<div class="row"><span class="label">更新时间</span><span class="value">' + new Date(data._updated).toLocaleString() + '</span></div>';
+ KEYS.forEach(function(k) {
+ var count = data[k] ? data[k].length : 0;
+ html += '<div class="row"><span class="label">' + k + '</span><span class="value">' + count + ' 条</span></div>';
+ });
+ el.innerHTML = html;
+ window._cloudData = data;
+ log('云端数据拉取成功');
+ } else {
+ log('云端数据为空');
+ }
+ })
+ .catch(function(e) {
+ log('拉取失败: ' + e.message);
+ });
 }
-try {
-  var raw2 = localStorage.getItem('village_user');
-  add('village_user (登录状态)', raw2 ? '已登录: '+JSON.parse(raw2).account : '未登录', raw2 ? 'ok' : 'warn');
-} catch(e) {
-  add('登录状态错误', e.message, 'err');
+
+function compareData() {
+ if (!window._cloudData) {
+ log('请先拉取云端数据');
+ return;
+ }
+
+ var el = document.getElementById('diff');
+ var html = '';
+ KEYS.forEach(function(k) {
+ var localV = localStorage.getItem('village_' + k) || localStorage.getItem(k);
+ var localCount = 0;
+ if (localV) { try { localCount = JSON.parse(localV).length || 0; } catch(e) {} }
+
+ var cloudCount = window._cloudData[k] ? window._cloudData[k].length : 0;
+
+ var status = localCount === cloudCount ? 'ok' : 'warn';
+ html += '<div class="row"><span class="label">' + k + '</span><span class="value ' + status + '">本地: ' + localCount + ' | 云端: ' + cloudCount + (localCount !== cloudCount ? ' ⚠️' : '') + '</span></div>';
+ });
+ el.innerHTML = html;
+ log('已对比数据');
 }
-add('Storage.get测试', '请看上面 village_villages 的结果');
+
+function uploadLocal() {
+ if (!confirm('确认上传本地数据到云端？')) return;
+ log('正在上传...');
+
+ var data = {};
+ KEYS.forEach(function(k) {
+ var v = localStorage.getItem('village_' + k) || localStorage.getItem(k);
+ if (v) { try { data[k] = JSON.parse(v); } catch(e) { data[k] = []; } }
+ else { data[k] = []; }
+ });
+ data._updated = Date.now();
+
+ fetch(S + '/rest/v1/village_data?id=eq.init', {
+ method: 'PATCH',
+ headers: { 'apikey': K, 'Authorization': 'Bearer ' + K, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+ body: JSON.stringify({ data: data })
+ })
+ .then(function(r) {
+ if (r.ok) {
+ log('上传成功！');
+ fetchCloudData();
+ } else {
+ log('上传失败: ' + r.status);
+ }
+ })
+ .catch(function(e) { log('上传失败: ' + e.message); });
+}
+
+function downloadCloud() {
+ if (!confirm('确认下载云端数据到本地？本地数据会被覆盖！')) return;
+ log('正在下载...');
+
+ fetch(S + '/rest/v1/village_data?id=eq.init&select=data', {
+ headers: { 'apikey': K, 'Authorization': 'Bearer ' + K }
+ })
+ .then(function(r) { return r.json(); })
+ .then(function(rows) {
+ if (rows && rows[0] && rows[0].data) {
+ var data = rows[0].data;
+ KEYS.forEach(function(k) {
+ if (data[k]) { localStorage.setItem('village_' + k, JSON.stringify(data[k])); }
+ });
+ log('下载成功！已覆盖本地数据');
+ showLocalData();
+ }
+ })
+ .catch(function(e) { log('下载失败: ' + e.message); });
+}
+
+function clearLocal() {
+ if (!confirm('确认清空本地数据？')) return;
+ KEYS.forEach(function(k) {
+ localStorage.removeItem('village_' + k);
+ localStorage.removeItem(k);
+ });
+ log('已清空本地数据');
+ showLocalData();
+}
+
+// 页面加载时自动检查
+showLocalData();
+fetchCloudData();
 </script>
-<h2 style="margin:20px 0 10px;font-size:16px">操作</h2>
-<button onclick="location.href='index.html'">返回首页</button>
 </body>
 </html>
