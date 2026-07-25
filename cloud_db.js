@@ -124,7 +124,27 @@
     }).catch(function (e) {
       console.warn('[cloud] load failed (keep local):', e);
       _loaded = true;
-      _cloudData = {};
+      _cloudData = {}
+  // 浏览器兼容性检测
+  var ua = navigator.userAgent || '';
+  var isQQ = ua.indexOf('QQBrowser') > -1 || ua.indexOf('QQ/') > -1;
+  var isWeChat = ua.indexOf('MicroMessenger') > -1;
+  var isUC = ua.indexOf('UCBrowser') > -1 || ua.indexOf('UCWEB') > -1;
+  if (isQQ || isWeChat || isUC) {
+    setTimeout(function() {
+      if (confirm('当前浏览器可能限制云端同步功能\n\n建议点击「确定」在外部浏览器中打开\n\n支持的浏览器：Chrome、Safari、Firefox')) {
+        var url = location.href;
+        if (isWeChat) {
+          // 微信无法直接跳外部浏览器，提示用户手动操作
+          alert('请点击右上角 ⋮ → 在浏览器中打开');
+        } else {
+          // QQ浏览器可以尝试跳转
+          location.href = 'intent://' + url.replace('https://', '') + '#Intent;scheme=https;end';
+        }
+      }
+    }, 3000);
+  }
+;
       setBadge('☁ 离线', 'rgba(140,140,140,0.85)');
     }).then(function () {
       if (_needPush) { _needPush = false; save(); }
