@@ -570,6 +570,10 @@ function approveChief(appId) {
  apps[appIdx].status = '已通过';
  apps[appIdx].reviewTime = Date.now();
  Storage.set('township_applications', apps);
+ if (window.CloudDB) {
+ window.CloudDB.save();
+ console.log('[admin] 村主任审核通过，已推送到云端');
+ }
 
  var villages = Storage.get('villages', []);
  villages.push({
@@ -758,6 +762,11 @@ function approveRole(regId) {
  if (regs[i].id === regId) { reg = regs[i]; regs[i].status = '已通过'; regs[i].reviewTime = Date.now(); break; }
  }
  Storage.set('registrations', regs);
+ // 推送到云端
+ if (window.CloudDB) {
+ window.CloudDB.save();
+ console.log('[admin] 审核通过，已推送到云端');
+ }
  if (reg && reg.accountId) {
  var accounts = Storage.get('accounts', []);
  var roleMap = {'村民':'villager','村主任':'township','游客':'tourist','农产品商家':'market','建筑队':'construction','老师':'teacher','大学生':'student','律师事务所':'law-firm','律师':'lawyer','货车司机':'truck','拼车':'carpool','按摩师':'massage'};
@@ -814,6 +823,10 @@ function rejectRole(regId) {
  }
  }
  Storage.set('registrations', regs);
+ if (window.CloudDB) {
+ window.CloudDB.save();
+ console.log('[admin] 审核拒绝，已推送到云端');
+ }
  toast('已拒绝');
  loadRoleApplications();
 }
