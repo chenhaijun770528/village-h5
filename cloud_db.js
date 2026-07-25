@@ -15,7 +15,8 @@
 
   var _loaded = false;
   var _cloudData = null;
-  var _lastSyncTime = 0;
+  var _syncTimer = null;
+  var _lastCloudUpdate = 0;
 
   function apiUrl() {
     return SUPABASE_URL + '/rest/v1/' + TABLE + '?id=eq.' + ROW_ID + '&select=data';
@@ -38,70 +39,88 @@
     return d;
   }
 
-  // 【关键修复】云端优先合并：云端数据覆盖本地，但保留本地独有的记录
-  function applyData(d, forceOverwrite) {
+  // 云端优先合并（审核状态会被云端覆盖）
+  function applyData(d) {
     _cloudData = d || {};
     if (!d) return;
-    
+
+    var cloudUpdateTime = d._updated || 0;
+    var needRefresh = false;
+
     for (var i = 0; i < SYNC_KEYS.length; i++) {
       var k = SYNC_KEYS[i];
       if (d[k] === undefined || d[k] === null) continue;
-      
+
       var local = Storage.get(k, null);
       var cloud = d[k];
-      
+
       if (Array.isArray(local) && Array.isArray(cloud)) {
-        // 数组合并：云端优先，但保留本地独有的（按 id 匹配）
-        var merged = mergeById(cloud, local, forceOverwrite);
+        // 检查云端是否有更新
+        for (var ci = 0; ci < cloud.length; ci++) {
+          var cloudItem = cloud[ci];
+          if (!cloudItem || !cloudItem.id) continue;
+
+          var localItem = null;
+          for (var li = 0; li < local.length; li++) {
+            if (local[li] && local[li].id === cloudItem.id) {
+              localItem = local[li];
+              break;
+            }
+          }
+
+          // 如果云端数据更新时间比本地新，或者状态不一致
+          if (localItem && cloudItem.status && localItem.status !== cloudItem.status) {
+            console.log('[cloud] 状态更新: ' + cloudItem.name + ' ' + localItem.status + ' -> ' + cloudItem.status);
+            needRefresh = true;
+            break;
+          }
+        }
+
+        // 合并：云端优先
+        var merged = mergeById(cloud, local);
         Storage.set(k, merged);
-      } else if (local && typeof local === 'object' && cloud && typeof cloud === 'object') {
-        // 对象合并：云端优先
-        var mergedObj = {};
-        for (var lk in local) if (local.hasOwnProperty(lk)) mergedObj[lk] = local[lk];
-        for (var ck in cloud) if (cloud.hasOwnProperty(ck)) mergedObj[ck] = cloud[ck]; // 云端覆盖
-        Storage.set(k, mergedObj);
       } else {
-        // 简单值：云端优先
         Storage.set(k, cloud);
       }
     }
+
     _loaded = true;
-    _lastSyncTime = Date.now();
+    _lastCloudUpdate = cloudUpdateTime;
+
+    // 如果有更新，触发页面重新渲染
+    if (needRefresh && typeof renderVillages === 'function') {
+      console.log('[cloud] 检测到数据更新，重新渲染页面');
+      renderVillages();
+    }
+    if (needRefresh && typeof loadLandscapeDesigners === 'function') {
+      loadLandscapeDesigners();
+    }
   }
 
-  // 按 id 合并数组，云端优先
-  function mergeById(cloudArr, localArr, forceOverwrite) {
+  function mergeById(cloudArr, localArr) {
     var map = {};
     var i;
-    
-    // 先放入本地数据
+
+    // 先放本地数据
     for (i = 0; i < (localArr || []).length; i++) {
       var item = localArr[i];
       if (item && item.id) map[item.id] = item;
     }
-    
-    // 云端数据覆盖（如果 forceOverwrite 或云端数据更新）
+
+    // 云端数据覆盖（云端优先）
     for (i = 0; i < (cloudArr || []).length; i++) {
       var cloudItem = cloudArr[i];
       if (cloudItem && cloudItem.id) {
-        var existing = map[cloudItem.id];
-        if (!existing) {
-          // 云端有新记录，加入
-          map[cloudItem.id] = cloudItem;
-        } else if (forceOverwrite || (cloudItem._updated && existing._updated && cloudItem._updated > existing._updated)) {
-          // 云端数据更新，覆盖
-          map[cloudItem.id] = cloudItem;
-        }
-        // 否则保留本地（本地更新）
+        map[cloudItem.id] = cloudItem; // 云端覆盖本地
       }
     }
-    
+
     var result = [];
     for (var key in map) if (map.hasOwnProperty(key)) result.push(map[key]);
     return result;
   }
 
-  function load(forceOverwrite) {
+  function load() {
     if (typeof fetch !== 'function') {
       _loaded = true;
       return Promise.resolve();
@@ -114,24 +133,18 @@
       })
       .then(function (rows) {
         if (rows && rows[0] && rows[0].data) {
-          applyData(rows[0].data, forceOverwrite);
-          console.log('[cloud] 加载成功，数据已同步');
+          applyData(rows[0].data);
+          console.log('[cloud] 数据同步成功');
         } else {
-          applyData({}, forceOverwrite);
+          applyData({});
         }
         return rows;
       })
       .catch(function (e) {
-        console.warn('[cloud] 加载失败:', e);
+        console.warn('[cloud] 同步失败:', e);
         _loaded = true;
         _cloudData = {};
       });
-  }
-
-  // 【新增】强制刷新（用于页面切换时拉取最新数据）
-  function refresh() {
-    console.log('[cloud] 强制刷新数据...');
-    return load(true); // true = 强制用云端覆盖
   }
 
   function save() {
@@ -141,7 +154,7 @@
     var merged = {};
     for (var i = 0; i < SYNC_KEYS.length; i++) {
       var k = SYNC_KEYS[i];
-      merged[k] = mergeArrays(_cloudData ? _cloudData[k] : null, local[k]);
+      merged[k] = mergeById(_cloudData ? _cloudData[k] : null, local[k]);
     }
     merged._updated = Date.now();
 
@@ -156,6 +169,7 @@
     })
     .then(function () {
       _cloudData = merged;
+      _lastCloudUpdate = Date.now();
       console.log('[cloud] 保存成功');
     })
     .catch(function (e) {
@@ -163,17 +177,18 @@
     });
   }
 
-  function mergeArrays(a, b) {
-    var map = {};
-    function keyOf(x) {
-      if (x && x.id !== undefined && x.id !== null) return 'id:' + x.id;
-      return 'val:' + JSON.stringify(x);
-    }
-    (a || []).forEach(function (x) { map[keyOf(x)] = x; });
-    (b || []).forEach(function (x) { map[keyOf(x)] = x; });
-    var out = [];
-    for (var k in map) if (map.hasOwnProperty(k)) out.push(map[k]);
-    return out;
+  // 【新增】每30秒自动同步
+  function startAutoSync() {
+    if (_syncTimer) clearInterval(_syncTimer);
+
+    _syncTimer = setInterval(function() {
+      if (document.hidden) return; // 页面不可见时跳过
+
+      console.log('[cloud] 自动同步检查...');
+      load();
+    }, 30000); // 30秒
+
+    console.log('[cloud] 已启动自动同步（每30秒）');
   }
 
   function hookStorage() {
@@ -192,18 +207,12 @@
 
   hookStorage();
 
-  // 页面可见性变化时自动刷新
+  // 页面可见性变化时立即同步
   if (typeof document !== 'undefined') {
     document.addEventListener('visibilitychange', function() {
       if (!document.hidden && _loaded) {
-        // 页面重新可见时，延迟刷新
-        setTimeout(function() {
-          refresh().then(function() {
-            // 触发页面重新渲染
-            if (typeof renderVillages === 'function') renderVillages();
-            if (typeof loadLandscapeDesigners === 'function') loadLandscapeDesigners();
-          });
-        }, 500);
+        console.log('[cloud] 页面重新可见，立即同步');
+        load();
       }
     });
   }
@@ -211,8 +220,9 @@
   window.CloudDB = {
     load: load,
     save: save,
-    refresh: refresh,
     SYNC_KEYS: SYNC_KEYS,
-    ready: load()
+    ready: load().then(function() {
+      startAutoSync(); // 初始化完成后启动自动同步
+    })
   };
 })();
