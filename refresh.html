@@ -20,6 +20,8 @@ body{font-family:-apple-system,sans-serif;padding:20px;background:#f5f5f5;text-a
 <p style="color:#666;font-size:13px">从云端拉取最新数据到本地</p>
 <div id="status" class="status loading">准备刷新...</div>
 <button class="btn" onclick="forceRefresh()">立即刷新</button>
+
+<button class="btn" style="background:#FF9800" onclick="uploadLocalToCloud()">上传本地到云端</button>
 <button class="btn" style="background:#1976D2" onclick="location.href='index.html'">返回首页</button>
 </div>
 <div class="card">
@@ -106,6 +108,48 @@ function showLatest(regs) {
 window.onload = function() {
   setTimeout(forceRefresh, 500);
 };
+
+
+async function uploadLocalToCloud() {
+ if (!confirm('将 localStorage 所有数据上传到云端？云端现有数据会被覆盖')) return;
+ setStatus('正在上传到云端...', 'loading');
+
+ var SYNC_KEYS = ['accounts','registrations','announcements','villages','products','foods','camps'];
+ var data = {};
+ for (var i = 0; i < SYNC_KEYS.length; i++) {
+ var k = SYNC_KEYS[i];
+ var v = localStorage.getItem('village_' + k) || localStorage.getItem(k);
+ if (v) {
+ try { data[k] = JSON.parse(v); } catch(e) { data[k] = []; }
+ } else {
+ data[k] = [];
+ }
+ }
+ data._updated = Date.now();
+
+ try {
+ var r = await fetch('https://eivqbbxyllsorbvgqsju.supabase.co/rest/v1/village_data?id=eq.init', {
+ method: 'PATCH',
+ headers: {
+ 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY',
+ 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY',
+ 'Content-Type': 'application/json',
+ 'Prefer': 'return=minimal'
+ },
+ body: JSON.stringify({ data: data })
+ });
+
+ if (r.ok) {
+ setStatus('上传成功！云端现有 ' + (data.registrations ? data.registrations.length : 0) + ' 条注册记录', 'success');
+ showLatest(data.registrations || []);
+ } else {
+ throw new Error('HTTP ' + r.status);
+ }
+ } catch (e) {
+ setStatus('上传失败: ' + e.message, 'error');
+ }
+}
+
 </script>
 </body>
 </html>
