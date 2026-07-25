@@ -829,6 +829,20 @@ function bootstrap() {
  }
 }
 bootstrap();
+
+// 初始化（不依赖 cloud_db.js，本地优先）
+init();
+
+// 如果 cloud_db.js 加载成功，再同步云端数据
+if (window.CloudDB) {
+  window.CloudDB.ready.then(function() {
+    console.log('[cloud] 云端同步完成');
+    // 重新渲染（云端数据已合并到本地）
+    renderVillages();
+  }).catch(function(e) {
+    console.log('[cloud] 云端同步失败，使用本地数据');
+  });
+}
 </script>
 </body>
 </html>
