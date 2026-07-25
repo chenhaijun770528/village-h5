@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>刷新数据</title>
+<style>
+body{font-family:-apple-system,sans-serif;padding:20px;background:#f5f5f5;text-align:center}
+.card{background:white;border-radius:12px;padding:20px;margin:20px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+.btn{background:#2E7D32;color:white;border:none;border-radius:8px;padding:12px 24px;font-size:16px;cursor:pointer;width:100%;margin:10px 0}
+.status{padding:10px;border-radius:8px;margin:10px 0;font-size:14px}
+.success{background:#E8F5E9;color:#2E7D32}
+.error{background:#FFEBEE;color:#C62828}
+.loading{background:#FFF3E0;color:#F57C00}
+</style>
+</head>
+<body>
+<div class="card">
+<h2>🔄 强制刷新数据</h2>
+<p style="color:#666;font-size:13px">从云端拉取最新数据到本地</p>
+<div id="status" class="status loading">准备刷新...</div>
+<button class="btn" onclick="forceRefresh()">立即刷新</button>
+<button class="btn" style="background:#1976D2" onclick="location.href='index.html'">返回首页</button>
+</div>
+<div class="card">
+<h3>最近注册记录</h3>
+<div id="list"></div>
+</div>
+<script>
+var SUPABASE_URL = 'https://eivqbbxyllsorbvgqsju.supabase.co';
+var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY';
+var SYNC_KEYS = ['accounts','registrations','announcements','villages','products','foods','camps'];
+
+function setStatus(msg, type) {
+  var el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status ' + type;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function forceRefresh() {
+  setStatus('正在从云端拉取数据...', 'loading');
+
+  try {
+    var r = await fetch(SUPABASE_URL + '/rest/v1/village_data?id=eq.init&select=data', {
+      headers: {
+        'apikey': ANON_KEY,
+        'Authorization': 'Bearer ' + ANON_KEY
+      }
+    });
+
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+
+    var rows = await r.json();
+    if (rows && rows[0] && rows[0].data) {
+      var data = rows[0].data;
+
+      // 强制覆盖本地数据
+      for (var i = 0; i < SYNC_KEYS.length; i++) {
+        var k = SYNC_KEYS[i];
+        if (data[k] !== undefined) {
+          localStorage.setItem('village_' + k, JSON.stringify(data[k]));
+          console.log('[refresh] 已更新: ' + k + ' (' + (data[k] ? data[k].length : 0) + ' 条)');
+        }
+      }
+
+      // 显示最新记录
+      showLatest(data.registrations || []);
+
+      setStatus('✅ 数据已刷新！共 ' + (data.registrations ? data.registrations.length : 0) + ' 条注册记录', 'success');
+    } else {
+      throw new Error('云端数据为空');
+    }
+  } catch(e) {
+    setStatus('❌ 刷新失败: ' + e.message, 'error');
+  }
+}
+
+function showLatest(regs) {
+  var list = document.getElementById('list');
+  if (!regs || regs.length === 0) {
+    list.innerHTML = '<p style="color:#999">暂无数据</p>';
+    return;
+  }
+
+  var html = '<div style="text-align:left;font-size:13px">';
+  // 显示最近5条
+  var latest = regs.slice(-5).reverse();
+  for (var i = 0; i < latest.length; i++) {
+    var r = latest[i];
+    var statusColor = r.status === '已通过' ? '#2E7D32' : (r.status === '已拒绝' ? '#C62828' : '#F57C00');
+    html += '<div style="padding:8px;border-bottom:1px solid #eee">';
+    html += '<b>' + escapeHtml(r.name || r.nickName) + '</b> - ' + escapeHtml(r.role);
+    html += '<br><span style="color:' + statusColor + '">' + escapeHtml(r.status) + '</span>';
+    html += '</div>';
+  }
+  html += '</div>';
+  list.innerHTML = html;
+}
+
+// 页面加载时自动刷新
+window.onload = function() {
+  setTimeout(forceRefresh, 500);
+};
+</script>
+</body>
+</html>
