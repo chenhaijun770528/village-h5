@@ -277,9 +277,30 @@ var currentTab = 'villages';
 
 // 初始化
 function init() {
- var savedLogin = sessionStorage.getItem('village_admin_logged');
- if (savedLogin === 'true') { isLoggedIn = true; }
+ // 强制从云端拉取最新数据（覆盖本地）
+ if (typeof fetch === 'function') {
+ fetch('https://eivqbbxyllsorbvgqsju.supabase.co/rest/v1/village_data?id=eq.init&select=data', {
+ headers: { 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY', 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY' }
+ })
+ .then(r => r.json())
+ .then(rows => {
+ if (rows && rows[0] && rows[0].data) {
+ var d = rows[0].data;
+ console.log('[admin] 从云端加载数据');
+ if (d.accounts) Storage.set('accounts', d.accounts);
+ if (d.registrations) Storage.set('registrations', d.registrations);
+ if (d.announcements) Storage.set('announcements', d.announcements);
+ if (d.villages) Storage.set('villages', d.villages);
+ if (d.products) Storage.set('products', d.products);
+ if (d.foods) Storage.set('foods', d.foods);
+ if (d.camps) Storage.set('camps', d.camps);
+ }
+ })
+ .then(() => loadUI())
+ .catch(e => { console.warn('[admin] 云端加载失败:', e); loadUI(); });
+ } else {
  loadUI();
+ }
 }
 
 function loadUI() {
