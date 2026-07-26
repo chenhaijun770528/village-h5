@@ -12,6 +12,27 @@
   var MASTER_KEY = '$2a$10$Jp5qaeJY5pMYvvFKg4O/1uKEIpZqkY1xzpUx8BWfPLrOy9HtsXRS2';
   var pending = 0;
 
+  // 劫持 localStorage.setItem：village_ 前缀 key 自动推送云端（合并式同步）
+  (function() {
+    var _origSet = localStorage.setItem.bind(localStorage);
+    var _timers = {};
+    localStorage.setItem = function(k, v) {
+      _origSet(k, v);
+      if (typeof k === 'string' && k.indexOf('village_') === 0) {
+        var binName = k.substring(8);
+        if (BIN[binName] && !_timers[k]) {
+          _timers[k] = setTimeout(function() {
+            _timers[k] = null;
+            var local = localStorage.getItem(k);
+            if (!local) return;
+            var data; try { data = JSON.parse(local); } catch(e) { return; }
+            cloudPut(BIN[binName], data, function() {});
+          }, 500);
+        }
+      }
+    };
+  })();
+
   // 状态角标
   function showStatus(msg, color) {
     var el = document.getElementById('cloudStatus');
