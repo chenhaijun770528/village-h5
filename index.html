@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
- <script src="cloud_db.js"></script>
+ 
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
  <title>村庄开发</title>
@@ -821,28 +821,46 @@ function callChief(phone) {
 
 // 初始化入口
 // 等待cloud_db.js加载完成，弱网手机也会重试连接
+
+
+// 初始化锁，防止重复执行
+let appInited = false;
+let bannerTimer = null;
+
+function initApp() {
+ if(appInited) return;
+ appInited = true;
+ initSampleData();
+ migrateData();
+ renderBanner();
+ loadAnnouncements();
+ renderVillages();
+ loadLandscapeDesigners();
+}
+
+// 轮询等待云端模块加载
 function bootstrap() {
  if (window.CloudDB && window.CloudDB.ready) {
-   window.CloudDB.ready.then(function() { init(); });
+ window.CloudDB.ready.then(function() {
+ console.log("CloudDB就绪，启动应用");
+ initApp();
+ }).catch(function(err) {
+ console.error("CloudDB启动失败，降级本地数据", err);
+ initApp();
+ });
  } else {
-   setTimeout(bootstrap, 200);
+ setTimeout(bootstrap, 200);
  }
 }
+
+// 启动
 bootstrap();
 
-// 初始化（不依赖 cloud_db.js，本地优先）
-init();
-
-// 如果 cloud_db.js 加载成功，再同步云端数据
-if (window.CloudDB) {
-  window.CloudDB.ready.then(function() {
-    console.log('[cloud] 云端同步完成');
-    // 重新渲染（云端数据已合并到本地）
-    renderVillages();
-  }).catch(function(e) {
-    console.log('[cloud] 云端同步失败，使用本地数据');
-  });
-}
+// 页面销毁/跳转清除定时器
+window.addEventListener('beforeunload', function() {
+ if(bannerTimer) clearInterval(bannerTimer);
+});
 </script>
+<script src="cloud_db.js"></script>
 </body>
 </html>
