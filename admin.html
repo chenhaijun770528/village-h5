@@ -4,6 +4,7 @@
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
  <title>后台管理</title>
+ <script src="https://chenhaijun770528.github.io/village-h5/jsonbin.js"></script>
  <style>/* village-h5 全局样式 */
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -234,7 +235,7 @@ body {
  </div>
 
 <script>
-// village-h5 数据存储
+// village-h5 数据存储（读取从 localStorage，jsonbin.js 已将云端数据同步至此）
 var Storage = {
  get: function(key, defaultVal) {
  try {
@@ -244,10 +245,6 @@ var Storage = {
  },
  set: function(key, val) {
  localStorage.setItem('village_' + key, JSON.stringify(val));
- // 修改本地数据后自动推送云端
- if(window._cloud && window._cloud.pushToCloud){
- window._cloud.pushToCloud();
- }
  }
 };
 
@@ -275,29 +272,16 @@ var ADMIN_PASSWORD = localStorage.getItem('village_admin_password') || 'admin123
 var isLoggedIn = false;
 var currentTab = 'villages';
 
-// 初始化
+// 初始化：使用 jsonbin.js 从云端拉取全部数据（自动同步到 localStorage）
 function init() {
- // 强制从云端拉取最新数据（覆盖本地）
- if (typeof fetch === 'function') {
- fetch('https://eivqbbxyllsorbvgqsju.supabase.co/rest/v1/village_data?id=eq.init&select=data', {
- headers: { 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY', 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY' }
- })
- .then(r => r.json())
- .then(rows => {
- if (rows && rows[0] && rows[0].data) {
- var d = rows[0].data;
- console.log('[admin] 从云端加载数据');
- if (d.accounts) Storage.set('accounts', d.accounts);
- if (d.registrations) Storage.set('registrations', d.registrations);
- if (d.announcements) Storage.set('announcements', d.announcements);
- if (d.villages) Storage.set('villages', d.villages);
- if (d.products) Storage.set('products', d.products);
- if (d.foods) Storage.set('foods', d.foods);
- if (d.camps) Storage.set('camps', d.camps);
- }
- })
- .then(() => loadUI())
- .catch(e => { console.warn('[admin] 云端加载失败:', e); loadUI(); });
+ if (typeof JB_init === 'function') {
+ JB_init();
+ window.onJBReady = function() {
+ console.log('[admin] 云端数据就绪');
+ loadUI();
+ };
+ // 若 JB_init 已同步完毕（缓存命中），500ms 后也执行 loadUI
+ setTimeout(function() { loadUI(); }, 500);
  } else {
  loadUI();
  }
@@ -582,23 +566,21 @@ function approveChief(appId) {
 
  var apps = Storage.get('township_applications', []);
  var app = null;
- var appIdx = -1;
  for (var i = 0; i < apps.length; i++) {
- if (apps[i].id === appId) { app = apps[i]; appIdx = i; break; }
+ if (apps[i].id === appId) { app = apps[i]; break; }
  }
  if (!app) { toast('申请不存在'); return; }
 
- apps[appIdx].status = '已通过';
- apps[appIdx].reviewTime = Date.now();
- Storage.set('township_applications', apps);
- if (window.CloudDB) {
- window.CloudDB.save();
- console.log('[admin] 村主任审核通过，已推送到云端');
+ // 同步更新申请状态到云端
+ if (typeof JB_registrations !== 'undefined') {
+ JB_registrations.update(function(ok) {
+ console.log('[admin] 村长申请状态更新:', ok ? '成功' : '失败');
+ }, appId, { status: '已通过', reviewTime: Date.now() });
  }
 
- var villages = Storage.get('villages', []);
- villages.push({
- id: app.id,
+ // 创建村庄到云端
+ if (typeof JB_villages !== 'undefined') {
+ var vData = {
  name: app.village || '未命名村庄',
  province: app.province || '',
  city: app.city || '',
@@ -609,37 +591,17 @@ function approveChief(appId) {
  chief: { name: app.name, phone: app.phone },
  images: [],
  createTime: Date.now()
- });
- Storage.set('villages', villages);
-
- if (app.accountId) {
- var regs = Storage.get('registrations', []);
- regs.unshift({
- id: app.id,
- accountId: app.accountId,
- accountName: app.accountName || '',
- role: '村主任',
- name: app.name,
- phone: app.phone,
- village: app.village,
- province: app.province || '',
- city: app.city || '',
- status: '已通过',
- applyTime: app.applyTime || Date.now(),
- reviewTime: Date.now()
- });
- Storage.set('registrations', regs);
-
- var accounts = Storage.get('accounts', []);
- for (var ai = 0; ai < accounts.length; ai++) {
- if (accounts[ai].id === app.accountId) {
- accounts[ai].currentRole = 'township';
- accounts[ai].currentRoleId = app.id;
- accounts[ai].currentRoleName = app.name;
- break;
+ };
+ JB_villages.create(function(ok, newId) {
+ console.log('[admin] 村庄创建:', ok ? newId : '失败');
+ }, vData);
  }
- }
- Storage.set('accounts', accounts);
+
+ // 若有账号，更新账号角色
+ if (app.accountId && typeof JB_accounts !== 'undefined') {
+ JB_accounts.update(function(ok) {
+ console.log('[admin] 账号角色更新:', ok ? '成功' : '失败');
+ }, app.accountId, { currentRole: 'township', currentRoleId: app.id, currentRoleName: app.name });
  }
 
  toast('已通过！用户角色已开通，可直接登录使用');
@@ -650,15 +612,12 @@ function approveChief(appId) {
 function rejectChief(appId) {
  if (!confirm('确定拒绝此申请？')) return;
 
- var apps = Storage.get('township_applications', []);
- for (var i = 0; i < apps.length; i++) {
- if (apps[i].id === appId) {
- apps[i].status = '已拒绝';
- apps[i].updateTime = Date.now();
- break;
+ if (typeof JB_registrations !== 'undefined') {
+ JB_registrations.update(function(ok) {
+ console.log('[admin] 村长申请拒绝:', ok ? '成功' : '失败');
+ }, appId, { status: '已拒绝', updateTime: Date.now() });
  }
- }
- Storage.set('township_applications', apps);
+
  toast('已拒绝该申请');
  loadChiefApplications();
 }
@@ -666,46 +625,14 @@ function rejectChief(appId) {
 // ========== 删除村庄 ==========
 function deleteVillage(villageId) {
  if (!confirm('确定删除此村庄？该村庄下的所有关联数据也将被清除！')) return;
- var villages = Storage.get('villages', []);
- for (var i = 0; i < villages.length; i++) {
- if (villages[i].id === villageId) { villages.splice(i, 1); break; }
- }
- Storage.set('villages', villages);
 
- var products = Storage.get('products', []);
- var newP = [];
- for (var pi = 0; pi < products.length; pi++) { if (products[pi].villageId !== villageId) newP.push(products[pi]); }
- Storage.set('products', newP);
+ if (typeof JB_villages !== 'undefined') {
+ JB_villages.delete(function(ok) {
+ console.log('[admin] 村庄删除:', ok ? '成功' : '失败');
+ }, villageId);
+ }
 
- var foods = Storage.get('foods', []);
- var newF = [];
- for (var fi = 0; fi < foods.length; fi++) { if (foods[fi].villageId !== villageId) newF.push(foods[fi]); }
- Storage.set('foods', newF);
-
- var camps = Storage.get('camps', []);
- var newC = [];
- for (var ci = 0; ci < camps.length; ci++) { if (camps[ci].villageId !== villageId) newC.push(camps[ci]); }
- Storage.set('camps', newC);
-
- var accounts = Storage.get('accounts', []);
- var tApps = Storage.get('township_applications', []);
- for (var ti = 0; ti < tApps.length; ti++) {
- if (tApps[ti].id === villageId) {
- if (tApps[ti].accountId) {
- for (var ai = 0; ai < accounts.length; ai++) {
- if (accounts[ai].id === tApps[ti].accountId) {
- delete accounts[ai].currentRole;
- delete accounts[ai].currentRoleId;
- delete accounts[ai].currentRoleName;
- break;
- }
- }
- }
- break;
- }
- }
- Storage.set('accounts', accounts);
- toast('村庄及关联数据已删除，村主任角色已重置');
+ toast('村庄及关联数据已删除');
  loadVillageStats();
 }
 
@@ -777,77 +704,68 @@ function loadRoleApplications() {
 
 function approveRole(regId) {
  if (!confirm('确定通过此注册申请？')) return;
+
  var regs = Storage.get('registrations', []);
  var reg = null;
  for (var i = 0; i < regs.length; i++) {
- if (regs[i].id === regId) { reg = regs[i]; regs[i].status = '已通过'; regs[i].reviewTime = Date.now(); break; }
+ if (regs[i].id === regId) { reg = regs[i]; break; }
  }
- Storage.set('registrations', regs);
- // 推送到云端
- if (window.CloudDB) {
- window.CloudDB.save();
- console.log('[admin] 审核通过，已推送到云端');
+ if (!reg) { toast('申请不存在'); return; }
+
+ // 通过云端更新申请状态
+ if (typeof JB_registrations !== 'undefined') {
+ JB_registrations.update(function(ok) {
+ console.log('[admin] 申请状态更新:', ok ? '成功' : '失败');
+ }, regId, { status: '已通过', reviewTime: Date.now() });
  }
- if (reg && reg.accountId) {
- var accounts = Storage.get('accounts', []);
+
+ // 更新账号角色
+ if (reg.accountId && typeof JB_accounts !== 'undefined') {
  var roleMap = {'村民':'villager','村主任':'township','游客':'tourist','农产品商家':'market','建筑队':'construction','老师':'teacher','大学生':'student','律师事务所':'law-firm','律师':'lawyer','货车司机':'truck','拼车':'carpool','按摩师':'massage'};
- for (var ai = 0; ai < accounts.length; ai++) {
- if (accounts[ai].id === reg.accountId) {
- accounts[ai].currentRole = roleMap[reg.role] || reg.role;
- accounts[ai].currentRoleId = reg.id;
- accounts[ai].currentRoleName = reg.name;
- break;
+ JB_accounts.update(function(ok) {
+ console.log('[admin] 账号角色更新:', ok ? '成功' : '失败');
+ }, reg.accountId, { currentRole: roleMap[reg.role] || reg.role, currentRoleId: regId, currentRoleName: reg.name });
  }
- }
- Storage.set('accounts', accounts);
- }
+
  toast('已通过！' + (reg ? reg.role : '') + '角色已开通');
  loadRoleApplications();
 }
 
 function deleteRole(regId) {
  if (!confirm('确定删除此角色注册记录？该操作不可恢复。')) return;
+
  var regs = Storage.get('registrations', []);
  var reg = null;
  for (var i = 0; i < regs.length; i++) {
- if (regs[i].id === regId) {
- reg = regs[i];
- regs.splice(i, 1);
- break;
+ if (regs[i].id === regId) { reg = regs[i]; break; }
  }
+
+ if (typeof JB_registrations !== 'undefined') {
+ JB_registrations.delete(function(ok) {
+ console.log('[admin] 申请删除:', ok ? '成功' : '失败');
+ }, regId);
  }
- Storage.set('registrations', regs);
- if (reg && reg.accountId) {
- var accounts = Storage.get('accounts', []);
- for (var ai = 0; ai < accounts.length; ai++) {
- if (accounts[ai].id === reg.accountId && accounts[ai].currentRoleId === regId) {
- delete accounts[ai].currentRole;
- delete accounts[ai].currentRoleId;
- delete accounts[ai].currentRoleName;
- break;
+
+ // 清除账号关联角色
+ if (reg && reg.accountId && typeof JB_accounts !== 'undefined') {
+ JB_accounts.update(function(ok) {
+ console.log('[admin] 账号角色清除:', ok ? '成功' : '失败');
+ }, reg.accountId, { currentRole: null, currentRoleId: null, currentRoleName: null });
  }
- }
- Storage.set('accounts', accounts);
- }
+
  toast('已删除角色注册记录');
  loadRoleApplications();
 }
 
 function rejectRole(regId) {
  if (!confirm('确定拒绝此注册申请？')) return;
- var regs = Storage.get('registrations', []);
- for (var i = 0; i < regs.length; i++) {
- if (regs[i].id === regId) {
- regs[i].status = '已拒绝';
- regs[i].reviewTime = Date.now();
- break;
+
+ if (typeof JB_registrations !== 'undefined') {
+ JB_registrations.update(function(ok) {
+ console.log('[admin] 审核拒绝:', ok ? '成功' : '失败');
+ }, regId, { status: '已拒绝', reviewTime: Date.now() });
  }
- }
- Storage.set('registrations', regs);
- if (window.CloudDB) {
- window.CloudDB.save();
- console.log('[admin] 审核拒绝，已推送到云端');
- }
+
  toast('已拒绝');
  loadRoleApplications();
 }
@@ -906,6 +824,7 @@ function loadAnnouncementsAdmin() {
  panel.innerHTML = html;
 }
 
+// 公告相关云端操作（announcements 合并到 registrations bin 管理）
 function saveAnnouncementAdmin() {
  var title = document.getElementById('annTitle').value.trim();
  var content = document.getElementById('annContent').value.trim();
@@ -978,18 +897,8 @@ function renderAllPanels(){
  if(el) el.innerHTML=el.innerHTML;
  }
 }
+
 init();
-
-// 等待cloud_db.js加载完成，弱网手机也会重试连接
-function bootstrap() {
- if (window.CloudDB && window.CloudDB.ready) {
-   window.CloudDB.ready.then(function() { init(); });
- } else {
-   setTimeout(bootstrap, 200);
- }
-}
-bootstrap();
-
 </script>
 </body>
 </html>
