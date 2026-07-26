@@ -483,10 +483,6 @@ const Storage = {
  },
  set: function(key, val) {
  localStorage.setItem('village_' + key, JSON.stringify(val));
- // 云同步推送（兼容cloud_db.js）
- if(window._cloud && typeof window._cloud.push === 'function'){
- window._cloud.push(key, val);
- }
  }
 };
 
