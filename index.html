@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
- <script src="cloud_db.js"></script>
+ <script src="jsonbin.js"></script>
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
  <title>村庄开发</title>
@@ -819,30 +819,16 @@ function callChief(phone) {
  window.location.href = 'tel:' + phone;
 }
 
-// 初始化入口
-// 等待cloud_db.js加载完成，弱网手机也会重试连接
+// 初始化入口：JSONBin 云端同步（本地兜底，云端失败不白屏）
 function bootstrap() {
- if (window.CloudDB && window.CloudDB.ready) {
-   window.CloudDB.ready.then(function() { init(); });
- } else {
-   setTimeout(bootstrap, 200);
- }
+  if (window.JB_init) {
+    window.onJBReady = init;
+    JB_init();
+  } else {
+    init();
+  }
 }
 bootstrap();
-
-// 初始化（不依赖 cloud_db.js，本地优先）
-init();
-
-// 如果 cloud_db.js 加载成功，再同步云端数据
-if (window.CloudDB) {
-  window.CloudDB.ready.then(function() {
-    console.log('[cloud] 云端同步完成');
-    // 重新渲染（云端数据已合并到本地）
-    renderVillages();
-  }).catch(function(e) {
-    console.log('[cloud] 云端同步失败，使用本地数据');
-  });
-}
 </script>
 </body>
 </html>
