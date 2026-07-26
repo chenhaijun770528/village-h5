@@ -290,15 +290,28 @@
   };
 
   // 启动：从云端拉取全部数据写入 localStorage，然后调用页面 init
+  // 同步策略：云端优先；云端空但本地有数据时，把本地推到云端（migrate），不覆盖本地；都空才写空
   window.JB_init = function() {
     JB_accounts.getAll(function(data) {
-      s('accounts', data || { nextId: 1, items: [] });
+      var la = g('accounts');
+      if (data && data.items && data.items.length) s('accounts', data);
+      else if (la && la.items && la.items.length) cloudPut(BIN.accounts, la, function(){});
+      else s('accounts', { nextId: 1, items: [] });
       JB_registrations.getAll(function(data2) {
-        s('registrations', data2 || { nextId: 1, items: [] });
+        var lr = g('registrations');
+        if (data2 && data2.items && data2.items.length) s('registrations', data2);
+        else if (lr && lr.items && lr.items.length) cloudPut(BIN.registrations, lr, function(){});
+        else s('registrations', { nextId: 1, items: [] });
         JB_villages.getAll(function(data3) {
-          s('villages', data3 || { nextId: 1, items: [] });
+          var lv = g('villages');
+          if (data3 && data3.items && data3.items.length) s('villages', data3);
+          else if (lv && lv.items && lv.items.length) cloudPut(BIN.villages, lv, function(){});
+          else s('villages', { nextId: 1, items: [] });
           JB_roles.getAll(function(data4) {
-            s('roles', data4 || { nextId: 1, items: [] });
+            var lo = g('roles');
+            if (data4 && data4.items && data4.items.length) s('roles', data4);
+            else if (lo && lo.items && lo.items.length) cloudPut(BIN.roles, lo, function(){});
+            else s('roles', { nextId: 1, items: [] });
             if (typeof window.onJBReady === 'function') window.onJBReady();
           });
         });
