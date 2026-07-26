@@ -4,10 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>注册账号 - 村庄平台</title>
+<script src="jsonbin.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHeI', sans-serif;
   background: linear-gradient(135deg, #2E7D32, #4CAF50);
   min-height: 100vh;
   display: flex;
@@ -106,46 +107,6 @@ body {
   </div>
 </div>
 <script>
-// 云端直传
-function uploadToCloud() {
- var SYNC_KEYS = ['accounts','registrations','announcements','villages','products','foods','camps'];
- var data = {};
- for (var i = 0; i < SYNC_KEYS.length; i++) {
- var k = SYNC_KEYS[i];
- var v = localStorage.getItem('village_' + k) || localStorage.getItem(k);
- if (v) { try { data[k] = JSON.parse(v); } catch(e) { data[k] = []; } }
- else { data[k] = []; }
- }
- data._updated = Date.now();
- fetch('https://eivqbbxyllsorbvgqsju.supabase.co/rest/v1/village_data?id=eq.init', {
- method: 'PATCH',
- headers: {
- 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY',
- 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY',
- 'Content-Type': 'application/json',
- 'Prefer': 'return=minimal'
- },
- body: JSON.stringify({ data: data })
- }).then(function(r) {
- console.log('[cloud] 上传结果: ' + r.status);
- }).catch(function(e) {
- console.warn('[cloud] 上传失败:', e);
- });
-}
-
-
-var Storage = {
-  get: function(key, defaultVal) {
-    try {
-      var v = localStorage.getItem('village_' + key);
-      return v ? JSON.parse(v) : defaultVal;
-    } catch(e) { return defaultVal; }
-  },
-  set: function(key, val) {
-    localStorage.setItem('village_' + key, JSON.stringify(val));
-  }
-};
-
 function toast(msg) {
   var el = document.createElement('div');
   el.className = 'toast';
@@ -202,28 +163,42 @@ function doRegister() {
     return;
   }
 
-  var accounts = Storage.get('accounts', []);
-  for (var i = 0; i < accounts.length; i++) {
-    if (accounts[i].account === account) {
+  // 云端查重
+  JB_accounts.find(function(existing) {
+    if (existing) {
       errorMsg.textContent = '该账号已被注册';
       return;
     }
-  }
-
-  var newAccount = {
-    id: 'acc_' + Date.now(),
-    account: account,
-    password: password,
-    currentRole: 'none',
-    currentRoleId: '',
-    status: 'active',
-    createTime: Date.now()
-  };
-
-  accounts.unshift(newAccount);
-  Storage.set('accounts', accounts);
-  toast('注册成功！请登录');
-  setTimeout(function() { location.href = 'login.html'; }, 1500);
+    // 准备账号数据
+    var accountData = {
+      account: account,
+      password: password,
+      currentRole: 'none',
+      currentRoleId: '',
+      status: 'active'
+    };
+    // 准备注册申请数据
+    var regData = {
+      account: account,
+      type: '账号注册'
+    };
+    // 写入 accounts bin
+    JB_accounts.create(function(ok1) {
+      if (!ok1) {
+        errorMsg.textContent = '注册失败，请重试';
+        return;
+      }
+      // 写入 registrations bin
+      JB_registrations.create(function(ok2) {
+        if (!ok2) {
+          errorMsg.textContent = '注册申请提交失败';
+          return;
+        }
+        toast('注册成功！请登录');
+        setTimeout(function() { location.href = 'login.html'; }, 1500);
+      }, regData);
+    }, accountData);
+  }, account);
 }
 
 document.addEventListener('keypress', function(e) {
