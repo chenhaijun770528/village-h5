@@ -188,8 +188,15 @@
       // 从云端查找账号
       JB_accounts.find(function(found) {
         if (!found) {
-          errorMsg.textContent = '账号不存在';
-          return;
+          // 云端无，本地兜底（旧账号迁移）
+          try {
+            var la = JSON.parse(localStorage.getItem('village_accounts') || '{"items":[]}');
+            var list = la.items || [];
+            for (var i = 0; i < list.length; i++) {
+              if (list[i].account === account || list[i].phone === account) { found = list[i]; break; }
+            }
+          } catch(e) {}
+          if (!found) { errorMsg.textContent = '账号不存在'; return; }
         }
 
         // 验证密码
@@ -231,6 +238,9 @@
         location.href = 'index.html';
       }
     })();
+
+    // 启动云端同步（拉云端+本地数据migrate到云端）
+    if (window.JB_init) JB_init();
   
     // 新功能：账号找回（从 registrations 恢复到 accounts）
     function recoverAccounts() {
