@@ -488,8 +488,8 @@ function renderPage() {
  '<div class="audit-info">村庄：' + (p.village||'未知') + ' | 手机：' + (p.phone||'未知') + '</div>' +
  '<div class="audit-info">申请时间：' + (p.applyTime ? new Date(p.applyTime).toLocaleDateString('zh-CN') : '') + '</div>' +
  '<div class="audit-actions">' +
- '<button class="btn-a-approve" onclick="approveVillager('' + p.id + '')">✅ 通过</button>' +
- '<button class="btn-a-reject" onclick="rejectVillager('' + p.id + '')">❌ 拒绝</button>' +
+ '<button class="btn-a-approve" onclick="approveVillager('\x27 + p.id + \x27)">✅ 通过</button>' +
+ '<button class="btn-a-reject" onclick="rejectVillager('\x27 + p.id + \x27)">❌ 拒绝</button>' +
  '</div></div>';
  });
  }
