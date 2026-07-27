@@ -308,28 +308,52 @@ var container = document.getElementById("mainContent");
 
 
   // === 淇锛氫粠"宸查€氳繃"娉ㄥ唽璁板綍鍚屾瑙掕壊鍒拌处鍙?===
-  // === ROLE SYNC: recover role from approved registration ===
-  if (!currentUser.currentRole || currentUser.currentRole === 'none') {
-    var _regs = Storage.get('registrations', []);
+  // === 角色同步：云端优先，等待 JB_init 完成后查询（含待审核状态提示）===
+  function syncUserRole() {
+    var _cuser = Storage.get('user', null);
+    if (!_cuser) return;
+    // ✅ 优先从云端查询，避免跨设备读不到数据
+    if (typeof JB_registrations !== 'undefined') {
+      JB_registrations.getAll(function(_allRegs) {
+        var _cloudRegs = (_allRegs && _allRegs.items) ? _allRegs.items : [];
+        applyRoleSync(_cloudRegs);
+      });
+    } else {
+      var _localRegs = Storage.get('registrations', []);
+      applyRoleSync(_localRegs);
+    }
+  }
+
+  function applyRoleSync(_regs) {
+    var _cuser = Storage.get('user', null);
+    if (!_cuser) return;
     var _roleMap = {
       '村主任':'township','村民':'villager','游客':'tourist',
       '超市老板':'market','建筑公司':'construction','老师':'teacher',
       '大学生':'student','律师':'lawyer','货运司机':'truck','顺风车':'carpool',
       '按摩师':'massage','按摩技师':'massage','建筑园林师':'landscape'
     };
-    for (var _i = 0; _i < _regs.length; _i++) {
-      if (_regs[_i].accountId === currentUser.id && _regs[_i].status === '已通过') {
-        var _rid = _roleMap[_regs[_i].role] || 'tourist';
-        currentUser.currentRole = _rid;
-        Storage.set('user', currentUser);
-        var _accs = Storage.get('accounts', []);
-        for (var _j = 0; _j < _accs.length; _j++) {
-          if (_accs[_j].id === currentUser.id) { _accs[_j].currentRole = _rid; break; }
+    if (!_cuser.currentRole || _cuser.currentRole === 'none') {
+      for (var _i = 0; _i < _regs.length; _i++) {
+        if (_regs[_i].accountId === _cuser.id) {
+          if (_regs[_i].status === '待审核') {
+            var _el = document.getElementById('pendingRoleNotice');
+            if (_el) { _el.style.display = 'block'; _el.innerHTML = '📋 您的「' + (_regs[_i].role || '未知角色') + '」申请正在审核中，请耐心等待...'; }
+          } else if (_regs[_i].status === '已通过') {
+            var _rid = _roleMap[_regs[_i].role] || 'tourist';
+            _cuser.currentRole = _rid;
+            Storage.set('user', _cuser);
+            var _accs = Storage.get('accounts', []);
+            for (var _j = 0; _j < _accs.length; _j++) { if (_accs[_j].id === _cuser.id) { _accs[_j].currentRole = _rid; break; } }
+            Storage.set('accounts', _accs);
+            break;
+          }
+          break;
         }
-        Storage.set('accounts', _accs);
-        break;
       }
     }
+    if (typeof renderPage === 'function') syncUserRole();
+renderPage();
   }
 var ROLES_MAP = {
       'township': { icon: '👔', name: '村主任', color: '#2E7D32' },
