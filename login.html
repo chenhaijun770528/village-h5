@@ -186,7 +186,7 @@
       }
 
       // 从云端查找账号
-      JB_accounts.find(function(found) {
+      JB_accounts.find(account, function(found) {
         if (!found) {
           // 云端无，本地兜底（旧账号迁移）
           try {
