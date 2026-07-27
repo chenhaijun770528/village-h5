@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <script src="cloud_db.js"></script>
   <script src="jsonbin.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -186,7 +185,7 @@
       }
 
       // 从云端查找账号
-      JB_accounts.find(account, function(found) {
+      JB_accounts.find(function(found) {
         if (!found) {
           // 云端无，本地兜底（旧账号迁移）
           try {
@@ -223,7 +222,7 @@
             location.href = 'select-role.html';
           }
         }, 800);
-      });
+      }, account);
     }
 
     // 回车登录
