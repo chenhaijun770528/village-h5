@@ -263,6 +263,11 @@ body {
  .func-item { padding: 12px 4px; }
  .func-text { font-size: 11px; }
 }
+ .massage-card { min-width: 130px; background: #fff; border-radius: 12px; padding: 14px 12px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.08); cursor: pointer; transition: transform 0.15s; }
+ .massage-card:active { transform: scale(0.95); }
+ .massage-avatar { font-size: 36px; margin-bottom: 6px; }
+ .massage-name { font-size: 13px; font-weight: bold; color: #333; margin-bottom: 4px; }
+ .massage-skill { font-size: 11px; color: #999; line-height: 1.4; }
  </style>
 </head>
 <body>
@@ -334,6 +339,14 @@ body {
  <div id="landscapeList" style="display:flex;gap:12px;overflow-x:auto;padding-bottom:10px;"></div>
  </div>
 
+
+<div class="section" id="massageSection" style="display:none;">
+<div class="section-title">
+ 按摩技师
+ <span class="landscape-count" id="massageCount">共 0 位技师</span>
+</div>
+<div id="massageList" style="display:flex;gap:12px;overflow-x:auto;padding-bottom:10px;"></div>
+</div>
  <div class="section">
  <div class="section-title">
  🏘️ 村庄列表
@@ -553,6 +566,24 @@ function goDesignerDetail(id) {
  toast('设计师详情页开发中');
 }
 
+
+function goMassageDetail(id) {
+ var therapists = Storage.get("registrations", []);
+ var t = null;
+ for (var i = 0; i < therapists.length; i++) {
+   var x = therapists[i];
+   if (x.id === id && (x.role === "按摩技师" || x.role === "按摩师")) { t = x; break; }
+ }
+ if (!t) { toast("未找到该技师信息"); return; }
+ var msg = "姓名: " + (t.name || t.nickName || "未知");
+ if (t.phone) msg += "
+电话: " + t.phone;
+ if (t.skill || t.desc) msg += "
+擅长: " + (t.skill || t.desc);
+ if (t.address) msg += "
+地址: " + t.address;
+ alert(msg);
+}
 function loadLandscapeDesigners() {
  var section = document.getElementById('landscapeSection');
  var list = document.getElementById('landscapeList');
@@ -585,6 +616,52 @@ function loadLandscapeDesigners() {
  '</div>';
  }
  list.innerHTML = html;
+
+function loadMassageTherapists() {
+ var section = document.getElementById("massageSection");
+ var list = document.getElementById("massageList");
+ var count = document.getElementById("massageCount");
+ if (!section || !list) return;
+ if (typeof JB_registrations !== "undefined") {
+   JB_registrations.getAll(function(data) {
+     var regs = (data && data.items) ? data.items : [];
+     renderMassageList(regs, section, list, count);
+   });
+ } else {
+   var regs = Storage.get("registrations", []);
+   renderMassageList(regs, section, list, count);
+ }
+}
+
+function renderMassageList(regs, section, list, count) {
+ var therapists = [];
+ for (var i = 0; i < regs.length; i++) {
+   var r = regs[i];
+   if ((r.role === "按摩技师" || r.role === "按摩师") && (r.status === "已通过" || r.status === "approved")) {
+     therapists.push(r);
+   }
+ }
+ if (therapists.length === 0) { section.style.display = "none"; return; }
+ section.style.display = "block";
+ count.textContent = "共 " + therapists.length + " 位技师";
+ var html = "";
+ for (var j = 0; j < therapists.length; j++) {
+   var t = therapists[j];
+   var avatar = t.avatarUrl || "?";
+   var name = escapeHtml(t.nickName || t.name || "技师");
+   var skill = escapeHtml(t.skill || t.desc || "专业按摩");
+   var tid = escapeHtml(t.id);
+   html += "<div class="massage-card" data-tid="" + tid + "">" +
+    "<div class="massage-avatar">" + avatar + "</div>" +
+    "<div class="massage-name">" + name + "</div>" +
+    "<div class="massage-skill">" + skill + "</div></div>";
+ }
+ list.innerHTML = html;
+ list.onclick = function(e) {
+   var card = e.target.closest(".massage-card");
+   if (card && card.dataset.tid) goMassageDetail(card.dataset.tid);
+ };
+}
 }
 
 function init() {
@@ -594,6 +671,7 @@ function init() {
  loadAnnouncements();
  renderVillages();
  loadLandscapeDesigners();
+ loadMassageTherapists();
 }
 
 function renderBanner() {
