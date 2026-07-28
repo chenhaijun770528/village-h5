@@ -3,200 +3,285 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>数据流诊断工具 (Gist版 v2)</title>
+<title>数据流诊断工具 (Gist版 v3)</title>
 <style>
 body{font-family:monospace;padding:20px;background:#1a1a1a;color:#0f0;font-size:13px}
 .section{background:#000;border:1px solid #0f0;padding:15px;margin:15px 0}
-h2{color:#0f0;border-bottom:1px solid #0f0;padding-bottom:10px}
-.row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #333}
+h2{color:#0f0;border-bottom:1px solid #0f0;padding-bottom:10px;margin-top:0}
+.row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #222}
 .label{color:#888}
-.value{color:#0f0;word-break:break-all}
+.value{color:#0f0;word-break:break-all;max-width:70%}
 .error{color:#f00}.warn{color:#ff0}.ok{color:#0f0}
-.btn{background:#0f0;color:#000;border:none;padding:10px 20px;cursor:pointer;margin:5px;font-family:monospace}
+.btn{background:#0f0;color:#000;border:none;padding:10px 20px;cursor:pointer;margin:5px 0;font-family:monospace;display:inline-block}
 .btn:hover{background:#0a0}
-pre{background:#111;padding:10px;overflow-x:auto;max-height:300px;overflow-y:auto;white-space:pre-wrap}
-input[type=password]{background:#000;color:#0f0;border:1px solid #0f0;padding:5px;width:320px;font-family:monospace;margin:3px}
+.btn:disabled{background:#333;color:#666;cursor:not-allowed}
+pre{background:#111;padding:10px;overflow-x:auto;max-height:250px;overflow-y:auto;white-space:pre-wrap;margin:0}
+input[type=password],input[type=text]{background:#000;color:#0f0;border:1px solid #0f0;padding:8px;width:320px;font-family:monospace;margin:3px 0;display:block}
+.tip{color:#888;font-size:11px;margin-top:4px}
 </style>
 </head>
 <body>
-<h1>数据流诊断工具 (Gist版 v2)</h1>
+<h1>数据流诊断工具 v3</h1>
+
 <div class="section">
 <div>当前访问来源: <span id="origin" class="value">?</span></div>
-<div style="color:#ff0;margin-top:8px">⚠️ 请确保此来源与你看数据的App是同一个（都是 https://chenhaijun770528.github.io 或都是本地文件）</div>
+<div class="tip">⚠️ 此页面数据与 App 的 localStorage 完全隔离，请用 App 内的 diag.html 或在此页面手动「下载到本地」</div>
 </div>
 
 <div class="section">
-<h2>0. Gist Token 配置</h2>
-<div>当前 Token: <span id="tokenStatus" class="label">未配置</span></div>
-<input type="password" id="tokenInput" placeholder="粘贴新 Token (ghp_...)">
-<button class="btn" onclick="saveToken()">保存 Token</button>
-<button class="btn" onclick="clearToken()">清除 Token</button>
+<h2>0. Gist Token</h2>
+<div id="tokenStatus" class="label">未配置</div>
+<input type="password" id="tokenInput" placeholder="粘贴 Token (ghp_...)">
+<button class="btn" id="btnSaveToken" onclick="doSaveToken()">💾 保存 Token</button>
+<button class="btn" onclick="doClearToken()">🗑️ 清除 Token</button>
+<div id="tokenHint" class="tip"></div>
 </div>
 
 <div class="section">
-<h2>1. 本地 localStorage 全部数据</h2>
-<div id="localData"></div>
-<button class="btn" onclick="showLocalData()">刷新本地数据</button>
+<h2>1. 本地 localStorage</h2>
+<div id="localData"><button class="btn" onclick="showLocal()">🔄 刷新</button></div>
 </div>
 
 <div class="section">
-<h2>2. Gist 云端数据</h2>
-<div id="cloudData"></div>
-<button class="btn" onclick="fetchCloudData()">刷新云端数据</button>
+<h2>2. Gist 云端</h2>
+<button class="btn" id="btnFetchCloud" onclick="doFetchCloud()">🔄 刷新云端</button>
+<div id="cloudData" style="margin-top:10px;color:#888">点击上方按钮加载</div>
+<div id="cloudHint" class="tip"></div>
 </div>
 
 <div class="section">
-<h2>3. 上传/下载</h2>
-<button class="btn" onclick="uploadLocal()">📤 上传全部本地到云端</button>
-<button class="btn" onclick="downloadCloud()">📥 下载全部云端到本地</button>
-<button class="btn" style="background:#f00;color:#fff" onclick="clearLocal()">🗑️ 清空本地数据</button>
+<h2>3. 同步操作</h2>
+<button class="btn" onclick="doUpload()">📤 上传本地 → 云端</button>
+<button class="btn" onclick="doDownload()">📥 下载云端 → 本地</button>
+<button class="btn" style="background:#600" onclick="doClearLocal()">🗑️ 清空本地</button>
 </div>
 
 <div class="section">
-<h2>4. 日志</h2>
+<h2>4. 操作日志</h2>
 <pre id="log"></pre>
 </div>
 
 <script>
+// ── GistDB ──────────────────────────────────────────────────────────
 (function(){
-  var GIST_ID='ed0e2614049e613d382f94458d9022f1';
-  var OWNER='chenhaijun770528';
-  var RAW_BASE='https://gist.githubusercontent.com/'+OWNER+'/'+GIST_ID+'/raw';
-  var API_BASE='https://api.github.com/gists/'+GIST_ID;
-  var _cache={};
-  var _cbs=[];
-  var _ready=false;
-  function getToken(){return localStorage.getItem('gist_token')||'';}
-  function init(cb){_cbs.push(cb);if(_ready){setTimeout(runCbs,0);return;}fetchGist(function(g){if(!g||!g.files){runCbs();return;}_cache={};for(var fn in g.files){var f=g.files[fn];if(f.content!==undefined){try{_cache[fn]=JSON.parse(f.content);}catch(e){_cache[fn]=f.content;}}}_ready=true;runCbs();});}
-  function runCbs(){var c=_cbs.splice(0);for(var i=0;i<c.length;i++){try{c[i](_cache);}catch(e){}}}
-  function get(key,cb){if(cb){fetchFile(key,function(d){_cache[key]=d;cb(d);});}return _cache[key];}
-  function set(key,data,cb){_cache[key]=data;save(key,cb);}
-  function save(key,cb){
-    var body={description:'Village H5 Database',files:{}};
-    body.files[key]={content:JSON.stringify(_cache[key],null,2)};
-    var x=new XMLHttpRequest();
-    x.open('PATCH',API_BASE,true);
-    x.setRequestHeader('Authorization','Bearer '+getToken());
+  var GIST_ID = 'ed0e2614049e613d382f94458d9022f1';
+  var OWNER = 'chenhaijun770528';
+  var RAW = 'https://gist.githubusercontent.com/'+OWNER+'/'+GIST_ID+'/raw';
+  var API = 'https://api.github.com/gists/'+GIST_ID;
+  var _cache = {};
+  var _ready = false;
+  var _loading = false;
+
+  function token() { return localStorage.getItem('gist_token')||''; }
+
+  function fetchGist(cb) {
+    var x = new XMLHttpRequest();
+    x.open('GET', API, true);
+    x.setRequestHeader('Authorization','Bearer '+token());
+    x.setRequestHeader('Accept','application/json');
+    x.onerror = function(){ cb(null); };
+    x.onload = function(){
+      if (x.status === 200 && x.responseText) {
+        try { cb(JSON.parse(x.responseText)); }
+        catch(e) { cb(null); }
+      } else { cb(null); }
+    };
+    x.send();
+  }
+
+  // 初始化：从 Gist 拉全部文件到 _cache
+  function init(cb) {
+    if (_ready) { setTimeout(function(){ cb(_cache); }, 0); return; }
+    if (_loading) { setTimeout(function(){ init(cb); }, 200); return; }
+    _loading = true;
+    fetchGist(function(gist) {
+      _loading = false;
+      if (!gist || !gist.files) { _ready = true; cb(_cache); return; }
+      _cache = {};
+      for (var fn in gist.files) {
+        var f = gist.files[fn];
+        if (f.content !== undefined) {
+          try { _cache[fn] = JSON.parse(f.content); }
+          catch(e) { _cache[fn] = f.content; }
+        }
+      }
+      _ready = true;
+      cb(_cache);
+    });
+  }
+
+  // 写入单个文件到 Gist（PATCH）
+  function putFile(key, data, cb) {
+    var x = new XMLHttpRequest();
+    x.open('PATCH', API, true);
+    x.setRequestHeader('Authorization','Bearer '+token());
     x.setRequestHeader('Content-Type','application/json');
-    x.onreadystatechange=function(){
-      if(x.readyState===4){
-        if(x.status===200){var r=JSON.parse(x.responseText);for(var fn in r.files){var f=r.files[fn];if(f.content!==undefined){try{_cache[fn]=JSON.parse(f.content);}catch(e){_cache[fn]=f.content;}}}if(cb)cb({ok:true});}
-        else{if(cb)cb({ok:false,error:x.status,response:x.responseText});}
+    x.onload = function(){
+      if (x.status === 200) {
+        try {
+          var r = JSON.parse(x.responseText);
+          if (r.files && r.files[key] && r.files[key].content !== undefined) {
+            try { _cache[key] = JSON.parse(r.files[key].content); }
+            catch(e) { _cache[key] = r.files[key].content; }
+          }
+        } catch(e){}
+        cb({ok:true});
+      } else {
+        cb({ok:false, status:x.status, msg:x.responseText});
       }
     };
-    x.send(JSON.stringify(body));
+    x.onerror = function(){ cb({ok:false, status:-1, msg:'network error'}); };
+    x.send(JSON.stringify({
+      description: 'Village H5 Database',
+      files: (function(){
+        var o = {}; o[key] = {content: JSON.stringify(data,null,2)}; return o;
+      })()
+    }));
   }
-  function fetchGist(cb){
-    var x=new XMLHttpRequest();
-    x.open('GET',API_BASE,true);
-    x.setRequestHeader('Authorization','Bearer '+getToken());
-    x.setRequestHeader('Accept','application/json');
-    x.onreadystatechange=function(){if(x.readyState===4&&x.status===200){try{cb(JSON.parse(x.responseText));}catch(e){cb(null);}}else if(x.readyState===4){cb(null);}};
-    x.send();
-  }
-  function fetchFile(key,cb){
-    var x=new XMLHttpRequest();
-    x.open('GET',RAW_BASE+'/'+key+'?t='+Date.now(),true);
-    x.onreadystatechange=function(){if(x.readyState===4){if(x.status===200){try{cb(JSON.parse(x.responseText));}catch(e){cb(x.responseText);}}else{cb(null);}}};
-    x.send();
-  }
-  window.GistDB={init:init,get:get,set:set,ready:function(){return _ready;}};
+
+  window.GistDB = { init:init, putFile:putFile, cache:function(){return _cache;} };
 })();
 
-function log(msg){var el=document.getElementById('log');var time=new Date().toLocaleTimeString();el.textContent='['+time+'] '+msg+'\n'+el.textContent;console.log(msg);}
-
-function saveToken(){var t=document.getElementById('tokenInput').value.trim();if(!t){log('Token 为空');return;}localStorage.setItem('gist_token',t);document.getElementById('tokenStatus').textContent='已配置 ('+t.substring(0,8)+'...)';log('✅ Token 已保存');}
-function clearToken(){localStorage.removeItem('gist_token');document.getElementById('tokenStatus').textContent='未配置';log('Token 已清除');}
-
-function getAllLocalKeys(){
-  var keys=[];
-  for(var i=0;i<localStorage.length;i++){keys.push(localStorage.key(i));}
-  return keys;
+// ── UI ───────────────────────────────────────────────────────────────
+function log(msg) {
+  var el = document.getElementById('log');
+  var t = new Date().toLocaleTimeString();
+  el.textContent = '['+t+'] '+msg+'\n'+el.textContent;
+  console.log(msg);
 }
 
-function showLocalData(){
-  var el=document.getElementById('localData');
-  var keys=getAllLocalKeys();
-  var html='<div class="row"><span class="label">总键数</span><span class="value">'+keys.length+'</span></div>';
-  keys.forEach(function(k){
-    var v=localStorage.getItem(k);
-    var count=0;
-    try{var o=JSON.parse(v);if(Array.isArray(o))count=o.length;else if(typeof o==='object')count=Object.keys(o).length;else count=v.length;}catch(e){count=v?v.length:0;}
-    html+='<div class="row"><span class="label">'+k+'</span><span class="value">'+(v?(count+' 项'):'∅')+'</span></div>';
+function doSaveToken() {
+  var t = document.getElementById('tokenInput').value.trim();
+  if (!t) { log('Token 为空'); return; }
+  localStorage.setItem('gist_token', t);
+  document.getElementById('tokenStatus').textContent = '已保存 ('+t.slice(0,8)+'...)';
+  document.getElementById('tokenStatus').className = 'ok';
+  document.getElementById('tokenHint').textContent = 'Token 已存入浏览器 localStorage，不会上传到任何地方';
+  document.getElementById('btnFetchCloud').disabled = false;
+  log('✅ Token 已保存');
+}
+
+function doClearToken() {
+  localStorage.removeItem('gist_token');
+  document.getElementById('tokenStatus').textContent = '未配置';
+  document.getElementById('tokenStatus').className = 'label';
+  document.getElementById('tokenHint').textContent = '';
+  document.getElementById('btnFetchCloud').disabled = true;
+  log('Token 已清除');
+}
+
+function showLocal() {
+  var el = document.getElementById('localData');
+  var keys = [];
+  for (var i=0; i<localStorage.length; i++) keys.push(localStorage.key(i));
+  var html = '<button class="btn" onclick="showLocal()">🔄 刷新</button>';
+  html += '<div class="row"><span class="label">总键数</span><span class="value">'+keys.length+'</span></div>';
+  keys.sort().forEach(function(k){
+    var v = localStorage.getItem(k);
+    var count = '?';
+    try {
+      var o = JSON.parse(v);
+      count = Array.isArray(o) ? o.length+' 项' : (typeof o==='object'&&o!==null ? Object.keys(o).length+' 个键' : typeof o);
+    } catch(e) { count = v ? v.length+' 字符' : '∅'; }
+    html += '<div class="row"><span class="label">'+k+'</span><span class="value">'+count+'</span></div>';
   });
-  el.innerHTML=html;
+  el.innerHTML = html;
 }
 
-function fetchCloudData(){
-  var t=localStorage.getItem('gist_token');
-  if(!t){log('❌ 请先配置 Token');document.getElementById('cloudData').innerHTML='<div class="error">未配置 Token</div>';return;}
+function doFetchCloud() {
+  var t = localStorage.getItem('gist_token');
+  if (!t) { log('❌ 请先保存 Token'); return; }
   log('正在拉取云端数据...');
-  GistDB.init(function(cache){
-    var el=document.getElementById('cloudData');
-    var keys=Object.keys(cache).filter(function(k){return k!=='_version';});
-    var html='<div class="row"><span class="label">总键数</span><span class="value">'+keys.length+'</span></div>';
-    keys.forEach(function(k){
-      var d=cache[k];var count=0;
-      if(Array.isArray(d))count=d.length;else if(typeof d==='object')count=Object.keys(d).length;
-      html+='<div class="row"><span class="label">'+k+'</span><span class="value">'+count+' 项</span></div>';
-    });
-    el.innerHTML=html;
+  document.getElementById('cloudData').innerHTML = '<span class="warn">加载中...</span>';
+  GistDB.init(function(cache) {
+    var keys = Object.keys(cache);
+    var html = '';
+    if (keys.length === 0) {
+      html = '<span class="warn">云端为空（尚未上传过数据）</span>';
+    } else {
+      html = '<div class="row"><span class="label">总文件数</span><span class="value">'+keys.length+'</span></div>';
+      keys.forEach(function(k){
+        var d = cache[k];
+        var count = Array.isArray(d) ? d.length+' 项' : (typeof d==='object'&&d!==null ? Object.keys(d).length+' 个键' : typeof d);
+        html += '<div class="row"><span class="label">'+k+'</span><span class="value">'+count+'</span></div>';
+      });
+    }
+    document.getElementById('cloudData').innerHTML = html;
+    document.getElementById('cloudHint').textContent = '最后更新: '+new Date().toLocaleString();
     log('✅ 云端数据已加载 ('+keys.length+' 个文件)');
   });
 }
 
-function uploadLocal(){
-  if(!confirm('确定把本地全部 localStorage 上传到云端 Gist？这会覆盖云端同名文件！'))return;
-  var t=localStorage.getItem('gist_token');
-  if(!t){log('❌ 请先配置 Token');return;}
-  log('开始上传本地全部数据到云端...');
-  var keys=getAllLocalKeys();
-  log('本地共 '+keys.length+' 个键');
-  var i=0;
-  function pushNext(){
-    if(i>=keys.length){log('✅ 全部数据上传完成');fetchCloudData();return;}
-    var k=keys[i];
-    var v=localStorage.getItem(k);
+function doUpload() {
+  if (!confirm('把本地全部 localStorage 上传到云端，会覆盖云端同名文件。确定？')) return;
+  var t = localStorage.getItem('gist_token');
+  if (!t) { log('❌ 请先保存 Token'); return; }
+  log('开始上传...');
+  var keys = [];
+  for (var i=0; i<localStorage.length; i++) keys.push(localStorage.key(i));
+  log('共 '+keys.length+' 个键');
+  var i = 0;
+  var ok = 0, fail = 0;
+  function next() {
+    if (i >= keys.length) {
+      log('完成：'+ok+' 成功，'+fail+' 失败');
+      doFetchCloud();
+      return;
+    }
+    var k = keys[i];
+    var v = localStorage.getItem(k);
     var data;
-    try{data=JSON.parse(v);}catch(e){data=v;}
-    log('推送 '+k+' ('+(Array.isArray(data)?data.length:'obj')+')...');
-    GistDB.set(k+'.json',data,function(r){
-      if(r&&r.ok){log('  ✅ '+k+' OK');}else{log('  ❌ '+k+' 失败: '+(r?r.error:'unknown'));}
-      i++;setTimeout(pushNext,400);
+    try { data = JSON.parse(v); } catch(e) { data = v; }
+    log('↑ '+k+' ...');
+    GistDB.putFile(k+'.json', data, function(r) {
+      if (r && r.ok) { log('  ✅ '+k); ok++; }
+      else { log('  ❌ '+k+' '+(r?r.status:'?')); fail++; }
+      i++;
+      setTimeout(next, 500);
     });
   }
-  pushNext();
+  next();
 }
 
-function downloadCloud(){
-  var t=localStorage.getItem('gist_token');
-  if(!t){log('❌ 请先配置 Token');return;}
-  log('开始下载云端全部数据到本地...');
-  GistDB.init(function(cache){
-    var keys=Object.keys(cache).filter(function(k){return k!=='_version';});
+function doDownload() {
+  var t = localStorage.getItem('gist_token');
+  if (!t) { log('❌ 请先保存 Token'); return; }
+  log('开始下载云端到本地...');
+  GistDB.init(function(cache) {
+    var keys = Object.keys(cache);
+    var n = 0;
     keys.forEach(function(k){
-      var localKey=k.replace(/\.json$/,'');
-      localStorage.setItem(localKey,JSON.stringify(cache[k]));
-      log('  ✅ '+localKey);
+      var localKey = k.replace(/\.json$/,'');
+      try { localStorage.setItem(localKey, JSON.stringify(cache[k])); n++; }
+      catch(e) { log('  ⚠️ '+localKey+' 写入失败（可能超出配额）'); }
     });
-    log('✅ 云端数据已下载到本地');
-    showLocalData();
+    log('✅ 已下载 '+n+' 个键到本地');
+    showLocal();
   });
 }
 
-function clearLocal(){
-  if(!confirm('确定清空本地所有 localStorage？'))return;
-  var keys=getAllLocalKeys();
-  keys.forEach(function(k){localStorage.removeItem(k);});
-  log('本地数据已清空 ('+keys.length+' 个键)');
-  showLocalData();
+function doClearLocal() {
+  if (!confirm('确定清空本地所有 localStorage？此操作不可恢复！')) return;
+  var keys = [];
+  for (var i=0; i<localStorage.length; i++) keys.push(localStorage.key(i));
+  keys.forEach(function(k){ localStorage.removeItem(k); });
+  log('已清空 '+keys.length+' 个键');
+  showLocal();
 }
 
-window.addEventListener('load',function(){
-  document.getElementById('origin').textContent=location.origin+(location.pathname||'');
-  var t=localStorage.getItem('gist_token');
-  if(t){document.getElementById('tokenStatus').textContent='已配置 ('+t.substring(0,8)+'...)';document.getElementById('tokenInput').placeholder='已保存，新 Token 粘贴后点保存';}
-  showLocalData();
+// ── Init ──────────────────────────────────────────────────────────────
+window.addEventListener('load', function(){
+  document.getElementById('origin').textContent = location.origin + location.pathname;
+  var t = localStorage.getItem('gist_token');
+  if (t) {
+    document.getElementById('tokenStatus').textContent = '已保存 ('+t.slice(0,8)+'...)';
+    document.getElementById('tokenStatus').className = 'ok';
+    document.getElementById('tokenHint').textContent = 'Token 已存入浏览器 localStorage';
+    document.getElementById('btnFetchCloud').disabled = false;
+  } else {
+    document.getElementById('btnFetchCloud').disabled = true;
+  }
+  showLocal();
 });
 </script>
 </body>
