@@ -55,12 +55,96 @@ input[type=text],input[type=password]{background:#000;color:#0f0;border:1px soli
 <pre id="log"></pre>
 </div>
 
-<script src="gist_db.js"></script>
 <script>
-window.GIST_TOKEN = localStorage.getItem('gist_token') || '';
+/* GistDB inline (token-free) */
+(function(){
+  var GIST_ID='ed0e2614049e613d382f94458d9022f1';
+  var OWNER='chenhaijun770528';
+  var RAW_BASE='https://gist.githubusercontent.com/'+OWNER+'/'+GIST_ID+'/raw';
+  var API_BASE='https://api.github.com/gists/'+GIST_ID;
+  var _cache={};
+  var _cbs=[];
+  var _ready=false;
+  var _version=null;
+
+  function getToken(){return localStorage.getItem('gist_token')||'';}
+
+  function init(cb){
+    _cbs.push(cb);
+    if(_ready){setTimeout(runCbs,0);return;}
+    fetchGist(function(gist){
+      if(!gist||!gist.files){runCbs();return;}
+      _cache={};
+      for(var fn in gist.files){
+        var f=gist.files[fn];
+        if(f.content!==undefined){
+          try{_cache[fn]=JSON.parse(f.content);}catch(e){_cache[fn]=f.content;}
+        }
+      }
+      _version=gist.version;
+      _ready=true;
+      runCbs();
+    });
+  }
+  function runCbs(){var c=_cbs.splice(0);for(var i=0;i<c.length;i++){try{c[i](_cache);}catch(e){}}}
+  function get(key,cb){
+    if(cb){fetchFile(key,function(d){_cache[key]=d;cb(d);});}
+    return _cache[key];
+  }
+  function set(key,data,cb){
+    _cache[key]=data;save(key,cb);
+  }
+  function save(key,cb){
+    var body={description:'Village H5 Database',files:{}};
+    body.files[key]={content:JSON.stringify(_cache[key],null,2)};
+    var x=new XMLHttpRequest();
+    x.open('PATCH',API_BASE,true);
+    x.setRequestHeader('Authorization','Bearer '+getToken());
+    x.setRequestHeader('Content-Type','application/json');
+    x.onreadystatechange=function(){
+      if(x.readyState===4){
+        if(x.status===200){
+          var r=JSON.parse(x.responseText);
+          _version=r.version;
+          for(var fn in r.files){
+            var f=r.files[fn];
+            if(f.content!==undefined){try{_cache[fn]=JSON.parse(f.content);}catch(e){_cache[fn]=f.content;}}
+          }
+          if(cb)cb({ok:true,version:_version});
+        }else{
+          console.error('GistDB save error:',x.status);
+          if(cb)cb({ok:false,error:x.status,response:x.responseText});
+        }
+      }
+    };
+    x.send(JSON.stringify(body));
+  }
+  function fetchGist(cb){
+    var x=new XMLHttpRequest();
+    x.open('GET',API_BASE,true);
+    x.setRequestHeader('Authorization','Bearer '+getToken());
+    x.setRequestHeader('Accept','application/json');
+    x.onreadystatechange=function(){
+      if(x.readyState===4&&x.status===200){try{cb(JSON.parse(x.responseText));}catch(e){cb(null);}}
+      else if(x.readyState===4){cb(null);}
+    };
+    x.send();
+  }
+  function fetchFile(key,cb){
+    var x=new XMLHttpRequest();
+    x.open('GET',RAW_BASE+'/'+key+'?t='+Date.now(),true);
+    x.onreadystatechange=function(){
+      if(x.readyState===4){
+        if(x.status===200){try{cb(JSON.parse(x.responseText));}catch(e){cb(x.responseText);}}
+        else{cb(null);}
+      }
+    };
+    x.send();
+  }
+  window.GistDB={init:init,get:get,set:set,ready:function(){return _ready;}};
+})();
 
 var KEYS = ['accounts','registrations','villages','products','foods','camps','announcements'];
-var GIST_ID = 'ed0e2614049e613d382f94458d9022f1';
 
 function log(msg) {
   var el = document.getElementById('log');
@@ -73,14 +157,12 @@ function saveToken() {
   var t = document.getElementById('tokenInput').value.trim();
   if (!t) { log('Token 为空'); return; }
   localStorage.setItem('gist_token', t);
-  window.GIST_TOKEN = t;
   document.getElementById('tokenStatus').textContent = '已配置 (' + t.substring(0,8) + '...)';
   log('✅ Token 已保存');
 }
 
 function clearToken() {
   localStorage.removeItem('gist_token');
-  window.GIST_TOKEN = '';
   document.getElementById('tokenStatus').textContent = '未配置';
   log('Token 已清除');
 }
@@ -95,11 +177,11 @@ function showLocalData() {
     html += '<div class="row"><span class="label">' + k + '</span><span class="value">' + (v ? count + ' 条' : '∅') + '</span></div>';
   });
   el.innerHTML = html;
-  log('本地数据已刷新');
 }
 
 function fetchCloudData() {
-  if (!window.GIST_TOKEN) {
+  var t = localStorage.getItem('gist_token');
+  if (!t) {
     log('❌ 请先配置 Token');
     document.getElementById('cloudData').innerHTML = '<div class="error">未配置 Token</div>';
     return;
@@ -122,7 +204,8 @@ function fetchCloudData() {
 
 function uploadLocal() {
   if (!confirm('确定把本地数据上传到云端 Gist？这会覆盖云端现有数据！')) return;
-  if (!window.GIST_TOKEN) { log('❌ 请先配置 Token'); return; }
+  var t = localStorage.getItem('gist_token');
+  if (!t) { log('❌ 请先配置 Token'); return; }
   log('开始上传本地到云端...');
 
   var data = {};
@@ -135,7 +218,6 @@ function uploadLocal() {
     }
   });
 
-  // 逐个推送
   var i = 0;
   function pushNext() {
     if (i >= KEYS.length) {
@@ -144,17 +226,16 @@ function uploadLocal() {
       return;
     }
     var k = KEYS[i];
-    var c = (i === KEYS.length - 1) ? 1 : 0;
     log('推送 ' + k + ' (' + data[k].length + ' 条)...');
     GistDB.set(k, data[k], function(r) {
       if (r && r.ok) {
         log('  ✅ ' + k + ' OK');
         i++;
-        setTimeout(pushNext, 300);
+        setTimeout(pushNext, 500);
       } else {
         log('  ❌ ' + k + ' 失败: ' + (r ? r.error : 'unknown'));
         i++;
-        setTimeout(pushNext, 300);
+        setTimeout(pushNext, 500);
       }
     });
   }
@@ -162,7 +243,8 @@ function uploadLocal() {
 }
 
 function downloadCloud() {
-  if (!window.GIST_TOKEN) { log('❌ 请先配置 Token'); return; }
+  var t = localStorage.getItem('gist_token');
+  if (!t) { log('❌ 请先配置 Token'); return; }
   log('开始下载云端到本地...');
   GistDB.init(function(cache) {
     KEYS.forEach(function(k) {
@@ -186,11 +268,9 @@ function clearLocal() {
   showLocalData();
 }
 
-// 自动初始化
 window.addEventListener('load', function() {
   var t = localStorage.getItem('gist_token');
   if (t) {
-    window.GIST_TOKEN = t;
     document.getElementById('tokenStatus').textContent = '已配置 (' + t.substring(0,8) + '...)';
     document.getElementById('tokenInput').placeholder = '已保存，新 Token 粘贴后点保存';
   }
