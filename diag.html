@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>数据流诊断</title>
+<title>数据流诊断工具 (Gist版)</title>
 <style>
 body{font-family:monospace;padding:20px;background:#1a1a1a;color:#0f0;font-size:12px}
 .section{background:#000;border:1px solid #0f0;padding:15px;margin:15px 0}
@@ -12,15 +12,24 @@ h2{color:#0f0;border-bottom:1px solid #0f0;padding-bottom:10px}
 .label{color:#888}
 .value{color:#0f0;word-break:break-all}
 .ok{color:#0f0}
-.error{color:#f00}
 .warn{color:#ff0}
+.error{color:#f00}
 .btn{background:#0f0;color:#000;border:none;padding:10px 20px;cursor:pointer;margin:5px;font-family:monospace}
 .btn:hover{background:#0a0}
 pre{background:#111;padding:10px;overflow-x:auto;max-height:300px;overflow-y:auto}
+input[type=text],input[type=password]{background:#000;color:#0f0;border:1px solid #0f0;padding:5px;width:300px;font-family:monospace;margin:3px}
 </style>
 </head>
 <body>
-<h1>数据流诊断工具</h1>
+<h1>数据流诊断工具 (Gist版)</h1>
+
+<div class="section">
+<h2>0. Gist Token 配置</h2>
+<div>当前 Token: <span id="tokenStatus" class="label">未配置</span></div>
+<input type="password" id="tokenInput" placeholder="粘贴新 Token (ghp_...)">
+<button class="btn" onclick="saveToken()">保存 Token</button>
+<button class="btn" onclick="clearToken()">清除 Token</button>
+</div>
 
 <div class="section">
 <h2>1. 本地 localStorage 数据</h2>
@@ -29,167 +38,164 @@ pre{background:#111;padding:10px;overflow-x:auto;max-height:300px;overflow-y:aut
 </div>
 
 <div class="section">
-<h2>2. 云端 Supabase 数据</h2>
+<h2>2. Gist 云端数据</h2>
 <div id="cloudData"></div>
-<button class="btn" onclick="fetchCloudData()">拉取云端数据</button>
+<button class="btn" onclick="fetchCloudData()">刷新云端数据</button>
 </div>
 
 <div class="section">
-<h2>3. 数据对比</h2>
-<div id="diff"></div>
-<button class="btn" onclick="compareData()">对比本地 vs 云端</button>
+<h2>3. 上传/下载/清空</h2>
+<button class="btn" onclick="uploadLocal()">📤 上传本地到云端</button>
+<button class="btn" onclick="downloadCloud()">📥 下载云端到本地</button>
+<button class="btn" onclick="clearLocal()">🗑️ 清空本地数据</button>
 </div>
 
 <div class="section">
-<h2>4. 操作</h2>
-<button class="btn" onclick="uploadLocal()">上传本地到云端</button>
-<button class="btn" onclick="downloadCloud()">下载云端到本地</button>
-<button class="btn" style="background:#f00;color:#fff" onclick="clearLocal()">清空本地数据</button>
-</div>
-
-<div class="section">
-<h2>5. 日志</h2>
+<h2>4. 日志</h2>
 <pre id="log"></pre>
 </div>
 
+<script src="gist_db.js"></script>
 <script>
-var S = 'https://eivqbbxyllsorbvgqsju.supabase.co';
-var K = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY';
+window.GIST_TOKEN = localStorage.getItem('gist_token') || '';
+
 var KEYS = ['accounts','registrations','villages','products','foods','camps','announcements'];
+var GIST_ID = 'ed0e2614049e613d382f94458d9022f1';
 
 function log(msg) {
- var el = document.getElementById('log');
- var time = new Date().toLocaleTimeString();
- el.textContent = '[' + time + '] ' + msg + '\n' + el.textContent;
- console.log(msg);
+  var el = document.getElementById('log');
+  var time = new Date().toLocaleTimeString();
+  el.textContent = '[' + time + '] ' + msg + '\n' + el.textContent;
+  console.log(msg);
+}
+
+function saveToken() {
+  var t = document.getElementById('tokenInput').value.trim();
+  if (!t) { log('Token 为空'); return; }
+  localStorage.setItem('gist_token', t);
+  window.GIST_TOKEN = t;
+  document.getElementById('tokenStatus').textContent = '已配置 (' + t.substring(0,8) + '...)';
+  log('✅ Token 已保存');
+}
+
+function clearToken() {
+  localStorage.removeItem('gist_token');
+  window.GIST_TOKEN = '';
+  document.getElementById('tokenStatus').textContent = '未配置';
+  log('Token 已清除');
 }
 
 function showLocalData() {
- var el = document.getElementById('localData');
- var html = '';
- KEYS.forEach(function(k) {
- var v = localStorage.getItem('village_' + k) || localStorage.getItem(k);
- var count = 0;
- if (v) {
- try { count = JSON.parse(v).length || 0; } catch(e) { count = -1; }
- }
- html += '<div class="row"><span class="label">' + k + '</span><span class="value">' + (v ? count + ' 条' : '无') + '</span></div>';
- });
- el.innerHTML = html;
- log('已读取本地数据');
+  var el = document.getElementById('localData');
+  var html = '';
+  KEYS.forEach(function(k) {
+    var v = localStorage.getItem('village_' + k) || localStorage.getItem(k);
+    var count = 0;
+    if (v) { try { count = JSON.parse(v).length || 0; } catch(e) { count = -1; } }
+    html += '<div class="row"><span class="label">' + k + '</span><span class="value">' + (v ? count + ' 条' : '∅') + '</span></div>';
+  });
+  el.innerHTML = html;
+  log('本地数据已刷新');
 }
 
 function fetchCloudData() {
- log('正在拉取云端数据...');
- fetch(S + '/rest/v1/village_data?id=eq.init&select=data', {
- headers: { 'apikey': K, 'Authorization': 'Bearer ' + K }
- })
- .then(function(r) { return r.json(); })
- .then(function(rows) {
- if (rows && rows[0] && rows[0].data) {
- var data = rows[0].data;
- var el = document.getElementById('cloudData');
- var html = '<div class="row"><span class="label">更新时间</span><span class="value">' + new Date(data._updated).toLocaleString() + '</span></div>';
- KEYS.forEach(function(k) {
- var count = data[k] ? data[k].length : 0;
- html += '<div class="row"><span class="label">' + k + '</span><span class="value">' + count + ' 条</span></div>';
- });
- el.innerHTML = html;
- window._cloudData = data;
- log('云端数据拉取成功');
- } else {
- log('云端数据为空');
- }
- })
- .catch(function(e) {
- log('拉取失败: ' + e.message);
- });
-}
-
-function compareData() {
- if (!window._cloudData) {
- log('请先拉取云端数据');
- return;
- }
-
- var el = document.getElementById('diff');
- var html = '';
- KEYS.forEach(function(k) {
- var localV = localStorage.getItem('village_' + k) || localStorage.getItem(k);
- var localCount = 0;
- if (localV) { try { localCount = JSON.parse(localV).length || 0; } catch(e) {} }
-
- var cloudCount = window._cloudData[k] ? window._cloudData[k].length : 0;
-
- var status = localCount === cloudCount ? 'ok' : 'warn';
- html += '<div class="row"><span class="label">' + k + '</span><span class="value ' + status + '">本地: ' + localCount + ' | 云端: ' + cloudCount + (localCount !== cloudCount ? ' ⚠️' : '') + '</span></div>';
- });
- el.innerHTML = html;
- log('已对比数据');
+  if (!window.GIST_TOKEN) {
+    log('❌ 请先配置 Token');
+    document.getElementById('cloudData').innerHTML = '<div class="error">未配置 Token</div>';
+    return;
+  }
+  log('正在拉取云端数据...');
+  GistDB.init(function(cache) {
+    var el = document.getElementById('cloudData');
+    var html = '<div class="row"><span class="label">版本</span><span class="value">' + (cache._version || '?') + '</span></div>';
+    KEYS.forEach(function(k) {
+      var d = cache[k];
+      var count = 0;
+      if (d && Array.isArray(d)) count = d.length;
+      else if (d && typeof d === 'object') count = Object.keys(d).length;
+      html += '<div class="row"><span class="label">' + k + '</span><span class="value">' + count + ' 条</span></div>';
+    });
+    el.innerHTML = html;
+    log('✅ 云端数据已加载');
+  });
 }
 
 function uploadLocal() {
- if (!confirm('确认上传本地数据到云端？')) return;
- log('正在上传...');
+  if (!confirm('确定把本地数据上传到云端 Gist？这会覆盖云端现有数据！')) return;
+  if (!window.GIST_TOKEN) { log('❌ 请先配置 Token'); return; }
+  log('开始上传本地到云端...');
 
- var data = {};
- KEYS.forEach(function(k) {
- var v = localStorage.getItem('village_' + k) || localStorage.getItem(k);
- if (v) { try { data[k] = JSON.parse(v); } catch(e) { data[k] = []; } }
- else { data[k] = []; }
- });
- data._updated = Date.now();
+  var data = {};
+  KEYS.forEach(function(k) {
+    var v = localStorage.getItem('village_' + k) || localStorage.getItem(k);
+    if (v) {
+      try { data[k] = JSON.parse(v); } catch(e) { data[k] = []; }
+    } else {
+      data[k] = [];
+    }
+  });
 
- fetch(S + '/rest/v1/village_data?id=eq.init', {
- method: 'PATCH',
- headers: { 'apikey': K, 'Authorization': 'Bearer ' + K, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
- body: JSON.stringify({ data: data })
- })
- .then(function(r) {
- if (r.ok) {
- log('上传成功！');
- fetchCloudData();
- } else {
- log('上传失败: ' + r.status);
- }
- })
- .catch(function(e) { log('上传失败: ' + e.message); });
+  // 逐个推送
+  var i = 0;
+  function pushNext() {
+    if (i >= KEYS.length) {
+      log('✅ 全部数据上传完成');
+      fetchCloudData();
+      return;
+    }
+    var k = KEYS[i];
+    var c = (i === KEYS.length - 1) ? 1 : 0;
+    log('推送 ' + k + ' (' + data[k].length + ' 条)...');
+    GistDB.set(k, data[k], function(r) {
+      if (r && r.ok) {
+        log('  ✅ ' + k + ' OK');
+        i++;
+        setTimeout(pushNext, 300);
+      } else {
+        log('  ❌ ' + k + ' 失败: ' + (r ? r.error : 'unknown'));
+        i++;
+        setTimeout(pushNext, 300);
+      }
+    });
+  }
+  pushNext();
 }
 
 function downloadCloud() {
- if (!confirm('确认下载云端数据到本地？本地数据会被覆盖！')) return;
- log('正在下载...');
-
- fetch(S + '/rest/v1/village_data?id=eq.init&select=data', {
- headers: { 'apikey': K, 'Authorization': 'Bearer ' + K }
- })
- .then(function(r) { return r.json(); })
- .then(function(rows) {
- if (rows && rows[0] && rows[0].data) {
- var data = rows[0].data;
- KEYS.forEach(function(k) {
- if (data[k]) { localStorage.setItem('village_' + k, JSON.stringify(data[k])); }
- });
- log('下载成功！已覆盖本地数据');
- showLocalData();
- }
- })
- .catch(function(e) { log('下载失败: ' + e.message); });
+  if (!window.GIST_TOKEN) { log('❌ 请先配置 Token'); return; }
+  log('开始下载云端到本地...');
+  GistDB.init(function(cache) {
+    KEYS.forEach(function(k) {
+      if (cache[k] !== undefined) {
+        localStorage.setItem('village_' + k, JSON.stringify(cache[k]));
+        log('  ✅ ' + k + ' (' + (Array.isArray(cache[k]) ? cache[k].length : 'obj') + ')');
+      }
+    });
+    log('✅ 云端数据已下载到本地');
+    showLocalData();
+  });
 }
 
 function clearLocal() {
- if (!confirm('确认清空本地数据？')) return;
- KEYS.forEach(function(k) {
- localStorage.removeItem('village_' + k);
- localStorage.removeItem(k);
- });
- log('已清空本地数据');
- showLocalData();
+  if (!confirm('确定清空本地所有 village_ 数据？')) return;
+  KEYS.forEach(function(k) {
+    localStorage.removeItem('village_' + k);
+    localStorage.removeItem(k);
+  });
+  log('本地数据已清空');
+  showLocalData();
 }
 
-// 页面加载时自动检查
-showLocalData();
-fetchCloudData();
+// 自动初始化
+window.addEventListener('load', function() {
+  var t = localStorage.getItem('gist_token');
+  if (t) {
+    window.GIST_TOKEN = t;
+    document.getElementById('tokenStatus').textContent = '已配置 (' + t.substring(0,8) + '...)';
+    document.getElementById('tokenInput').placeholder = '已保存，新 Token 粘贴后点保存';
+  }
+  showLocalData();
+});
 </script>
 </body>
 </html>
