@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
- <script src="jsonbin.js"></script>
+ 
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
  <title>村庄开发</title>
@@ -589,7 +589,16 @@ function loadLandscapeDesigners() {
  var list = document.getElementById('landscapeList');
  var count = document.getElementById('landscapeCount');
  if (!section || !list) return;
- var registrations = Storage.get('registrations', []);
+ var 
+  // 云端优先
+  if (typeof JB_registrations !== 'undefined') {
+    JB_registrations.getAll(function(data) {
+      var regs = (data && data.items) ? data.items : [];
+      renderDesignerList(regs, section, list, count);
+    });
+    return;
+  }
+  registrations = Storage.get('registrations', []);
  var designers = [];
  for (var i = 0; i < registrations.length; i++) {
  var r = registrations[i];
@@ -651,7 +660,7 @@ function renderMassageList(regs, section, list, count) {
    var name = escapeHtml(t.nickName || t.name || "技师");
    var skill = escapeHtml(t.skill || t.desc || "专业按摩");
    var tid = escapeHtml(t.id);
-   html += "<div class="massage-card" data-tid="" + tid + "">" +
+   html += '<div class="massage-card" data-tid="' + tid + '">' +
     "<div class="massage-avatar">" + avatar + "</div>" +
     "<div class="massage-name">" + name + "</div>" +
     "<div class="massage-skill">" + skill + "</div></div>";
@@ -664,7 +673,7 @@ function renderMassageList(regs, section, list, count) {
 }
 }
 
-function init() {
+function init() { initialCompleted = true;
  initSampleData();
  migrateData();
  renderBanner();
@@ -894,15 +903,23 @@ function callChief(phone) {
 }
 
 // 初始化入口：JSONBin 云端同步（本地兜底，云端失败不白屏）
+var initialCompleted = false;
 function bootstrap() {
   if (window.JB_init) {
     window.onJBReady = init;
     JB_init();
+    setTimeout(function() {
+      if (!initialCompleted) {
+        console.warn("云端连接超时，切换本地缓存");
+        init();
+      }
+    }, 3000);
   } else {
     init();
   }
 }
 bootstrap();
 </script>
+<script src="jsonbin.js"></script>
 </body>
 </html>
