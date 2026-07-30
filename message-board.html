@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <script src="cloud_db.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>留言板</title>
@@ -668,7 +667,7 @@ function logout() {
     }
 
     function goPage(url) { location.href = url }
-    if(window.CloudDB){CloudDB.ready.then(init);}else{init();}
+    init()
   </script>
 </body>
 </html>

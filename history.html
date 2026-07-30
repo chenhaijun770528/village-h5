@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <script src="cloud_db.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>浏览历史</title>
@@ -451,7 +450,7 @@ const DB = {
       totalArea: '6200',
       farmlandArea: '3500',
       commercialArea: '350',
-      description: '阳光村是广州市郊的现代化农村，积极发展乡村旅游和生态农业。村内有大型草莓采摘园、农家乐设施，是城市居民周末体验田园生活的好选择。',
+      description: '阳光村是广州市郊的现代化农村，积极发展乡村旅游和���态农业。村内有大型草莓采摘园、农家乐设施，是城市居民周末体验田园生活的好选择。',
       chief: { name: '李明华', phone: '13800138002' },
       scenery: [
         { id: 's4', title: '草莓采摘园', desc: '50亩有机草莓，个大味甜', img: 'https://picsum.photos/seed/scene4/400/300' },
@@ -627,12 +626,12 @@ function logout() {
       if (!confirm('确定清空所有浏览记录？')) return
       Storage.set('history', [])
       toast('已清空')
-      if(window.CloudDB){CloudDB.ready.then(init);}else{init();}
+      init()
     }
 
     function goDetail(id) { location.href = 'village-detail.html?id=' + id }
     function goPage(url) { location.href = url }
-    if(window.CloudDB){CloudDB.ready.then(init);}else{init();}
+    init()
   </script>
 </body>
 </html>

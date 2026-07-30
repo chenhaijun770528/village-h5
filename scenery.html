@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <script src="cloud_db.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>风景展示</title>
@@ -473,7 +472,7 @@ const DB = {
       chief: { name: '王志强', phone: '13800138003' },
       scenery: [
         { id: 's6', title: '古民居群', desc: '保存完好的明清古建筑', img: 'https://picsum.photos/seed/scene6/400/300', category: '农村风貌' },
-        { id: 's7', title: '千年古井', desc: '井水清澈，冬暖夏凉', img: 'https://picsum.photos/seed/scene7/400/300', category: '农村风貌' },
+        { id: 's7', title: '千年古井', desc: '井水清澈，冬暖夏凉', img: 'https://picsum.photos/seed/scene7/400/300', category: '农���风貌' },
         { id: 's8', title: '竹林氧吧', desc: '百亩竹林，呼吸自然', img: 'https://picsum.photos/seed/scene8/400/300', category: '树林' }
       ],
       food: [
@@ -503,7 +502,7 @@ const DB = {
 
   // 角色类型（注册）
   roles: [
-    { id: 'r1', icon: '🏠', name: '村民', path: 'register-villager.html' },
+    { id: 'r1', icon: '����', name: '村民', path: 'register-villager.html' },
     { id: 'r2', icon: '👔', name: '村主任', path: 'register-township.html' },
     { id: 'r3', icon: '🏪', name: '超市老板', path: 'register-market.html' },
     { id: 'r4', icon: '🏗️', name: '建筑公司', path: 'register-construction.html' },
@@ -596,7 +595,7 @@ function logout() {
 }</script>
   <script>
     window._sceneryCat = 'all';
-    function switchSceneryCat(cat) { window._sceneryCat = cat; if(window.CloudDB){CloudDB.ready.then(init);}else{init();}; }
+    function switchSceneryCat(cat) { window._sceneryCat = cat; init(); }
 
     function init() {
       const params = new URLSearchParams(location.search)
@@ -652,7 +651,7 @@ function logout() {
       document.body.appendChild(el)
     }
 
-    if(window.CloudDB){CloudDB.ready.then(init);}else{init();}
+    init()
   </script>
 </body>
 </html>

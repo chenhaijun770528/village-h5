@@ -1,7 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <script src="cloud_db.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>选择角色 - 村庄平台</title>
@@ -408,7 +407,7 @@
     renderMyRegistrations();
     updateBtn();
 
-    // 页面加载时：检查是否有已通过的注册（管理员/村主任刚审核完）
+    // 页面加载时：检查是否有已通过的注��（管理员/村主任刚审核完）
     function checkApprovedRoles() {
       var regs = Storage.get('registrations', []);
       var myApproved = null;

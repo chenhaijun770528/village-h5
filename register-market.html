@@ -420,35 +420,7 @@ body {
       <button class="btn-primary" onclick="submit()">提交注册</button>
     </div>
   </div>
-  <script>
-// 云端直传
-function uploadToCloud() {
- var SYNC_KEYS = ['accounts','registrations','announcements','villages','products','foods','camps'];
- var data = {};
- for (var i = 0; i < SYNC_KEYS.length; i++) {
- var k = SYNC_KEYS[i];
- var v = localStorage.getItem('village_' + k) || localStorage.getItem(k);
- if (v) { try { data[k] = JSON.parse(v); } catch(e) { data[k] = []; } }
- else { data[k] = []; }
- }
- data._updated = Date.now();
- fetch('https://eivqbbxyllsorbvgqsju.supabase.co/rest/v1/village_data?id=eq.init', {
- method: 'PATCH',
- headers: {
- 'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY',
- 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY',
- 'Content-Type': 'application/json',
- 'Prefer': 'return=minimal'
- },
- body: JSON.stringify({ data: data })
- }).then(function(r) {
- console.log('[cloud] 上传结果: ' + r.status);
- }).catch(function(e) {
- console.warn('[cloud] 上传失败:', e);
- });
-}
-
-// village-h5 数据层
+  <script>// village-h5 数据层
 // 模拟数据（后续可替换为真实API）
 
 const DB = {
@@ -534,7 +506,7 @@ const DB = {
 
   // 露营基地
   camps: [
-    { id: 'c1', name: '星空露营基地', desc: '海拔800米，远离光污染，是观星圣地', price: '188', unit: '顶/晚', img: 'https://picsum.photos/seed/camp1/400/300', tags: ['观星', '烧烤', '篝火'], features: ['专业露营帐篷', '天文望远镜租借', '烧烤设备', '24小时热水'] },
+    { id: 'c1', name: '星空露营基地', desc: '海拔800米，远��光污染，是观星圣地', price: '188', unit: '顶/晚', img: 'https://picsum.photos/seed/camp1/400/300', tags: ['观星', '烧烤', '篝火'], features: ['专业露营帐篷', '天文望远镜租借', '烧烤设备', '24小时热水'] },
     { id: 'c2', name: '湖畔露营区', desc: '紧邻水库，湖光山色，宁静惬意', price: '158', unit: '顶/晚', img: 'https://picsum.photos/seed/camp2/400/300', tags: ['钓鱼', '划船', '亲子'], features: ['湖景帐篷', '免费停车', '钓鱼工具租借', '儿童游乐区'] },
     { id: 'c3', name: '森林木屋营地', desc: '独栋木屋掩映在松林间，呼吸森林负氧离子', price: '288', unit: '间/晚', img: 'https://picsum.photos/seed/camp3/400/300', tags: ['森林', '静修', '养生'], features: ['独栋木屋', '独立卫浴', '厨房设施', '森林SPA'] }
   ],
@@ -605,9 +577,6 @@ const Storage = {
 
 // 初始化示例数据到localStorage
 function initSampleData() {
-  if (typeof CloudDB !== 'undefined' && CloudDB.loadFromPublic) {
-    CloudDB.loadFromPublic().catch(function(){});
-  }
   if (!localStorage.getItem('village_villages')) {
     Storage.set('villages', DB.villages)
   }
@@ -642,77 +611,9 @@ function logout() {
       if (!name || !phone || !shop) { toast('请填写必填项'); return }
       const users = Storage.get('registrations', [])
       users.unshift({ role: '超市老板', name, phone, shop, address: document.getElementById('address').value, biz: document.getElementById('biz').value, time: Date.now() })
-      Storage.set('registrations', users);
-    
-    // 生成审核分享链接
-    if (window.showShareLink) {
-      var _shareData = users[users.length - 1];
-      // 确保有 role 字段
-      if (!_shareData.role) _shareData.role = 'market';
-      showShareLink(_shareData, _shareData.role);
-    }
-
-      // 直接写入 Supabase（跳过 cloud_db.js 中间层）
-      (function() {
-        var _u = 'https://eivqbbxyllsorbvgqsju.supabase.co';
-        var _k = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdnFiYnh5bGxzb3Jidmdxc2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTIzMDksImV4cCI6MjA5ODI4ODMwOX0.QeKnbo1cgA0yGMOEydML3PNXatH1V1QXfW0hyxRy7KY';
-        fetch(_u + '/rest/v1/village_data?id=eq.init&select=data', {
-          headers: { 'apikey': _k, 'Content-Type': 'application/json' }
-        }).then(function(r) { return r.json(); }).then(function(rows) {
-          var cloudData = (rows && rows[0] && rows[0].data) ? rows[0].data : {};
-          cloudData.registrations = regs;
-          var body = JSON.stringify({ data: cloudData });
-          if (rows && rows[0]) {
-            return fetch(_u + '/rest/v1/village_data?id=eq.init', {
-              method: 'PATCH',
-              headers: { 'apikey': _k, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-              body: body
-            });
-          } else {
-            return fetch(_u + '/rest/v1/village_data', {
-              method: 'POST',
-              headers: { 'apikey': _k, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-              body: body
-            });
-          }
-        }).then(function() {
-          toast('提交成功！');
-          setTimeout(function() { location.href = 'index.html'; }, 1500);
-        }).catch(function(e) {
-          console.warn('云端同步失败:', e);
-          toast('提交成功！');
-          setTimeout(function() { location.href = 'index.html'; }, 1500);
-        });
-      })();
-      
-    function showShareLink(regData) {
-      if (!regData) return;
-      var noPhoto = JSON.parse(JSON.stringify(regData));
-      delete noPhoto.photo;
-      var basePath = location.pathname.replace(//[^/]+$/, '/');
-      var shareLink = location.origin + basePath + 'share.html?data=' + encodeURIComponent(JSON.stringify(noPhoto));
-      var modal = document.createElement('div');
-      modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:"PingFang SC","Microsoft YaHei",sans-serif;';
-      modal.innerHTML = '<div style="background:#fff;border-radius:12px;padding:24px;max-width:340px;width:90%;">' +
-        '<div style="font-weight:bold;font-size:16px;margin-bottom:12px;color:#2E7D32;">&#10003; 申请已提交！</div>' +
-        '<div style="color:#666;font-size:13px;margin-bottom:10px;">请复制下方链接发给管理员审核：</div>' +
-        '<textarea id="shareLinkArea" readonly style="width:100%;height:80px;font-size:12px;border:1px solid #ddd;border-radius:6px;padding:8px;resize:none;box-sizing:border-box;margin-bottom:10px;"></textarea>' +
-        '<button id="copyBtn" style="width:100%;padding:10px;background:#FF9800;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;margin-bottom:8px;">&#128203; 复制链接</button>' +
-        '<button onclick="location.href=\'index.html\'" style="width:100%;padding:10px;background:#2E7D32;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">返回首页</button>' +
-        '</div>';
-      document.body.appendChild(modal);
-      document.getElementById('shareLinkArea').value = shareLink;
-      document.getElementById('copyBtn').onclick = function() {
-        document.getElementById('shareLinkArea').select();
-        document.execCommand('copy');
-        this.textContent = '&#10003; 已复制！';
-        setTimeout(function() { location.href = 'index.html'; }, 1000);
-      };
-    }
-
-      toast('注册成功！'); showShareLink(users[0]); setTimeout(() => location.href = 'index.html', 1500)
+      Storage.set('registrations', users)
+      toast('注册成功！'); setTimeout(() => location.href = 'index.html', 1500)
     }
   </script>
-<script src="share_helper.js"></script>
 </body>
 </html>

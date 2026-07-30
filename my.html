@@ -2,7 +2,6 @@
 ﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <script src="cloud_db.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>个人中心 - 村庄平台</title>
@@ -306,32 +305,7 @@ var container = document.getElementById("mainContent");
       console.log('[兼容] currentRole 已从对象转为字符串:', newRole);
     }
 
-
-  // === 淇锛氫粠"宸查€氳繃"娉ㄥ唽璁板綍鍚屾瑙掕壊鍒拌处鍙?===
-  // === ROLE SYNC: recover role from approved registration ===
-  if (!currentUser.currentRole || currentUser.currentRole === 'none') {
-    var _regs = Storage.get('registrations', []);
-    var _roleMap = {
-      '村主任':'township','村民':'villager','游客':'tourist',
-      '超市老板':'market','建筑公司':'construction','老师':'teacher',
-      '大学生':'student','律师':'lawyer','货运司机':'truck','顺风车':'carpool',
-      '按摩师':'massage','按摩技师':'massage','建筑园林师':'landscape'
-    };
-    for (var _i = 0; _i < _regs.length; _i++) {
-      if (_regs[_i].accountId === currentUser.id && _regs[_i].status === '已通过') {
-        var _rid = _roleMap[_regs[_i].role] || 'tourist';
-        currentUser.currentRole = _rid;
-        Storage.set('user', currentUser);
-        var _accs = Storage.get('accounts', []);
-        for (var _j = 0; _j < _accs.length; _j++) {
-          if (_accs[_j].id === currentUser.id) { _accs[_j].currentRole = _rid; break; }
-        }
-        Storage.set('accounts', _accs);
-        break;
-      }
-    }
-  }
-var ROLES_MAP = {
+    var ROLES_MAP = {
       'township': { icon: '👔', name: '村主任', color: '#2E7D32' },
       'villager': { icon: '🏠', name: '村民', color: '#4CAF50' },
       'tourist': { icon: '🎒', name: '游客', color: '#2196F3' },
@@ -678,7 +652,7 @@ function renderPage() {
         '</div>' +
         '<div style="margin-top:16px;padding-top:16px;border-top:2px solid #E8F5E9;"><div style="font-size:15px;font-weight:bold;color:#2E7D32;margin-bottom:12px;">🏞️ 风景图片管理</div><div id="vf_scenerySections"></div></div>' +
         '<button class="modal-btn modal-btn-save" onclick="saveVillage()">💾 保存</button>' +
-        '<button class="modal-btn modal-btn-cancel" onclick="closeVillageModal()">取消</button>' +
+        '<button class="modal-btn modal-btn-cancel" onclick="closeVillageModal()">��消</button>' +
         '</div></div>';
       var wrapper = document.createElement('div');
       wrapper.id = 'villageModalWrapper';
@@ -2129,7 +2103,7 @@ window.auditProducts = function() {
   if (apps.length === 0) {
     var empty = document.createElement('div');
     empty.style.cssText = 'text-align:center;padding:40px;color:#999;';
-    empty.textContent = '暂无待审核申请';
+    empty.textContent = '暂无待审核申��';
     wrap.appendChild(empty);
   } else {
     for (var k = 0; k < apps.length; k++) {
@@ -2360,7 +2334,7 @@ window.auditCamps = function() {
       renderPage();
     }
     
-    if(window.CloudDB){CloudDB.ready.then(init);}else{init();};
+    init();
 </script>
 
   <!-- 编辑联系方式弹窗 -->

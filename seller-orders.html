@@ -1,7 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <script src="cloud_db.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>卖家订单管理</title>
@@ -196,7 +195,7 @@ function cancelOrder(orderId){
   loadOrders();
 }
 
-if(window.CloudDB){CloudDB.ready.then(init);}else{init();};
+init();
 </script>
 </body>
 </html>

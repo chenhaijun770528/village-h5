@@ -2,7 +2,6 @@
 ﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <script src="jsonbin.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>个人中心 - 村庄平台</title>
@@ -306,56 +305,7 @@ var container = document.getElementById("mainContent");
       console.log('[兼容] currentRole 已从对象转为字符串:', newRole);
     }
 
-
-  // === 淇锛氫粠"宸查€氳繃"娉ㄥ唽璁板綍鍚屾瑙掕壊鍒拌处鍙?===
-  // === 角色同步：云端优先，等待 JB_init 完成后查询（含待审核状态提示）===
-  function syncUserRole() {
-    var _cuser = Storage.get('user', null);
-    if (!_cuser) return;
-    // ✅ 优先从云端查询，避免跨设备读不到数据
-    if (typeof JB_registrations !== 'undefined') {
-      JB_registrations.getAll(function(_allRegs) {
-        var _cloudRegs = (_allRegs && _allRegs.items) ? _allRegs.items : [];
-        applyRoleSync(_cloudRegs);
-      });
-    } else {
-      var _localRegs = Storage.get('registrations', []);
-      applyRoleSync(_localRegs);
-    }
-  }
-
-  function applyRoleSync(_regs) {
-    var _cuser = Storage.get('user', null);
-    if (!_cuser) return;
-    var _roleMap = {
-      '村主任':'township','村民':'villager','游客':'tourist',
-      '超市老板':'market','建筑公司':'construction','老师':'teacher',
-      '大学生':'student','律师':'lawyer','货运司机':'truck','顺风车':'carpool',
-      '按摩师':'massage','按摩技师':'massage','建筑园林师':'landscape'
-    };
-    if (!_cuser.currentRole || _cuser.currentRole === 'none') {
-      for (var _i = 0; _i < _regs.length; _i++) {
-        if (_regs[_i].accountId === _cuser.id) {
-          if (_regs[_i].status === '待审核') {
-            var _el = document.getElementById('pendingRoleNotice');
-            if (_el) { _el.style.display = 'block'; _el.innerHTML = '📋 您的「' + (_regs[_i].role || '未知角色') + '」申请正在审核中，请耐心等待...'; }
-          } else if (_regs[_i].status === '已通过') {
-            var _rid = _roleMap[_regs[_i].role] || 'tourist';
-            _cuser.currentRole = _rid;
-            Storage.set('user', _cuser);
-            var _accs = Storage.get('accounts', []);
-            for (var _j = 0; _j < _accs.length; _j++) { if (_accs[_j].id === _cuser.id) { _accs[_j].currentRole = _rid; break; } }
-            Storage.set('accounts', _accs);
-            break;
-          }
-          break;
-        }
-      }
-    }
-    if (typeof renderPage === 'function') syncUserRole();
-renderPage();
-  }
-var ROLES_MAP = {
+    var ROLES_MAP = {
       'township': { icon: '👔', name: '村主任', color: '#2E7D32' },
       'villager': { icon: '🏠', name: '村民', color: '#4CAF50' },
       'tourist': { icon: '🎒', name: '游客', color: '#2196F3' },
@@ -367,7 +317,7 @@ var ROLES_MAP = {
       'truck': { icon: '🚛', name: '货运司机', color: '#8D6E63' },
       'carpool': { icon: '🚗', name: '顺风车', color: '#009688' },
       'massage': { icon: '💆', name: '按摩技师', color: '#E91E63' },
-      'landscape': { icon: '🌿', name: '建筑园林设计师', color: '#795548' }
+      'landscape': { icon: '🌿', name: '建筑园林设��师', color: '#795548' }
     };
 
     function toast(msg) {
@@ -408,7 +358,7 @@ function renderPage() {
         }
       }
 
-      // 获取我的所有注册记录
+      // 获取我的��有注册记录
       var regs = Storage.get('registrations', []);
       var myRegs = [];
       for (var i = 0; i < regs.length; i++) {
@@ -488,7 +438,7 @@ function renderPage() {
           html += '<div class="village-panel">' +
             '<div class="village-panel-title">🏘️ 我的村庄</div>' +
             '<div style="text-align:center;padding:10px 0;">' +
-            '<div style="font-size:48px;margin-bottom:8px;">🏡</div>' +
+            '<div style="font-size:48px;margin-bottom:8px;">���</div>' +
             '<div style="font-size:14px;color:#888;margin-bottom:12px;">您还没有村庄信息</div>' +
             '<button onclick="openVillageModal(true)" style="padding:10px 24px;background:#2E7D32;color:white;border:none;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;">创建村庄</button>' +
             '</div>' +
@@ -588,7 +538,7 @@ function renderPage() {
       // ===== 按摩技师资料编辑 =====
       var myMassageReg = null;
       for (var mri = 0; mri < regs.length; mri++) {
-        if (regs[mri].accountId === currentUser.id && (regs[mri].role === '按摩师' || regs[mri].role === '按摩技师') && regs[mri].status === '已通过') {
+        if (regs[mri].accountId === currentUser.id && regs[mri].role === '按摩师' && regs[mri].status === '已通过') {
           myMassageReg = regs[mri];
           break;
         }
@@ -852,7 +802,7 @@ function renderPage() {
       { key: "山", label: "山", icon: "⛰️", color: "#5D4037" },
       { key: "河", label: "河", icon: "🏞️", color: "#00838F" },
       { key: "树林", label: "树林", icon: "🌲", color: "#2E7D32" },
-      { key: "农村风貌", label: "农村风貌", icon: "🌾", color: "#F57F17" }
+      { key: "农村风貌", label: "农村���貌", icon: "🌾", color: "#F57F17" }
     ];
     
     function initSceneryEditor(data) {
@@ -998,7 +948,7 @@ function renderPage() {
       var regs = Storage.get('registrations', []);
       var myReg = null, myIdx = -1;
       for (var i = 0; i < regs.length; i++) {
-        if (regs[i].accountId === currentUser.id && (regs[i].role === '按摩师' || regs[i].role === '按摩技师') && regs[i].status === '已通过') {
+        if (regs[i].accountId === currentUser.id && regs[i].role === '按摩师' && regs[i].status === '已通过') {
           myReg = regs[i]; myIdx = i; break;
         }
       }
@@ -1049,7 +999,7 @@ function renderPage() {
       var newAddress = document.getElementById('editMassageAddress').value.trim();
       var newSkill = document.getElementById('editMassageSkill').value.trim();
       var newYears = document.getElementById('editMassageYears').value.trim();
-      if (newPhone && !/^1\d{10}$/.test(newPhone)) { toast('请输入正确的手机号'); return; }
+      if (newPhone && !/^1\d{10}$/.test(newPhone)) { toast('请输入正确的手��号'); return; }
       var regs = Storage.get('registrations', []);
       regs[idx].phone = newPhone;
       regs[idx].curAddress = newAddress;
@@ -1402,7 +1352,7 @@ function initMyProducts() {
   var foods = Storage.get('foods', []).filter(function(f) { return f.sellerId === user.account; });
   var camps = Storage.get('camps', []).filter(function(c) { return c.sellerId === user.account; });
   var orders = Storage.get('orders', []).filter(function(o) {
-    return o.sellerId === user.account && o.status !== '已取消' && o.status !== '已完成' && o.status !== '已拒绝';
+    return o.sellerId === user.account && o.status !== '��取消' && o.status !== '已完成' && o.status !== '已拒绝';
   });
 
   var total = products.length + foods.length + camps.length;
@@ -2449,7 +2399,7 @@ window.showCampApps = function() {
 };
 
 window.deleteCamp = function(id) {
-  if (!confirm('确定删除这个申请？')) return;
+  if (!confirm('确定��除这个申请？')) return;
   var apps = Storage.get('camp_applications', []);
   var filtered = [];
   for (var i = 0; i < apps.length; i++) {
@@ -2717,7 +2667,7 @@ window.auditCamps = function() {
       }
       Storage.set('accounts', accounts);
       document.getElementById('editContactModal').style.display = 'none';
-      toast('保存成功！');
+      toast('保存成功��');
       renderPage(); // 重新渲染页面显示新信息
     }
     // 页面初始化
@@ -2725,7 +2675,7 @@ window.auditCamps = function() {
       renderPage();
     }
     
-    if(window.JB_init){window.onJBReady=init;JB_init();}else{init();};
+    init();
 </script>
 
   <!-- 编辑联系方式弹窗 -->
@@ -2746,7 +2696,6 @@ window.auditCamps = function() {
   </div>
   </body>
 </html>
-
 
 
 

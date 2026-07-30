@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <script src="cloud_db.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>村庄详情</title>
@@ -665,7 +664,7 @@ var SCENE_CATS = [
 
       <!-- 村长联系 -->
       <div class="detail-section">
-        <h3>📞 联系村主任</h3>
+        <h3>��� 联系村主任</h3>
         <div class="form-row">
           <div class="form-row-label">姓名</div>
           <div class="form-row-value">${v.chief.name}</div>
@@ -716,7 +715,7 @@ var SCENE_CATS = [
       if (idx >= 0) { f.splice(idx, 1); toast('已取消收藏') }
       else { f.unshift(v); toast('已收藏') }
       Storage.set('favorites', f)
-      if(window.CloudDB){CloudDB.ready.then(init);}else{init();}
+      init()
     }
 
     function previewImg(src) {
@@ -729,7 +728,7 @@ var SCENE_CATS = [
     function goPage(url) { location.href = url }
     function showShare() { toast('请使用浏览器分享功能') }
 
-    if(window.CloudDB){CloudDB.ready.then(init);}else{init();}
+    init()
   </script>
 </body>
 </html>

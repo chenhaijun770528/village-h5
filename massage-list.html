@@ -2,7 +2,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <script src="cloud_db.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>按摩技师</title>
@@ -209,7 +208,7 @@ function saveEdit() {
   
   toast("修改成功");
   closeEdit();
-  if(window.CloudDB){CloudDB.ready.then(init);}else{init();};
+  init();
 }
 
 function init() {
@@ -220,7 +219,7 @@ function init() {
   var therapists = [];
   
   for (var i = 0; i < regs.length; i++) {
-    if ((regs[i].role === "按摩师" || regs[i].role === "按摩技师") && regs[i].status === "已通过") {
+    if (regs[i].role === "按摩师" && regs[i].status === "已通过") {
       therapists.push({ data: regs[i], index: i });
     }
   }
@@ -269,8 +268,7 @@ function init() {
   list.innerHTML = html;
 }
 
-if(window.CloudDB){CloudDB.ready.then(init);}else{init();};
+init();
 </script>
 </body>
 </html>
-

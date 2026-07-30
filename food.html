@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <script src="cloud_db.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>乡村美食</title>
@@ -428,7 +427,7 @@ function init() {
   updateFabVisibility();
 }
 
-// 加载美食列表（正式列表 + 村长待审核申请）
+// 加载美食���表（正式列表 + 村长待审核申请）
 function loadFoods() {
   var grid = document.getElementById('foodGrid');
   var foods = Storage.get('foods', []);
@@ -794,7 +793,11 @@ function deleteApplication(appId) {
   openMyApplications();
 }
 
-if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', function(){ if(window.CloudDB){CloudDB.ready.then(init);}else{init();} }); } else { if(window.CloudDB){CloudDB.ready.then(init);}else{init();} }
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 </script>
 </body>
 </html>
